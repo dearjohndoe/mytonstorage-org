@@ -7,7 +7,7 @@ import { Upload, FolderUp, Loader } from "lucide-react"
 import { addFile, addFolder } from "@/lib/api"
 import { AddedBag, FileMetadata } from "@/types/files"
 import { useAppStore } from '@/store/useAppStore'
-import { printSize, readAllFiles } from "@/lib/utils"
+import { printSpace, readAllFiles } from "@/lib/utils"
 import { FileInfo } from "@/types/files"
 import { ErrorComponent } from "../error"
 
@@ -216,7 +216,7 @@ export default function StorageUpload() {
                       files.length > 1 ? (
                         <>
                           <h3 className="text-lg font-medium mb-2">Selected Files</h3>
-                          <p className="text-sm text-gray-500 mb-2">Total files: {files.length} ({printSize(files.reduce((acc, file) => acc + file.size, 0))})</p>
+                          <p className="text-sm text-gray-500 mb-2">Total files: {files.length} ({printSpace(files.reduce((acc, file) => acc + file.size, 0))})</p>
                         </>
                       ) : (
                         <>
@@ -225,7 +225,7 @@ export default function StorageUpload() {
                       )}
                     <ul className="text-left text-sm text-gray-700">
                       {files.map((file, index) => (
-                        <li key={index}>{file.webkitRelativePath || file.name} ({printSize(file.size)})</li>
+                        <li key={index}>{file.webkitRelativePath || file.name} ({printSpace(file.size)})</li>
                       ))}
                     </ul>
                   </div>

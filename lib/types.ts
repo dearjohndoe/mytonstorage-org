@@ -6,6 +6,13 @@ export type ApiResponse = {
   data: any | null
 }
 
+export type BagInfoShort = {
+  contract_address: string
+  bag_id: string
+  description: string
+  size: number
+}
+
 export type ProviderInfo = {
   provider: Provider
   offer: ProviderOffer | null

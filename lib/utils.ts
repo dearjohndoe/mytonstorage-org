@@ -1,12 +1,17 @@
 import axios from "axios"
 import { Provider } from "@/types/mytonstorage"
 
-export function printSize(size: number | null): string {
-  if (size === null || size === undefined) return "N/A"
-  if (size < 1024) return `${size} B`
-  if (size < 1024 * 1024) return `${(size / 1024).toFixed(2)} KB`
-  if (size < 1024 * 1024 * 1024) return `${(size / 1024 / 1024).toFixed(2)} MB`
-  return `${(size / 1024 / 1024 / 1024).toFixed(2)} GB`
+
+export const printSpace = (bytes: number): string => {
+  if (bytes <= 0) return ``
+
+  if (bytes <= 1024) return `${bytes} bytes`
+
+  if (bytes <= 1024 * 1024) return `${(bytes / 1024).toFixed(2)} Kb`
+
+  if (bytes <= 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(2)} Mb`
+
+  return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} Gb`
 }
 
 export async function readAllFiles(initialEntries: any[]): Promise<File[]> {
@@ -167,6 +172,8 @@ export const shuffleProviders = (providers: Provider[], count: number): Provider
 }
 
 export const shortenString = (key: string, maxLen: number = 10) => {
+  if (!key) return null
+
   if (key.length <= maxLen) return key
   return `${key.substring(0, maxLen / 2)}...${key.substring(key.length - maxLen / 2)}`
 }

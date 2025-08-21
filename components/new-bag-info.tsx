@@ -1,7 +1,7 @@
 "use client"
 
 import { getFile, removeFile } from "@/lib/api";
-import { printSize } from "@/lib/utils";
+import { printSpace } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
 import { FileText, Loader, Trash } from "lucide-react";
 import React, { useEffect } from "react"
@@ -130,7 +130,7 @@ export default function NewBagInfo({ canCancel }: NewBagInfoProps) {
               </div>
 
               <div>
-                <RenderField label="Bag size" value={printSize(widgetData.bagInfo.bag_size)} />
+                <RenderField label="Bag size" value={printSpace(widgetData.bagInfo.bag_size)} />
               </div>
 
             </div>

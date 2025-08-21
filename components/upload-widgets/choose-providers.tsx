@@ -33,7 +33,9 @@ export default function ChooseProviders() {
   const [canContinue, setCanContinue] = React.useState<boolean>(false);
 
   useEffect(() => {
-    loadProviders();
+    if (!isLoading) {
+      loadProviders();
+    }
   }, []);
 
   useEffect(() => {
@@ -162,6 +164,10 @@ export default function ChooseProviders() {
   }
 
   const loadProviders = async () => {
+    if (isLoading) {
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     setWarn(null);
