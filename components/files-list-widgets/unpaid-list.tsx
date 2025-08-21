@@ -2,7 +2,7 @@ import { getUnpaid, removeFile } from "@/lib/api";
 import { UserBag } from "@/types/files";
 import { Ban, Loader, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { ErrorComponent } from "./error";
+import { ErrorComponent } from "../error";
 import React from "react";
 import { useAppStore } from "@/store/useAppStore";
 
@@ -11,14 +11,23 @@ export function UnpaidFilesList() {
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [unpaidFiles, setUnpaidFiles] = useState<UserBag[] | null>(null);
+    const [hasFetched, setHasFetched] = useState(false);
 
     useEffect(() => {
-        fetchData();
-    }, []);
+        if (!hasFetched) {
+            fetchData();
+        }
+    }, [hasFetched]);
 
 
     const fetchData = async () => {
+        if (isLoading && hasFetched) {
+            return;
+        }
+
         setIsLoading(true);
+        setHasFetched(true);
+        
         const resp = await getUnpaid();
         if (resp.error) {
             setError(resp.error);
@@ -71,9 +80,7 @@ export function UnpaidFilesList() {
                 </div>
             </div>
 
-            {
-                <ErrorComponent error={error} />
-            }
+            { error && <ErrorComponent error={error} /> }
 
             {
                 isLoading && (

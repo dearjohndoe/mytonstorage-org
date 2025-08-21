@@ -1,6 +1,6 @@
 import axios, { AxiosError } from "axios"
 import { BagInfo, AddedBag, FileMetadata, Offers, UserBag } from "@/types/files";
-import { ApiResponse, InitStorageContract, Transaction } from "./types";
+import { ApiResponse, BagInfoShort, InitStorageContract, Transaction } from "./types";
 import { handleError } from "./utils";
 
 // API base URL from env with safe fallback
@@ -15,6 +15,25 @@ export async function setBagStorageContract(bagId: string, addr: string): Promis
       withCredentials: true
     });
     data = response.status === 200;
+  } catch (err: AxiosError | any) {
+    error = handleError(err);
+  }
+
+  return {
+    error: error,
+    data: data
+  }
+}
+
+export async function getDescriptions(addresses: string[]): Promise<ApiResponse> {
+  var error: string | null = null;
+  var data: BagInfoShort[] | null = null;
+
+  try {
+    const response = await axios.post(`${host}/api/v1/files/details`, { contracts: addresses }, {
+      withCredentials: true
+    });
+    data = response.data as BagInfoShort[];
   } catch (err: AxiosError | any) {
     error = handleError(err);
   }

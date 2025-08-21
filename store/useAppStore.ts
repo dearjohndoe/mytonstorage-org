@@ -1,15 +1,20 @@
-import { Transaction } from '@/lib/types'
+import { BagInfoShort, Transaction } from '@/lib/types'
 import { AddedBag, BagInfo, FileInfo } from '@/types/files'
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 
 export interface UploadFile {
-  id: string
-  name: string
-  size: number
-  uploadDate: string
-  status: 'uploaded' | 'uploading' | 'error'
-  url?: string
+  contractAddress: string
+  txLt: string
+  createdAt: number
+  expiresAt: number | null
+  info: BagInfoShort | null
+  status: 'uploaded' | 'uploading' | 'error' // -
+}
+
+export interface Blockchain {
+  lt: string | null
+  lastUpdate: number | null
 }
 
 export interface UploadWidgetData {
@@ -45,6 +50,7 @@ export interface AppState {
 
   // Данные для страницы со списком файлов
   files: {
+    blockchain: Blockchain,
     list: UploadFile[]
     searchQuery?: string
     sortBy?: 'name' | 'date' | 'size'
@@ -65,9 +71,8 @@ export interface AppActions {
 
   // Управление файлами
   addFile: (file: UploadFile) => void
-  updateFile: (id: string, updates: Partial<UploadFile>) => void
-  removeFile: (id: string) => void
   setFiles: (files: UploadFile[]) => void
+  setBlockchain: (lt: string, lastUpdate: number) => void
   setSearchQuery: (query: string) => void
   setSortBy: (sortBy: 'name' | 'date' | 'size', order: 'asc' | 'desc') => void
 
@@ -87,6 +92,10 @@ const initialState: AppState = {
     }
   },
   files: {
+    blockchain: {
+      lt: null,
+      lastUpdate: null
+    },
     list: [],
     searchQuery: '',
     sortBy: 'date',
@@ -142,29 +151,22 @@ export const useAppStore = create<AppStore>()(
           }
         })),
 
-      updateFile: (id, updates) =>
-        set((state) => ({
-          files: {
-            ...state.files,
-            list: state.files.list.map(file =>
-              file.id === id ? { ...file, ...updates } : file
-            )
-          }
-        })),
-
-      removeFile: (id) =>
-        set((state) => ({
-          files: {
-            ...state.files,
-            list: state.files.list.filter(file => file.id !== id)
-          }
-        })),
-
       setFiles: (files) =>
         set((state) => ({
           files: {
             ...state.files,
             list: files
+          }
+        })),
+
+      setBlockchain: (lt, lastUpdate) =>
+        set((state) => ({
+          files: {
+            ...state.files,
+            blockchain: {
+              lt,
+              lastUpdate
+            }
           }
         })),
 
@@ -197,6 +199,7 @@ export const useAppStore = create<AppStore>()(
         currentPage: state.currentPage,
         upload: state.upload,
         files: {
+          blockchain: state.files.blockchain,
           list: state.files.list,
           searchQuery: state.files.searchQuery,
           sortBy: state.files.sortBy,

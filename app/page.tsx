@@ -2,15 +2,15 @@
 
 import { useIsMobile } from "@/hooks/useIsMobile"
 import { useAppStore } from "@/store/useAppStore"
-import StorageUpload from "@/components/widgets/storage-upload"
-import { FilesList } from "@/components/files-list"
+import StorageUpload from "@/components/upload-widgets/storage-upload"
+import { FilesList } from "@/components/files-list-widgets/files-list"
 import React, { useEffect, useState } from "react";
 import { useTonWallet, useTonConnectUI } from "@tonconnect/ui-react";
 import { login, proofPayload } from "@/lib/api"
 import NewBagInfo from "@/components/new-bag-info"
-import ChooseProviders from "@/components/widgets/choose-providers"
-import Payment from "@/components/widgets/payment"
-import StorageInfo from "@/components/widgets/storage-info"
+import ChooseProviders from "@/components/upload-widgets/choose-providers"
+import Payment from "@/components/upload-widgets/payment"
+import StorageInfo from "@/components/upload-widgets/storage-info"
 import WidgetsMap from "@/components/widgets-map"
 
 function HomeContent() {
