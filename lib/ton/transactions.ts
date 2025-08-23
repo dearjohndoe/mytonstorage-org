@@ -3,8 +3,8 @@ import { TonClient, Address, Transaction, Message } from "@ton/ton";
 
 require("buffer");
 
-export async function fetchNewContracts(userAddr: string, lt: string | null, limit: number): Promise<StorageContract[] | Error> {
-    let txs: Transaction[] | Error = await fetchUserTransactions(userAddr, lt, limit);
+export async function fetchNewContracts(userAddr: string): Promise<StorageContract[] | Error> {
+    let txs: Transaction[] | Error = await fetchUserTransactions(userAddr);
     if (txs instanceof Error) {
         return txs;
     }
@@ -24,7 +24,6 @@ export async function fetchNewContracts(userAddr: string, lt: string | null, lim
         const originalBody = msg.body.beginParse();
         let body = originalBody.clone();
         if (body.remainingBits < 64) {
-            console.warn("Body is too short, skipping transaction:", tx.hash().toString('hex'));
             continue
         }
 
@@ -47,7 +46,7 @@ export async function fetchNewContracts(userAddr: string, lt: string | null, lim
     return resp;
 }
 
-async function fetchUserTransactions(userAddr: string, lt: string | null, limit: number): Promise<Transaction[] | Error> {
+async function fetchUserTransactions(userAddr: string): Promise<Transaction[] | Error> {
     let transactions: Transaction[]
 
     try {
@@ -57,8 +56,7 @@ async function fetchUserTransactions(userAddr: string, lt: string | null, limit:
 
         const address = Address.parse(userAddr);
         let opts = {
-            limit: limit,
-            lt: lt || undefined,
+            limit: 100,
             archival: true,
         }
 

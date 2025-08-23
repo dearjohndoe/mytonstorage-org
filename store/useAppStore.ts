@@ -1,4 +1,5 @@
 import { BagInfoShort, Transaction } from '@/lib/types'
+import { StorageContractFull } from '@/types/blockchain'
 import { AddedBag, BagInfo, FileInfo } from '@/types/files'
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
@@ -9,6 +10,8 @@ export interface UploadFile {
   createdAt: number
   expiresAt: number | null
   info: BagInfoShort | null
+  contractInfo: StorageContractFull | null
+  lastContractUpdate: number | null
   status: 'uploaded' | 'uploading' | 'error' // -
 }
 

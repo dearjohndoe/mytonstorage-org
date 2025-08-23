@@ -20,7 +20,7 @@ export default function ChooseProviders() {
   const widgetData = upload.widgetData;
   const userAddress = useTonAddress(true);
 
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [isLoading, setIsLoading] = React.useState(false);
   const [offersLoading, setOffersLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [warn, setWarn] = React.useState<string | null>(null);

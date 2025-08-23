@@ -26,7 +26,6 @@ function HomeContent() {
           if (!w) return;
           if (w.connectItems?.tonProof && "proof" in w.connectItems.tonProof) {
               try {
-                  // Do not log proof value
                   console.log("Attempting to login with TON proof");
                   const ok = await login(
                       w.account.address,

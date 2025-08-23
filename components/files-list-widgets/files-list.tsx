@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react'
 import { UploadFile, useAppStore } from '@/store/useAppStore'
 import { UnpaidFilesList } from './unpaid-list'
-import { ChevronDown, CircleX, Copy, ReceiptText, SquarePen, Wallet } from 'lucide-react'
+import { CircleX, Copy, Info, ReceiptText, SquarePen, Wallet } from 'lucide-react'
 import { ErrorComponent } from '../error';
 import { fetchNewContracts } from '@/lib/ton/transactions';
 import { useTonWallet } from '@tonconnect/ui-react';
 import { copyToClipboard, printSpace, shortenString } from '@/lib/utils';
 import { getDescriptions } from '@/lib/api';
 import { BagInfoShort } from '@/lib/types';
+import { ContractDetails } from '../contract-details';
 
 const TransactionsCheckLimit = 100;
 
@@ -19,6 +20,7 @@ export function FilesList() {
   const [localFiles, setLocalFiles] = useState<UploadFile[]>([]);
   const [copiedKey, setCopiedKey] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedContract, setSelectedContract] = useState<string | null>(null);
 
   useEffect(() => {
     if (wallet?.account.address && !isLoading) {
@@ -49,8 +51,7 @@ export function FilesList() {
     setIsLoading(true);
     setError(null);
 
-    const contracts = await fetchNewContracts(wallet?.account.address, files.blockchain?.lt || null, TransactionsCheckLimit);
-    console.debug('fetchNewContracts result:', contracts)
+    const contracts = await fetchNewContracts(wallet?.account.address);
 
     if (contracts instanceof Error) {
       setError(contracts.message);
@@ -103,12 +104,54 @@ export function FilesList() {
   }
 
   return (
-    <div className="space-y-4 text-sm">
+    <div className="space-y-4 relative">
+      {/* Details modal */}
+      {selectedContract !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto pointer-events-none">
+          <div className="relative bg-white border shadow-2xl rounded-xl p-8 mt-4 mb-4 mx-auto max-w-5xl w-full max-h-[100vh] overflow-y-auto pointer-events-auto">
+            <button
+              className="absolute top-4 right-4 z-10 flex items-center justify-center w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors duration-200"
+              onClick={() => setSelectedContract(null)}
+            >
+              <span className="text-gray-600 text-lg font-medium">✕</span>
+            </button>
+
+            {selectedContract && (
+              <div>
+                <div className="text-md text-gray-700 mb-2">
+                  <div className="flex items-center">
+                    <span className="text-gray-900 font-semibold">Storage contract info:</span>
+                    <a
+                      href={`https://tonscan.org/address/${selectedContract}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-2 text-blue-600 hover:underline"
+                      title={selectedContract}>
+                      {shortenString(selectedContract, 48)}
+                    </a>
+                    <button
+                      onClick={() => copyToClipboard(selectedContract, setCopiedKey)}
+                      className={`ml-2 transition-colors duration-200
+                          ${copiedKey === selectedContract
+                          ? "text-gray-100 font-extrabold drop-shadow-[0_0_6px_rgba(34,197,94,0.8)]"
+                          : "text-gray-700 hover:text-gray-400"
+                        }`}>
+                      <Copy className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <br />
+                  <ContractDetails contractAddress={selectedContract} />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Unpaid - from backend */}
-      <UnpaidFilesList />
-
-      <br />
+      <div className="relative z-10">
+        <UnpaidFilesList />
+      </div>
 
       {/* Paid - from blockchain */}
       <div className="flex items-center justify-between gap-2 mb-4">
@@ -240,33 +283,33 @@ export function FilesList() {
                       <td>
                         <div className="flex items-center">
                           <button
-                            onClick={() => { }}
-                            className="p-1 mx-3 rounded-full text-blue-800 hover:bg-gray-100"
+                            onClick={() => setSelectedContract(f.contractAddress)}
+                            className="p-1 mx-3 rounded-full text-gray-500 hover:text-gray-300"
                             title='Topup balance'
                           >
-                            <ChevronDown className="h-5 w-5" />
+                            <Info className="h-5 w-5" />
                           </button>
 
                           <button
                             onClick={() => { }}
-                            className="p-1 rounded-full text-gray-800 hover:bg-gray-100"
+                            className="p-1 rounded-full text-gray-800 hover:text-gray-500"
                             title='Topup balance'
                           >
                             <Wallet className="h-5 w-5" />
                           </button>
                           <button
                             onClick={() => { }}
-                            className="p-1 rounded-full text-gray-800 hover:bg-gray-100"
+                            className="p-1 rounded-full text-gray-800 hover:text-gray-500"
                             title='Edit providers list'
                           >
                             <SquarePen className="h-5 w-5" />
                           </button>
                           <button
                             onClick={() => { }}
-                            className="p-1 rounded-full hover:bg-gray-100"
+                            className="p-1 rounded-full"
                             title='Withdraw funds'
                           >
-                            <CircleX className="h-5 w-5 text-red-500" />
+                            <CircleX className="h-5 w-5 text-red-500  hover:text-red-300" />
                           </button>
                         </div>
                       </td>
