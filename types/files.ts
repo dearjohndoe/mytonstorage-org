@@ -1,13 +1,4 @@
 
-export type BagInfo = {
-    bag_id: string;
-    description: string;
-    size: number;
-    files_count: number;
-    bag_size: number;
-    peers: number;
-};
-
 export type FileMetadata = {
     description: string;
 };
@@ -15,15 +6,20 @@ export type FileMetadata = {
 export type UserBag = {
     bag_id: string;
     user_address: string;
-    storage_contract: string;
     created_at: number;
-    updated_at: number;
-    store_until: number;
+    description: string;
+    files_count: number;
+    bag_size: number;
 }
 
 export type AddedBag = {
     bag_id: string;
 };
+
+export type UnpaidBags = {
+    free_storage: number;
+    bags: UserBag[];
+}
 
 export type Offers = {
     offers: ProviderOffer[];
@@ -34,6 +30,7 @@ export type ProviderOffer = {
     offer_span: number;
     price_per_day: number;
     price_per_proof: number;
+    price_per_mb: number;
     provider: ProviderContractData;
 };
 

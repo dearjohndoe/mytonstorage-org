@@ -44,7 +44,7 @@ export function RenderField({ label, value, unit, url, copy, isInteger }: Render
                 <span className="truncate" title={title}>{shorten}</span>
             </a>
         ) : (
-            <span className="text-gray-700 truncate" title={title}>{shorten}</span>
+            <span className="text-gray-800 truncate" title={title}>{shorten}</span>
         )}
         
         {copy && (
@@ -53,7 +53,7 @@ export function RenderField({ label, value, unit, url, copy, isInteger }: Render
                 className={`ml-2 transition-colors duration-200
                 ${copiedKey === copy
                     ? "text-gray-100 font-extrabold drop-shadow-[0_0_6px_rgba(34,197,94,0.8)]"
-                    : "text-gray-700 hover:text-gray-400"
+                    : "text-gray-800 hover:text-gray-400"
                 }`}
             ><Copy className="h-4 w-4" /></button>
         )}

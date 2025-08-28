@@ -1,7 +1,9 @@
+"use client"
+
 import { useAppStore } from "@/store/useAppStore";
 import { useTonConnectUI } from "@tonconnect/ui-react";
 import { ChevronLeft, ReceiptText } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ErrorComponent } from "../error";
 import { setBagStorageContract } from "@/lib/api";
 

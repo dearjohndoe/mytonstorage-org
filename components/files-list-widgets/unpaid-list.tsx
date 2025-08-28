@@ -1,6 +1,8 @@
+"use client"
+
 import { getUnpaid, removeFile } from "@/lib/api";
 import { UserBag } from "@/types/files";
-import { Ban, Loader, X } from "lucide-react";
+import { Ban, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ErrorComponent } from "../error";
 import React from "react";
@@ -9,36 +11,34 @@ import { useAppStore } from "@/store/useAppStore";
 export function UnpaidFilesList() {
     const { updateWidgetData } = useAppStore()
     const [error, setError] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
     const [unpaidFiles, setUnpaidFiles] = useState<UserBag[] | null>(null);
-    const [hasFetched, setHasFetched] = useState(false);
+    const [storageTime, setStorageTime] = useState<number | null>(null);
 
     useEffect(() => {
-        if (!hasFetched) {
-            fetchData();
-        }
-    }, [hasFetched]);
+        fetchData();
+    }, []);
 
 
     const fetchData = async () => {
-        if (isLoading && hasFetched) {
-            return;
-        }
+        if (isLoading) return;
 
         setIsLoading(true);
-        setHasFetched(true);
-        
+
         const resp = await getUnpaid();
         if (resp.error) {
             setError(resp.error);
         } else {
-            setUnpaidFiles(resp.data || []);
+            setUnpaidFiles(resp.data.bags || []);
+            setStorageTime(resp.data.free_storage || null);
         }
 
         setIsLoading(false);
     };
 
     const cancelStorage = async (bagid: string) => {
+        if (isLoading) return;
+
         setIsLoading(true);
 
         try {
@@ -71,8 +71,12 @@ export function UnpaidFilesList() {
         }
     };
 
+    if (!error && (!unpaidFiles || unpaidFiles.length === 0)) {
+        return <div></div>
+    }
+
     return (
-        <div className="mb-4">
+        <div>
             <div className="flex items-center justify-between gap-2 mb-4">
                 <div className="flex items-center">
                     <Ban className="w-5 h-5 text-blue-600" />
@@ -80,21 +84,7 @@ export function UnpaidFilesList() {
                 </div>
             </div>
 
-            { error && <ErrorComponent error={error} /> }
-
-            {
-                isLoading && (
-                    <div className="flex flex-col items-center">
-                        <Loader className="animate-spin h-8 w-8 text-blue-500" />
-                    </div>
-                )
-            }
-
-            {
-                (!isLoading && (!unpaidFiles || unpaidFiles.length === 0)) && (
-                    <h2>No unpaid files.</h2>
-                )
-            }
+            {error && <ErrorComponent error={error} />}
 
             {
                 !isLoading && unpaidFiles && unpaidFiles.length > 0 && (
@@ -140,7 +130,7 @@ export function UnpaidFilesList() {
                                             </td>
                                             <td>
                                                 <div className="flex items-center">
-                                                    {f.store_until}
+                                                    {storageTime}
                                                 </div>
                                             </td>
                                             <td>

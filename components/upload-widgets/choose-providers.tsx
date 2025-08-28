@@ -20,7 +20,7 @@ export default function ChooseProviders() {
   const widgetData = upload.widgetData;
   const userAddress = useTonAddress(true);
 
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [isLoading, setIsLoading] = React.useState(false);
   const [offersLoading, setOffersLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [warn, setWarn] = React.useState<string | null>(null);
@@ -90,7 +90,7 @@ export default function ChooseProviders() {
 
     setOffersLoading(true);
 
-    const resp = await getOffers(widgetData.bagInfo.bag_id, providers.map(p => p.provider.pubkey));
+    const resp = await getOffers(providers.map(p => p.provider.pubkey), widgetData.bagInfo.bag_id, 0);
     const data = resp.data as Offers;
     if (data) {
       if (data.offers && data.offers.length > 0) {
@@ -208,16 +208,10 @@ export default function ChooseProviders() {
           </div>
         )}
         {
-          !error && (
-            warn ? (
+          !error && warn && (
               <div className="flex flex-col items-center p-4 bg-yellow-50 rounded-lg">
                 <p>{warn}</p>
               </div>
-            ) : (
-              <div className="flex flex-col items-center p-4 rounded-lg">
-                <p><wbr></wbr></p>
-              </div>
-            )
           )
         }
 
