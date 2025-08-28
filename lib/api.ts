@@ -1,10 +1,11 @@
 import axios, { AxiosError } from "axios"
-import { BagInfo, AddedBag, FileMetadata, Offers, UserBag } from "@/types/files";
-import { ApiResponse, BagInfoShort, InitStorageContract, Transaction } from "./types";
+import { AddedBag, FileMetadata, Offers, UnpaidBags } from "@/types/files";
+import { ApiResponse, BagInfoShort, InitStorageContract, TopupBalance, Transaction, UpdateStorageContract } from "./types";
 import { handleError } from "./utils";
 
 // API base URL from env with safe fallback
-const host = (typeof process !== 'undefined' && process.env.PUBLIC_API_BASE) || "https://mytonstorage.org";
+const host = (typeof process !== 'undefined' && process.env.PUBLIC_API_BASE) || "http://localhost:9092";
+// const host = (typeof process !== 'undefined' && process.env.PUBLIC_API_BASE) || "https://mytonstorage.org";
 
 export async function setBagStorageContract(bagId: string, addr: string): Promise<ApiResponse> {
   var error: string | null = null;
@@ -49,7 +50,7 @@ export async function getDeployTransaction(initStorageContract: InitStorageContr
   var data: Transaction | null = null;
 
   try {
-    const response = await axios.post(`${host}/api/v1/providers/init-contract`, initStorageContract, {
+    const response = await axios.post(`${host}/api/v1/contracts/init-contract`, initStorageContract, {
       withCredentials: true
     });
     data = response.data as Transaction;
@@ -63,13 +64,71 @@ export async function getDeployTransaction(initStorageContract: InitStorageContr
   }
 }
 
-export async function getOffers(bagID: string, providers: string[]): Promise<ApiResponse> {
+export async function getUpdateTransaction(updateStorageContract: UpdateStorageContract): Promise<ApiResponse> {
+  var error: string | null = null;
+  var data: Transaction | null = null;
+
+  try {
+    const response = await axios.post(`${host}/api/v1/contracts/update`, updateStorageContract, {
+      withCredentials: true
+    });
+    data = response.data as Transaction;
+  } catch (err: AxiosError | any) {
+    error = handleError(err);
+  }
+
+  return {
+    error: error,
+    data: data
+  }
+}
+
+export async function getTopupBalanceTransaction(tb: TopupBalance): Promise<ApiResponse> {
+  var error: string | null = null;
+  var data: Transaction | null = null;
+
+  try {
+    const response = await axios.post(`${host}/api/v1/contracts/topup`, tb, {
+      withCredentials: true
+    });
+    data = response.data as Transaction;
+  } catch (err: AxiosError | any) {
+    error = handleError(err);
+  }
+
+  return {
+    error: error,
+    data: data
+  }
+}
+
+export async function getWithdrawTransaction(contractAddress: string): Promise<ApiResponse> {
+  var error: string | null = null;
+  var data: Transaction | null = null;
+
+  try {
+    const response = await axios.post(`${host}/api/v1/contracts/withdraw`, { address: contractAddress }, {
+      withCredentials: true
+    });
+    data = response.data as Transaction;
+  } catch (err: AxiosError | any) {
+    error = handleError(err);
+  }
+
+  return {
+    error: error,
+    data: data
+  }
+}
+
+export async function getOffers(providers: string[], bagID?: string, bagSize?: number, ): Promise<ApiResponse> {
   var error: string | null = null;
   var data: Offers | null = null;
 
   try {
     const response = await axios.post(`${host}/api/v1/providers/offers`, {
-      bag_id: bagID,
+      bag_id: bagID || "",
+      bag_size: bagSize || 0,
       providers
     }, {
       withCredentials: true,
@@ -140,13 +199,13 @@ export async function addFile(file: File, metadata: FileMetadata, setProgress: (
 
 export async function getUnpaid(): Promise<ApiResponse> {
   var error: string | null = null;
-  var data: UserBag[] | null = null;
+  var data: UnpaidBags | null = null;
 
   try {
     const response = await axios.post(`${host}/api/v1/files/unpaid`, {}, {
       withCredentials: true
     });
-    data = response.data.bags as UserBag[];
+    data = response.data as UnpaidBags;
   } catch (err: AxiosError | any) {
     error = handleError(err);
   }
@@ -184,25 +243,6 @@ export async function addFolder(files: File[], metadata: FileMetadata, setProgre
       }
     });
     data = response.data as AddedBag;
-  } catch (err: AxiosError | any) {
-    error = handleError(err);
-  }
-
-  return {
-    error: error,
-    data: data
-  }
-}
-
-export async function getFile(bagId: string): Promise<ApiResponse> {
-  var error: string | null = null;
-  var data: BagInfo | null = null;
-
-  try {
-    const response = await axios.get(`${host}/api/v1/files/${bagId}`, {
-      withCredentials: true
-    });
-    data = response.data as BagInfo;
   } catch (err: AxiosError | any) {
     error = handleError(err);
   }

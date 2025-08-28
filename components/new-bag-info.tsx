@@ -1,12 +1,13 @@
 "use client"
 
-import { getFile, removeFile } from "@/lib/api";
+import { getUnpaid, removeFile } from "@/lib/api";
 import { printSpace } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
 import { FileText, Loader, Trash } from "lucide-react";
 import React, { useEffect } from "react"
 import { RenderField } from "./render-field";
-import { BagInfo } from "@/types/files";
+import { CountdownTimer } from "./countdown-timer";
+import { UnpaidBags } from "@/types/files";
 
 // props
 interface NewBagInfoProps {
@@ -16,22 +17,38 @@ interface NewBagInfoProps {
 export default function NewBagInfo({ canCancel }: NewBagInfoProps) {
   const apiBase = (typeof process !== 'undefined' && process.env.PUBLIC_API_BASE) || "https://mytonstorage.org";
   const [isLoading, setIsLoading] = React.useState(false);
-  const { upload, updateWidgetData } = useAppStore()
-  const widgetData = upload.widgetData
+  const { upload, updateWidgetData } = useAppStore();
+  const widgetData = upload.widgetData;
 
   useEffect(() => {
     if (!isLoading && widgetData.newBagID && widgetData.newBagID.length === 64 && !widgetData.bagInfo) {
       (async () => {
         setIsLoading(true);
-        const resp = await getFile(widgetData.newBagID as string);
-        const bagInfo = resp.data as BagInfo;
-        if (bagInfo) {
+        const resp = await getUnpaid();
+        const bagInfo = resp.data as UnpaidBags;
+        if (bagInfo && bagInfo.bags.length > 0) {
           updateWidgetData({
-            bagInfo: bagInfo,
+            bagInfo: bagInfo.bags[0],
+            freeStorage: bagInfo.free_storage,
           })
         } else if (resp.error) {
           console.error("Failed to fetch bag info:", resp.error);
           console.error(resp.error)
+
+          updateWidgetData({
+            selectedFiles: [],
+            newBagID: undefined,
+            newBagInfo: undefined,
+            bagInfo: undefined,
+            description: undefined,
+
+            providersCount: 0,
+            selectedProviders: [],
+            transaction: undefined,
+
+            storageContractAddress: undefined,
+            paymentStatus: undefined
+          });
         }
 
         setIsLoading(false);
@@ -120,7 +137,6 @@ export default function NewBagInfo({ canCancel }: NewBagInfoProps) {
               <div>
                 <RenderField label="Description" value={widgetData.bagInfo.description || '—'} />
               </div>
-
             </div>
 
             <div className="space-y-3">
@@ -137,6 +153,23 @@ export default function NewBagInfo({ canCancel }: NewBagInfoProps) {
           </div>
         </div>
       )}
+
+      {
+        widgetData && widgetData.bagInfo && (
+          <div>
+            <div className="flex mt-4 justify-end">
+              <div className="flex items-center w-64">
+                <span className="text-sm font-medium text-gray-700">Free storage:</span>
+                <div className="mx-2">
+                  <CountdownTimer
+                    expirationTime={widgetData!.bagInfo!.created_at + (widgetData!.freeStorage || 0)}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      }
     </div>
   )
 }

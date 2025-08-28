@@ -1,3 +1,5 @@
+"use client"
+
 import { getUnpaid, removeFile } from "@/lib/api";
 import { UserBag } from "@/types/files";
 import { Ban, X } from "lucide-react";
@@ -11,6 +13,7 @@ export function UnpaidFilesList() {
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [unpaidFiles, setUnpaidFiles] = useState<UserBag[] | null>(null);
+    const [storageTime, setStorageTime] = useState<number | null>(null);
 
     useEffect(() => {
         fetchData();
@@ -26,7 +29,8 @@ export function UnpaidFilesList() {
         if (resp.error) {
             setError(resp.error);
         } else {
-            setUnpaidFiles(resp.data || []);
+            setUnpaidFiles(resp.data.bags || []);
+            setStorageTime(resp.data.free_storage || null);
         }
 
         setIsLoading(false);
@@ -72,7 +76,7 @@ export function UnpaidFilesList() {
     }
 
     return (
-        <div className="mb-4">
+        <div>
             <div className="flex items-center justify-between gap-2 mb-4">
                 <div className="flex items-center">
                     <Ban className="w-5 h-5 text-blue-600" />
@@ -126,7 +130,7 @@ export function UnpaidFilesList() {
                                             </td>
                                             <td>
                                                 <div className="flex items-center">
-                                                    {f.store_until}
+                                                    {storageTime}
                                                 </div>
                                             </td>
                                             <td>

@@ -1,19 +1,21 @@
+"use client"
+
 import React, { useEffect, useState } from 'react'
 import { UploadFile, useAppStore } from '@/store/useAppStore'
-import { UnpaidFilesList } from './unpaid-list'
-import { CircleX, Copy, Info, ReceiptText, SquarePen, Wallet } from 'lucide-react'
-import { ErrorComponent } from '../error';
 import { fetchNewContracts } from '@/lib/ton/transactions';
-import { useTonWallet } from '@tonconnect/ui-react';
+import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
+import { getDescriptions, getTopupBalanceTransaction, getWithdrawTransaction } from '@/lib/api';
+import { BagInfoShort, Transaction } from '@/lib/types';
+import { CircleX, Copy, Info, Wallet, ReceiptText, RefreshCw } from 'lucide-react';
 import { copyToClipboard, printSpace, shortenString } from '@/lib/utils';
-import { getDescriptions } from '@/lib/api';
-import { BagInfoShort } from '@/lib/types';
-import { ContractDetails } from '../contract-details';
-
-const TransactionsCheckLimit = 100;
+import { ContractDetails } from '@/components/contract-details';
+import { TopupDetails } from '@/components/topup-details';
+import { UnpaidFilesList } from './unpaid-list';
+import { ErrorComponent } from '@/components/error';
 
 export function FilesList() {
   const apiBase = (typeof process !== 'undefined' && process.env.PUBLIC_API_BASE) || "https://mytonstorage.org";
+  const [tonConnectUI] = useTonConnectUI();
   const wallet = useTonWallet();
   const [error, setError] = useState<string | null>(null);
   const { files, setFiles, setBlockchain } = useAppStore();
@@ -21,6 +23,9 @@ export function FilesList() {
   const [copiedKey, setCopiedKey] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedContract, setSelectedContract] = useState<string | null>(null);
+  const [selectedTopupContract, setSelectedTopupContract] = useState<string | null>(null);
+  const [loadingWithdrawalAddress, setLoadingWithdrawalAddress] = useState<string | null>(null);
+  const [loadingTopupAddress, setLoadingTopupAddress] = useState<string | null>(null);
 
   useEffect(() => {
     if (wallet?.account.address && !isLoading) {
@@ -36,6 +41,24 @@ export function FilesList() {
   useEffect(() => {
     setLocalFiles(files.list);
   }, [files.list]);
+
+  // Handle Esc key to close modals
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        if (selectedContract !== null) {
+          setSelectedContract(null);
+        } else if (selectedTopupContract !== null) {
+          setSelectedTopupContract(null);
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedContract, selectedTopupContract]);
 
   const fetchData = async () => {
     if (isLoading) {
@@ -78,13 +101,13 @@ export function FilesList() {
 
     const addresses = contracts.map(contract => contract.address).filter(Boolean) as string[];
     if (addresses.length > 0) {
-      await loadBagDescriptions(addresses, newFiles);
+      await loadBagsDescriptions(addresses, newFiles);
     }
 
     setIsLoading(false);
   };
 
-  const loadBagDescriptions = async (addresses: string[], currentFiles: UploadFile[]) => {
+  const loadBagsDescriptions = async (addresses: string[], currentFiles: UploadFile[]) => {
     const desc = await getDescriptions(addresses);
     if (desc.error) {
       setError(desc.error);
@@ -101,6 +124,102 @@ export function FilesList() {
     });
 
     setFiles(updatedFiles);
+  }
+
+  const topupBalance = async (storageContractAddress: string, amount?: number) => {
+    if (!amount) {
+      // Открываем модалку для ввода суммы
+      setSelectedTopupContract(storageContractAddress);
+      return;
+    }
+
+    if (loadingWithdrawalAddress || isLoading) {
+      return;
+    }
+
+    setLoadingTopupAddress(storageContractAddress);
+    setError(null);
+
+    const resp = await getTopupBalanceTransaction({ address: storageContractAddress, amount });
+    if (resp.error) {
+      setLoadingTopupAddress(null);
+      setError(resp.error);
+      return;
+    }
+
+    const tx = resp.data as Transaction;
+
+    const message = {
+      address: tx.address,
+      amount: tx.amount.toString(),
+      stateInit: tx.state_init,
+      payload: tx.body,
+    };
+
+    setLoadingTopupAddress(null);
+    setSelectedTopupContract(null);
+
+    console.log("Sending topup transaction:", message);
+    try {
+      const wResp = await tonConnectUI.sendTransaction({
+        validUntil: Math.floor(Date.now() / 1000) + 60,
+        messages: [message]
+      });
+
+      console.log("Topup transaction response:", wResp);
+    } catch (error) {
+      console.error("Failed to send topup transaction:", error);
+      setError("Failed to send transaction");
+    }
+  }
+
+  const cancelStorage = async (storageContractAddress: string) => {
+    if (loadingWithdrawalAddress || isLoading) {
+      return;
+    }
+
+    setLoadingWithdrawalAddress(storageContractAddress);
+    setError(null);
+    setIsLoading(false);
+
+    const resp = await getWithdrawTransaction(storageContractAddress);
+    if (resp.error) {
+      setLoadingWithdrawalAddress(null);
+      setError(resp.error);
+      return;
+    }
+
+    const tx = resp.data as Transaction;
+
+    const message = {
+      address: tx.address,
+      amount: tx.amount.toString(),
+      stateInit: tx.state_init,
+      payload: tx.body,
+    };
+
+    setLoadingWithdrawalAddress(null);
+
+    console.log("Sending transaction:", message);
+    const wResp = await tonConnectUI.sendTransaction({
+      validUntil: Math.floor(Date.now() / 1000) + 60,
+      messages: [
+        message
+      ]
+    });
+
+    console.log("Transaction response:", wResp);
+
+    if (wResp.boc.length > 0) {
+      let filesCopy: UploadFile[] = [];
+      localFiles.forEach(f => {
+        if (f.contractAddress !== tx.address) {
+          filesCopy.push(f);
+        }
+      });
+
+      setLocalFiles(filesCopy);
+    }
   }
 
   return (
@@ -148,9 +267,30 @@ export function FilesList() {
         </div>
       )}
 
+      {/* Topup modal */}
+      {selectedTopupContract !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto pointer-events-none">
+          <div className="relative bg-white border shadow-2xl rounded-xl mt-4 mb-4 mx-auto max-w-lg w-full pointer-events-auto">
+            <button
+              className="absolute top-4 right-4 z-10 flex items-center justify-center w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors duration-200"
+              onClick={() => setSelectedTopupContract(null)}
+            >
+              <span className="text-gray-600 text-lg font-medium">✕</span>
+            </button>
+
+            <TopupDetails
+              onConfirm={(amount) => topupBalance(selectedTopupContract, amount)}
+              onCancel={() => setSelectedTopupContract(null)}
+              isLoading={loadingTopupAddress === selectedTopupContract}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Unpaid - from backend */}
       <div className="relative z-10">
         <UnpaidFilesList />
+        <br />
       </div>
 
       {/* Paid - from blockchain */}
@@ -179,17 +319,17 @@ export function FilesList() {
                 <tr>
                   <th>
                     <div className="flex items-center">
+                      BagID
+                    </div>
+                  </th>
+                  <th>
+                    <div className="flex items-center">
                       Description
                     </div>
                   </th>
                   <th>
                     <div className="flex items-center">
                       Contract Address
-                    </div>
-                  </th>
-                  <th>
-                    <div className="flex items-center">
-                      BagID
                     </div>
                   </th>
                   <th>
@@ -211,33 +351,6 @@ export function FilesList() {
                 {localFiles.map((f, index) => (
                   <React.Fragment key={f.contractAddress}>
                     <tr key={f.contractAddress} className={`group ${index % 2 ? "" : "bg-gray-50"} transition-colors duration-200`}>
-                      <td>
-                        <div className="flex items-center">
-                          {f.info ? (<span>{f.info.description}</span>) : ("--")}
-                        </div>
-                      </td>
-                      <td>
-                        <div className="flex items-center">
-                          <a
-                            href={`https://tonscan.org/address/${f.contractAddress}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline"
-                            title={f.contractAddress}>
-                            {shortenString(f.contractAddress, 15)}
-                          </a>
-                          <button
-                            onClick={() => copyToClipboard(f.contractAddress, setCopiedKey)}
-                            className={`ml-2 transition-colors duration-200
-                                ${copiedKey === f.contractAddress
-                                ? "text-gray-100 font-extrabold drop-shadow-[0_0_6px_rgba(34,197,94,0.8)]"
-                                : "text-gray-700 hover:text-gray-400"
-                              }`}
-                          >
-                            <Copy className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </td>
                       <td>
                         <div className="flex items-center">
                           {f.info ? (
@@ -262,6 +375,35 @@ export function FilesList() {
                               </button>
                             </div>
                           ) : ("--")}
+                        </div>
+                      </td>
+                      <td>
+                        <div 
+                          className="flex items-center"
+                          title={f.info?.description || ''}>
+                          {f.info ? (<span>{shortenString(f.info.description, 35)}</span>) : ("--")}
+                        </div>
+                      </td>
+                      <td>
+                        <div className="flex items-center">
+                          <a
+                            href={`https://tonscan.org/address/${f.contractAddress}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline"
+                            title={f.contractAddress}>
+                            {shortenString(f.contractAddress, 15)}
+                          </a>
+                          <button
+                            onClick={() => copyToClipboard(f.contractAddress, setCopiedKey)}
+                            className={`ml-2 transition-colors duration-200
+                                ${copiedKey === f.contractAddress
+                                ? "text-gray-100 font-extrabold drop-shadow-[0_0_6px_rgba(34,197,94,0.8)]"
+                                : "text-gray-700 hover:text-gray-400"
+                              }`}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </button>
                         </div>
                       </td>
                       <td>
@@ -291,25 +433,32 @@ export function FilesList() {
                           </button>
 
                           <button
-                            onClick={() => { }}
+                            onClick={() => topupBalance(f.contractAddress)}
                             className="p-1 rounded-full text-gray-800 hover:text-gray-500"
                             title='Topup balance'
                           >
                             <Wallet className="h-5 w-5" />
                           </button>
-                          <button
+
+                          {/* <button
                             onClick={() => { }}
                             className="p-1 rounded-full text-gray-800 hover:text-gray-500"
                             title='Edit providers list'
                           >
                             <SquarePen className="h-5 w-5" />
-                          </button>
+                          </button> */}
+
                           <button
-                            onClick={() => { }}
+                            onClick={() => { cancelStorage(f.contractAddress) }}
                             className="p-1 rounded-full"
                             title='Withdraw funds'
+                            disabled={loadingWithdrawalAddress !== null || isLoading}
                           >
-                            <CircleX className="h-5 w-5 text-red-500  hover:text-red-300" />
+                            {
+                              loadingWithdrawalAddress === f.contractAddress ?
+                                <RefreshCw className="h-5 w-5 text-blue-500 animate-spin" /> :
+                                <CircleX className="h-5 w-5 text-red-500  hover:text-red-300" />
+                            }
                           </button>
                         </div>
                       </td>
