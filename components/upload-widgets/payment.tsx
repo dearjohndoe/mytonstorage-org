@@ -22,6 +22,12 @@ export default function Payment() {
             return;
         }
 
+        if (widgetData!.bagInfo!.created_at + widgetData!.freeStorage! < Math.floor(Date.now() / 1000)) {
+            console.log("Bag storage time expired");
+            setError("Storage time expired. Please start over.");
+            return;
+        }
+
         setLoading(true);
 
         const message = {

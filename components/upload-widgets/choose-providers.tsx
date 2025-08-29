@@ -50,6 +50,12 @@ export default function ChooseProviders() {
   }, [providers, offersLoading, isLoading]);
 
   const removeProvider = (pubkey: string) => {
+    if (widgetData!.bagInfo!.created_at + widgetData!.freeStorage! < Math.floor(Date.now() / 1000)) {
+      console.log("Bag storage time expired");
+      setError("Storage time expired. Please start over.");
+      return;
+    }
+
     setProviders((prev) => prev.filter((p) => p.provider.pubkey !== pubkey));
     setWarn(null);
   };
@@ -58,6 +64,12 @@ export default function ChooseProviders() {
     setIsLoading(true);
     setError(null);
     setWarn(null);
+
+    if (widgetData!.bagInfo!.created_at + widgetData!.freeStorage! < Math.floor(Date.now() / 1000)) {
+      console.log("Bag storage time expired");
+      setError("Storage time expired. Please start over.");
+      return;
+    }
 
     var newProviders: Provider[] = [];
 
@@ -83,6 +95,12 @@ export default function ChooseProviders() {
   const loadOffers = async () => {
     setError(null);
     setWarn(null);
+
+    if (widgetData!.bagInfo!.created_at + widgetData!.freeStorage! < Math.floor(Date.now() / 1000)) {
+      console.log("Bag storage time expired");
+      setError("Storage time expired. Please start over.");
+      return;
+    }
 
     if (!widgetData.bagInfo || providers.length === 0) {
       return;
@@ -123,6 +141,12 @@ export default function ChooseProviders() {
   const getDeployTx = async () => {
     setError(null);
     setWarn(null);
+
+    if (widgetData!.bagInfo!.created_at + widgetData!.freeStorage! < Math.floor(Date.now() / 1000)) {
+      console.log("Bag storage time expired");
+      setError("Storage time expired. Please start over.");
+      return;
+    }
 
     if (!initialBalance || !userAddress || !widgetData.newBagID || providers.length === 0) {
       console.error("Missing required data for deployment", initialBalance, userAddress, widgetData.newBagID, providers);
@@ -168,6 +192,12 @@ export default function ChooseProviders() {
       return;
     }
 
+    if (widgetData!.bagInfo!.created_at + widgetData!.freeStorage! < Math.floor(Date.now() / 1000)) {
+      console.log("Bag storage time expired");
+      setError("Storage time expired. Please start over.");
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     setWarn(null);
@@ -203,15 +233,15 @@ export default function ChooseProviders() {
 
         {/* Error message */}
         {!isLoading && error && (
-          <div className="flex flex-col items-center p-4 bg-red-50 rounded-lg">
+          <div className="flex flex-col items-center p-4 bg-red-50 rounded-lg ">
             <p className="text-red-600">{error}</p>
           </div>
         )}
         {
           !error && warn && (
-              <div className="flex flex-col items-center p-4 bg-yellow-50 rounded-lg">
-                <p>{warn}</p>
-              </div>
+            <div className="flex flex-col items-center p-4 bg-yellow-50 rounded-lg">
+              <p>{warn}</p>
+            </div>
           )
         }
 
