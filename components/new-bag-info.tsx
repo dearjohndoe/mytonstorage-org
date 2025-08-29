@@ -17,7 +17,7 @@ interface NewBagInfoProps {
 export default function NewBagInfo({ canCancel }: NewBagInfoProps) {
   const apiBase = (typeof process !== 'undefined' && process.env.PUBLIC_API_BASE) || "https://mytonstorage.org";
   const [isLoading, setIsLoading] = React.useState(false);
-  const { upload, updateWidgetData } = useAppStore();
+  const { upload, updateWidgetData, resetWidgetData } = useAppStore();
   const widgetData = upload.widgetData;
 
   useEffect(() => {
@@ -35,20 +35,7 @@ export default function NewBagInfo({ canCancel }: NewBagInfoProps) {
           console.error("Failed to fetch bag info:", resp.error);
           console.error(resp.error)
 
-          updateWidgetData({
-            selectedFiles: [],
-            newBagID: undefined,
-            newBagInfo: undefined,
-            bagInfo: undefined,
-            description: undefined,
-
-            providersCount: 0,
-            selectedProviders: [],
-            transaction: undefined,
-
-            storageContractAddress: undefined,
-            paymentStatus: undefined
-          });
+          resetWidgetData();
         }
 
         setIsLoading(false);
@@ -64,20 +51,7 @@ export default function NewBagInfo({ canCancel }: NewBagInfoProps) {
     if (ok) {
       console.log("Storage cancelled successfully");
 
-      updateWidgetData({
-        selectedFiles: [],
-        newBagID: undefined,
-        newBagInfo: undefined,
-        bagInfo: undefined,
-        description: undefined,
-
-        providersCount: 0,
-        selectedProviders: [],
-        transaction: undefined,
-
-        storageContractAddress: undefined,
-        paymentStatus: undefined
-      });
+      resetWidgetData();
     } else if (resp.error) {
       console.error("Failed to cancel storage:", resp.error);
     }
