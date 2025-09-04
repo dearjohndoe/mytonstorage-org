@@ -136,13 +136,11 @@ export default function StorageUpload() {
     const resp = await addFile(file, { description } as FileMetadata, setProgressCallback)
     const addedBag = resp.data as AddedBag
     if (addedBag) {
-      console.info("A")
       updateWidgetData({
         selectedFiles: [{ name: file.name, size: file.size, path: file.webkitRelativePath || null } as FileInfo],
         newBagID: addedBag.bag_id,
       })
     } else if (resp.error) {
-      console.info("B")
       setError(resp.error)
     }
   }
