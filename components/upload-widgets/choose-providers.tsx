@@ -399,6 +399,11 @@ export default function ChooseProviders() {
                   ))}
                 </tbody>
               </table>
+
+              {/* Selected providers count */}
+              <div className="m-4">
+                <p className="text-right text-sm text-gray-600">Providers count: {providers.length}</p>
+              </div>
             </div>
           )}
 

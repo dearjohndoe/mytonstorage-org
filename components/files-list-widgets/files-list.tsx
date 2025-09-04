@@ -318,6 +318,11 @@ export function FilesList() {
               <thead>
                 <tr>
                   <th>
+                    <div className="flex items-center ml-2">
+                      Contract Address
+                    </div>
+                  </th>
+                  <th>
                     <div className="flex items-center">
                       BagID
                     </div>
@@ -325,11 +330,6 @@ export function FilesList() {
                   <th>
                     <div className="flex items-center">
                       Description
-                    </div>
-                  </th>
-                  <th>
-                    <div className="flex items-center">
-                      Contract Address
                     </div>
                   </th>
                   <th>
@@ -351,6 +351,28 @@ export function FilesList() {
                 {localFiles.map((f, index) => (
                   <React.Fragment key={f.contractAddress}>
                     <tr key={f.contractAddress} className={`group ${index % 2 ? "" : "bg-gray-50"} transition-colors duration-200`}>
+                      <td>
+                        <div className="flex items-center ml-2">
+                          <a
+                            href={`https://tonscan.org/address/${f.contractAddress}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline"
+                            title={f.contractAddress}>
+                            {shortenString(f.contractAddress, 15)}
+                          </a>
+                          <button
+                            onClick={() => copyToClipboard(f.contractAddress, setCopiedKey)}
+                            className={`ml-2 transition-colors duration-200
+                                ${copiedKey === f.contractAddress
+                                ? "text-gray-100 font-extrabold drop-shadow-[0_0_6px_rgba(34,197,94,0.8)]"
+                                : "text-gray-700 hover:text-gray-400"
+                              }`}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
                       <td>
                         <div className="flex items-center">
                           {f.info ? (
@@ -374,41 +396,19 @@ export function FilesList() {
                                 <Copy className="h-4 w-4" />
                               </button>
                             </div>
-                          ) : ("--")}
+                          ) : ("")}
                         </div>
                       </td>
                       <td>
                         <div 
                           className="flex items-center"
                           title={f.info?.description || ''}>
-                          {f.info ? (<span>{shortenString(f.info.description, 35)}</span>) : ("--")}
+                          {f.info ? (<span>{shortenString(f.info.description, 35)}</span>) : ("")}
                         </div>
                       </td>
                       <td>
                         <div className="flex items-center">
-                          <a
-                            href={`https://tonscan.org/address/${f.contractAddress}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline"
-                            title={f.contractAddress}>
-                            {shortenString(f.contractAddress, 15)}
-                          </a>
-                          <button
-                            onClick={() => copyToClipboard(f.contractAddress, setCopiedKey)}
-                            className={`ml-2 transition-colors duration-200
-                                ${copiedKey === f.contractAddress
-                                ? "text-gray-100 font-extrabold drop-shadow-[0_0_6px_rgba(34,197,94,0.8)]"
-                                : "text-gray-700 hover:text-gray-400"
-                              }`}
-                          >
-                            <Copy className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="flex items-center">
-                          {f.info ? (<span>{printSpace(f.info.size)}</span>) : ("--")}
+                          {f.info ? (<span>{printSpace(f.info.size)}</span>) : ("")}
                         </div>
                       </td>
                       <td>

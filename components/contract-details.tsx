@@ -72,6 +72,33 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
         setFiles(updatedFiles);
     }, [localContractInfo]);
 
+    const computeNextProofTime = (provider: ProviderInfo) => {
+        if (localContractInfo === null) return <></>;
+
+        if (provider.lastProof === 0 || provider.maxSpan === 0) return <></>;
+
+        const nextProofTimestamp = provider.lastProof + provider.maxSpan;
+        const date = new Date(nextProofTimestamp * 1000).toLocaleString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        const timeLeft = nextProofTimestamp - Math.floor(Date.now() / 1000);
+        const totalSpan = provider.maxSpan;
+        let colorClass = "text-green-600";
+
+        if (timeLeft < 0) {
+            colorClass = "text-red-600"; // expired
+        } else if (timeLeft < totalSpan / 10) {
+            colorClass = "text-yellow-600"; // warning
+        }
+
+        return <span className={colorClass}>{date}</span>;
+    }
+
     const fetchContractInfo = async () => {
         if (isLoadingContractInfo) return;
 
@@ -144,7 +171,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
     const applyProvidersChanges = async () => {
         if (isLoading || !editProviders || editProviders.length === 0) {
             return;
-        }applyProvidersChanges
+        }
 
         setIsLoading(true);
         setError(null);
@@ -231,14 +258,18 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                     </td>
                     <td>
                         <div className="flex items-center">
-                            {provider.provider.lastProof ? new Date(provider.provider.lastProof * 1000).toLocaleString('ru-RU', {
-                                day: '2-digit',
-                                month: '2-digit',
-                                year: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            }) : ""}
+                            {provider.provider.lastProof !== 0
+                                ? (new Date(provider.provider.lastProof * 1000).toLocaleString('ru-RU', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })) : ("")}
                         </div>
+                    </td>
+                    <td>
+                        {computeNextProofTime(provider.provider)}
                     </td>
                     <td>
                         <div className="flex items-center">
@@ -247,7 +278,17 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                     </td>
                     <td>
                         <div className="flex items-center">
-                            {provider.provider.nonce}
+                            <p>...</p>
+                            <button
+                                onClick={() => copyToClipboard(provider.provider.nonce, setCopiedKey)}
+                                className={`ml-2 transition-colors duration-200
+                                                            ${copiedKey === provider.provider.nonce
+                                        ? "text-gray-100 font-extrabold drop-shadow-[0_0_6px_rgba(34,197,94,0.8)]"
+                                        : "text-gray-700 hover:text-gray-400"
+                                    }`}
+                            >
+                                <Copy className="h-4 w-4" />
+                            </button>
                         </div>
                     </td>
                     <td>
@@ -326,14 +367,18 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                         </td>
                         <td>
                             <div className="flex items-center">
-                                {new Date(provider.lastProof * 1000).toLocaleString('ru-RU', {
-                                    day: '2-digit',
-                                    month: '2-digit',
-                                    year: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                })}
+                                {provider.lastProof !== 0
+                                    ? (new Date(provider.lastProof * 1000).toLocaleString('ru-RU', {
+                                        day: '2-digit',
+                                        month: '2-digit',
+                                        year: '2-digit',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })) : ("")}
                             </div>
+                        </td>
+                        <td>
+                            {computeNextProofTime(provider)}
                         </td>
                         <td>
                             <div className="flex items-center">
@@ -342,7 +387,17 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                         </td>
                         <td>
                             <div className="flex items-center">
-                                {provider.nonce}
+                                <p>...</p>
+                                <button
+                                    onClick={() => copyToClipboard(provider.nonce, setCopiedKey)}
+                                    className={`ml-2 transition-colors duration-200
+                                                                ${copiedKey === provider.nonce
+                                            ? "text-gray-100 font-extrabold drop-shadow-[0_0_6px_rgba(34,197,94,0.8)]"
+                                            : "text-gray-700 hover:text-gray-400"
+                                        }`}
+                                >
+                                    <Copy className="h-4 w-4" />
+                                </button>
                             </div>
                         </td>
                         <td>
@@ -458,6 +513,11 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                                         </th>
                                         <th>
                                             <div className="flex items-center">
+                                                Next Proof Time
+                                            </div>
+                                        </th>
+                                        <th>
+                                            <div className="flex items-center">
                                                 Next Proof Byte
                                             </div>
                                         </th>
@@ -519,12 +579,12 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
 
                 <RenderField
                     label="File size"
-                    value={printSpace(Number(localContractInfo.info.fileSize))}
+                    value={printSpace(Number(localContractInfo.info.fileSize), true)}
                 />
 
                 <RenderField
                     label="Chunk size"
-                    value={printSpace(localContractInfo.info.chunkSize)}
+                    value={printSpace(localContractInfo.info.chunkSize, true)}
                 />
 
                 <RenderField
