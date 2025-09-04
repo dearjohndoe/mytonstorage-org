@@ -10,6 +10,7 @@ import { useAppStore } from '@/store/useAppStore'
 import { printSpace, readAllFiles } from "@/lib/utils"
 import { FileInfo } from "@/types/files"
 import { ErrorComponent } from "../error"
+import { FilesUploadList } from "../files-upload-list"
 
 declare module "react" {
   interface InputHTMLAttributes<T> extends React.AriaAttributes, React.DOMAttributes<T> {
@@ -17,6 +18,8 @@ declare module "react" {
     mozdirectory?: string;
   }
 }
+
+const maxFileSize = 4 * 1024 * 1024 * 1024;
 
 export default function StorageUpload() {
   const [isDragging, setIsDragging] = useState(false)
@@ -64,7 +67,7 @@ export default function StorageUpload() {
       }
 
       for (const file of allFiles) {
-        const validationError = validateFile(file);
+        const validationError = validateSize(file.size);
         if (validationError) {
           setError(validationError);
           return;
@@ -78,14 +81,13 @@ export default function StorageUpload() {
     }
   }
 
-  const validateFile = (file: File): string | null => {
-    const maxSize = 10 * 1024 * 1024 * 1024; // 10GB
-    if (file.size > maxSize) {
-      return `File "${file.name}" is too large. Maximum size is 10GB.`;
+  const validateSize = (size: number): string | null => {
+    if (size > maxFileSize) {
+      return `File is too large. Maximum size is 4GB.`;
     }
 
-    if (file.size === 0) {
-      return `File "${file.name}" is empty.`;
+    if (size === 0) {
+      return `File is empty.`;
     }
 
     return null;
@@ -94,23 +96,21 @@ export default function StorageUpload() {
   const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setError(null)
 
-    const files = Array.from(e.target.files || [])
-    if (files.length > 1) {
-      setError("Only one file or folder can be uploaded at a time.")
+    const newFiles = Array.from(e.target.files || [])
+    if (newFiles.length === 0) {
       return
     }
 
-    if (files.length === 0) {
-      return
+    for (const file of newFiles) {
+      const validationError = validateSize(file.size);
+      if (validationError) {
+        setError(validationError);
+        return;
+      }
     }
 
-    const validationError = validateFile(files[0]);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-
-    setFiles(files)
+    // Add files
+    setFiles(prevFiles => [...prevFiles, ...newFiles])
   }
 
   const sendFiles = async () => {
@@ -122,11 +122,17 @@ export default function StorageUpload() {
       await sendFolder(files, description, setProgress)
     }
 
-    setIsLoading(false) 
+    setIsLoading(false)
     setProgress(0)
   }
 
   const sendFile = async (file: File, description: string, setProgressCallback: (progress: number) => void) => {
+    const validationError = validateSize(file.size);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
     const resp = await addFile(file, { description } as FileMetadata, setProgressCallback)
     const addedBag = resp.data as AddedBag
     if (addedBag) {
@@ -142,6 +148,13 @@ export default function StorageUpload() {
   }
 
   const sendFolder = async (files: File[], description: string, setProgressCallback: (progress: number) => void) => {
+    const totalSize = files.reduce((acc, file) => acc + file.size, 0)
+    const validationError = validateSize(totalSize);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
     const resp = await addFolder(files, { description } as FileMetadata, setProgressCallback)
     const addedBag = resp.data as AddedBag
     if (addedBag) {
@@ -157,21 +170,26 @@ export default function StorageUpload() {
   const handleFolderInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setError(null)
 
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) {
+    const newFiles = Array.from(e.target.files || []);
+    if (newFiles.length === 0) {
       setError("No files found.");
       return;
     }
 
-    for (const file of files) {
-      const validationError = validateFile(file);
+    for (const file of newFiles) {
+      const validationError = validateSize(file.size);
       if (validationError) {
         setError(validationError);
         return;
       }
     }
 
-    setFiles(files)
+    setFiles(newFiles)
+  }
+
+  const removeFile = (index: number) => {
+    const newFiles = files.filter((_, i) => i !== index)
+    setFiles(newFiles)
   }
 
   const TextField = ({ label, name }: { label: string, name: string }) => {
@@ -193,16 +211,16 @@ export default function StorageUpload() {
     <div>
       <ErrorComponent error={error} />
 
-      <div className="grid grid-flow-col justify-stretch">
+      <div className="flex gap-4 items-stretch">
         {/* Drop area */}
         <div
-          className={`w-full relative overflow-hidden m-0 border-2 border-dashed rounded-lg mt-8 flex flex-col items-center justify-center ${isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300"
+          className={`w-2/3 relative overflow-hidden m-0 border-2 border-dashed rounded-lg mt-8 flex flex-col items-center justify-center ${isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300"
             }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
-          <div className="m-10">
+          <div className="py-10 px-6 w-full">
             {isLoading ? (
               <div className="flex flex-col items-center">
                 <Loader className="animate-spin h-8 w-8 text-blue-500 mb-4" />
@@ -211,23 +229,12 @@ export default function StorageUpload() {
             ) : (
               <>
                 {files.length > 0 ? (
-                  <div className="text-center">
-                    {
-                      files.length > 1 ? (
-                        <>
-                          <h3 className="text-lg font-medium mb-2">Selected Files</h3>
-                          <p className="text-sm text-gray-500 mb-2">Total files: {files.length} ({printSpace(files.reduce((acc, file) => acc + file.size, 0))})</p>
-                        </>
-                      ) : (
-                        <>
-                          <h3 className="text-lg font-medium mb-2">Selected File</h3>
-                        </>
-                      )}
-                    <ul className="text-left text-sm text-gray-700">
-                      {files.map((file, index) => (
-                        <li key={index}>{file.webkitRelativePath || file.name} ({printSpace(file.size)})</li>
-                      ))}
-                    </ul>
+                  <div className="w-full">
+                    <FilesUploadList
+                      files={files}
+                      onRemoveFile={removeFile}
+                      className="border-none p-0"
+                    />
                   </div>
                 ) : (
                   <div className="text-center">
@@ -236,38 +243,42 @@ export default function StorageUpload() {
                   </div>
                 )}
 
-                <div className="flex gap-4">
-                  <button
-                    className="btn text-md flex items-center gap-2 border rounded px-4 py-2 m-4 hover:bg-gray-100"
-                    onClick={() => document.getElementById("fileInput")?.click()}
-                  >
-                    <Upload className="h-4 w-4" />
-                    {
-                      files.length > 0 ? "Select Another File" : "Select File"
-                    }
-                    <input
-                      type="file"
-                      id="fileInput"
-                      className="hidden"
-                      onChange={handleFileInputChange}
-                    />
-                  </button>
-                  <button
-                    className="btn text-md flex items-center gap-2 border rounded px-4 py-2 m-4 hover:bg-gray-100"
-                    onClick={() => document.getElementById("folderInput")?.click()}
-                  >
-                    <FolderUp className="h-4 w-4" />
-                    {
-                      files.length > 0 ? "Select Another Folder" : "Select Folder"
-                    }
-                    <input
-                      type="file"
-                      id="folderInput"
-                      className="hidden"
-                      {...({ webkitdirectory: "true", mozdirectory: "true" } as any)}
-                      onChange={handleFolderInputChange}
-                    />
-                  </button>
+                <div>
+                  <div className="flex justify-center">
+                    <button
+                      className="btn text-md flex items-center gap-2 border rounded px-4 py-2 m-4 hover:bg-gray-100"
+                      onClick={() => document.getElementById("fileInput")?.click()}
+                    >
+                      <Upload className="h-4 w-4" />
+                      Add File(s)
+                      <input
+                        type="file"
+                        id="fileInput"
+                        className="hidden"
+                        multiple
+                        onChange={handleFileInputChange}
+                      />
+                    </button>
+                    <button
+                      className="btn text-md flex items-center gap-2 border rounded px-4 py-2 m-4 hover:bg-gray-100"
+                      onClick={() => document.getElementById("folderInput")?.click()}
+                    >
+                      <FolderUp className="h-4 w-4" />
+                      Select Folder
+                      <input
+                        type="file"
+                        id="folderInput"
+                        className="hidden"
+                        {...({ webkitdirectory: "true", mozdirectory: "true" } as any)}
+                        onChange={handleFolderInputChange}
+                      />
+                    </button>
+                  </div>
+                  {
+                    !files || files.length === 0 && (
+                      <p className="text-center text-xs text-gray-400">Max file size: {printSpace(maxFileSize)}</p>
+                    )
+                  }
                 </div>
               </>
             )}
@@ -292,12 +303,11 @@ export default function StorageUpload() {
         </div>
 
         {/* Configure file details */}
-
-        {files.length > 0 && (
-          <div className="m-8 p-2 flex flex-col h-full">
-            <h3 className="text-lg font-medium mb-2">Details</h3>
+        <div className="w-1/3 mt-8 ml-4 p-4 flex flex-col border border-gray-200 rounded-lg bg-gray-50">
+          <h3 className="text-lg font-medium mb-4">Details</h3>
+          <div className="flex-1 flex flex-col">
             <TextField label="Add description:" name="description" />
-            <div className="flex justify-end mt-4">
+            <div className="flex justify-end mt-auto pt-4">
               <button
                 className="btn bg-blue-500 text-white px-4 py-2 rounded"
                 onClick={sendFiles}
@@ -305,7 +315,7 @@ export default function StorageUpload() {
               >Upload</button>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   )
