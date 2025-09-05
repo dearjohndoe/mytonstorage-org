@@ -37,13 +37,104 @@ export default function ChooseProviders() {
   const [hasDeclines, setHasDeclines] = React.useState<boolean>(false);
   const [canContinue, setCanContinue] = React.useState<boolean>(false);
 
+  const [allProviders, setAllProviders] = React.useState<Provider[]>([]);
+  const [locationFilter, setLocationFilter] = React.useState<boolean>(true);
+  const [sortingFilter, setSortingFilter] = React.useState<boolean>(true);
+  const [randomFilter, setRandomFilter] = React.useState<boolean>(true);
+
   useEffect(() => {
     loadProviders();
   }, [widgetData.bagInfo]);
 
   useEffect(() => {
+    if (allProviders.length > 0) {
+      applyFilters();
+    }
+  }, [allProviders, locationFilter, sortingFilter, randomFilter, selectedProvidersCount]);
+
+  const handleLocationFilterChange = (value: boolean) => {
+    setLocationFilter(value);
+    setRandomFilter(false);
+  };
+
+  const handleSortingFilterChange = (value: boolean) => {
+    setSortingFilter(value);
+    setRandomFilter(false);
+  };
+
+  const applyFilters = () => {
+    const filteredProviders = filterAndSortProviders(allProviders, selectedProvidersCount);
+    setProviders(filteredProviders.map(provider => ({
+      provider,
+      offer: null,
+      decline: null
+    } as ProviderInfo)));
+  };
+
+  useEffect(() => {
     updateMinPrice();
   }, [providers]);
+
+  const filterAndSortProviders = (providersToFilter: Provider[], count: number): Provider[] => {
+    let filteredProviders = [...providersToFilter];
+
+    if (randomFilter === false) {
+      // Filtering by location/city
+      if (locationFilter === true) {
+        const countriesMap = new Map<string, Provider[]>();
+        filteredProviders.forEach(provider => {
+          const country = provider.location?.country || 'Unknown';
+          if (!countriesMap.has(country)) {
+            countriesMap.set(country, []);
+          }
+          countriesMap.get(country)!.push(provider);
+        });
+
+        filteredProviders = [];
+        for (const countryProviders of countriesMap.values()) {
+          const bestProvider = countryProviders.sort((a, b) => {
+            if (sortingFilter === true) {
+              return (b.rating || 0) - (a.rating || 0);
+            }
+
+            return (b.price || 0) - (a.price || 0);
+          })[0];
+          filteredProviders.push(bestProvider);
+        }
+      } else if (locationFilter === false) {
+        const citiesMap = new Map<string, Provider[]>();
+        filteredProviders.forEach(provider => {
+          const city = provider.location?.city || provider.location?.country || 'Unknown';
+          if (!citiesMap.has(city)) {
+            citiesMap.set(city, []);
+          }
+          citiesMap.get(city)!.push(provider);
+        });
+
+        filteredProviders = [];
+        for (const cityProviders of citiesMap.values()) {
+          const bestProvider = cityProviders.sort((a, b) => {
+            if (sortingFilter === true) {
+              return (b.rating || 0) - (a.rating || 0);
+            }
+
+            return (b.price || 0) - (a.price || 0);
+          })[0];
+          filteredProviders.push(bestProvider);
+        }
+      }
+
+      // Sorting by rating/price
+      if (sortingFilter === true) {
+        filteredProviders.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      } else {
+        filteredProviders.sort((a, b) => (a.price || 0) - (b.price || 0));
+      }
+    }
+
+    // If random
+    return shuffleProviders(filteredProviders, count);
+  };
 
   useEffect(() => {
     const hasDeclinesUpdate = providers.some(p => p.decline != null && p.decline !== undefined);
@@ -224,6 +315,12 @@ export default function ChooseProviders() {
     }
   }
 
+  useEffect(() => {
+    if (!isLoading) {
+      loadProviders();
+    }
+  }, [locationFilter, sortingFilter, randomFilter, selectedProvidersCount]);
+
   const loadProviders = async () => {
     if (isLoading) {
       return;
@@ -243,12 +340,7 @@ export default function ChooseProviders() {
     const prv = resp.data as Providers;
     if (prv) {
       console.info("Loaded providers:", prv);
-      const shuffledProviders = shuffleProviders(prv.providers, selectedProvidersCount)
-      setProviders(shuffledProviders.map(provider => ({
-        provider,
-        offer: null,
-        decline: null
-      } as ProviderInfo)));
+      setAllProviders(prv.providers);
     } else if (resp && resp.error) {
       console.error("Failed to load providers:", resp.error);
       setError(resp.error);
@@ -308,27 +400,26 @@ export default function ChooseProviders() {
           <div className="flex flex-wrap items-center justify-center items-end gap-16">
             <ThreeStateField
               label=""
-              name="hasLocation"
               states={["From different Countries", "From different Cities", "Any Location"]}
-              colors={["bg-green-200", "bg-blue-200", "bg-gray-200"]}
-              value={null}
-              onChange={(name, value) => { }}
+              colors={["bg-green-300", "bg-blue-300", "bg-gray-200"]}
+              value={locationFilter}
+              disabled={randomFilter}
+              onChange={handleLocationFilterChange}
             />
             <ThreeStateField
               label=""
-              name="hasRating"
               states={["Sort by Rating", "Sort by Price", "No Sorting"]}
-              colors={["bg-green-200", "bg-blue-200", "bg-gray-200"]}
-              value={false}
-              onChange={(name, value) => { }}
+              colors={["bg-green-300", "bg-blue-300", "bg-gray-200"]}
+              value={sortingFilter}
+              disabled={randomFilter}
+              onChange={handleSortingFilterChange}
             />
             <TwoStateField
               label=""
-              name="hasLocation"
-              states={["Random", "None"]}
-              colors={["bg-green-200", "bg-blue-200"]}
-              value={true}
-              onChange={(name, value) => { }}
+              states={["Random", "Deterministic"]}
+              colors={["bg-yellow-300", "bg-gray-200"]}
+              value={randomFilter}
+              onChange={setRandomFilter}
             />
           </div>
         </div>

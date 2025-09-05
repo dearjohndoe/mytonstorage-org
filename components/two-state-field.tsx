@@ -1,15 +1,14 @@
 import React from "react"
 
 interface TwoStateFieldProps {
-  label: string
-  name: string
+  label: string 
   states: string[]
   colors: string[]
   value: boolean
-  onChange: (name: string, value: boolean) => void
+  onChange: (value: boolean) => void
 }
 
-export function TwoStateField({ label, name, states, colors, value, onChange }: TwoStateFieldProps) {
+export function TwoStateField({ label, states, colors, value, onChange }: TwoStateFieldProps) {
   if (states.length != 2 || colors.length != 2) {
     throw new Error("Invalid states array");
   }
@@ -24,7 +23,7 @@ export function TwoStateField({ label, name, states, colors, value, onChange }: 
       <button
         type="button"
         className={`px-3 py-1 rounded-full text-sm font-medium ${color} text-gray-700`}
-        onClick={() => onChange(name, nextValue)}
+        onClick={() => onChange(nextValue)}
       >
         {display}
       </button>
