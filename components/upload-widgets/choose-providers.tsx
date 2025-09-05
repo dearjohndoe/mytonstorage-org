@@ -12,6 +12,7 @@ import { getDeployTransaction, getOffers } from "@/lib/api";
 import { InitStorageContract, ProviderAddress, ProviderInfo, Transaction } from "@/lib/types";
 import { Offers, ProviderDecline } from "@/types/files";
 import { useTonAddress } from '@tonconnect/ui-react';
+import HintWithIcon from "../hint";
 
 const defaultInitBalance = 500000000; // 0.5 TON
 const feeMin = 50000000; // 0.05 TON
@@ -326,6 +327,13 @@ export default function ChooseProviders() {
                     <th>
                       <div className="flex items-center">
                         Price per proof
+                        <HintWithIcon text="offered price" maxWidth={18}/>
+                      </div>
+                    </th>
+                    <th>
+                      <div className="flex items-center">
+                        Price
+                        <HintWithIcon text="per 200 GB per 30 days" maxWidth={18}/>
                       </div>
                     </th>
                     <th className="w-10"></th>
@@ -384,6 +392,11 @@ export default function ChooseProviders() {
                             ) : (
                               <span></span>
                             )}
+                          </div>
+                        </td>
+                        <td>
+                          <div className="flex items-center">
+                            {(p.provider.price / 1_000_000_000).toFixed(2)} TON
                           </div>
                         </td>
                         <td>
