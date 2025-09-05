@@ -13,6 +13,8 @@ import { InitStorageContract, ProviderAddress, ProviderInfo, Transaction } from 
 import { Offers, ProviderDecline } from "@/types/files";
 import { useTonAddress } from '@tonconnect/ui-react';
 import HintWithIcon from "../hint";
+import { ThreeStateField } from "../tri-state-field";
+import { TwoStateField } from "../two-state-field";
 
 const defaultInitBalance = 500000000; // 0.5 TON
 const feeMin = 50000000; // 0.05 TON
@@ -298,7 +300,40 @@ export default function ChooseProviders() {
           </button>
         </div>
 
-        <div className="mt-3">
+        {/* Filters */}
+        <div>
+          <p className="text-center text-gray-700 justify-self-start mt-4">
+            Filters:
+          </p>
+          <div className="flex flex-wrap items-center justify-center items-end gap-16">
+            <ThreeStateField
+              label=""
+              name="hasLocation"
+              states={["From different Countries", "From different Cities", "Any Location"]}
+              colors={["bg-green-200", "bg-blue-200", "bg-gray-200"]}
+              value={null}
+              onChange={(name, value) => { }}
+            />
+            <ThreeStateField
+              label=""
+              name="hasRating"
+              states={["Sort by Rating", "Sort by Price", "No Sorting"]}
+              colors={["bg-green-200", "bg-blue-200", "bg-gray-200"]}
+              value={false}
+              onChange={(name, value) => { }}
+            />
+            <TwoStateField
+              label=""
+              name="hasLocation"
+              states={["Random", "None"]}
+              colors={["bg-green-200", "bg-blue-200"]}
+              value={true}
+              onChange={(name, value) => { }}
+            />
+          </div>
+        </div>
+
+        <div className="mt-6">
           {!isLoading && providers.length > 0 && (
             <div className="overflow-x-auto">
               <table className="ton-table overscroll-x-auto">
@@ -327,13 +362,13 @@ export default function ChooseProviders() {
                     <th>
                       <div className="flex items-center">
                         Price per proof
-                        <HintWithIcon text="offered price" maxWidth={18}/>
+                        <HintWithIcon text="offered price" maxWidth={18} />
                       </div>
                     </th>
                     <th>
                       <div className="flex items-center">
                         Price
-                        <HintWithIcon text="per 200 GB per 30 days" maxWidth={18}/>
+                        <HintWithIcon text="per 200 GB per 30 days" maxWidth={18} />
                       </div>
                     </th>
                     <th className="w-10"></th>

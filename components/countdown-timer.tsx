@@ -21,8 +21,8 @@ export function CountdownTimer({ expirationTime, className = '' }: CountdownTime
     );
   }
 
-  const formatTimeUnit = (value: number, unit: string) => {
-    if (value === 0) return null;
+  const formatTimeUnit = (value: number, unit: string, forceShow = false) => {
+    if (value === 0 && !forceShow) return null;
     return `${value} ${unit}${value !== 1 ? 's' : ''}`;
   };
 
@@ -30,7 +30,7 @@ export function CountdownTimer({ expirationTime, className = '' }: CountdownTime
     formatTimeUnit(timeLeft.days, 'day'),
     formatTimeUnit(timeLeft.hours, 'hour'),
     formatTimeUnit(timeLeft.minutes, 'min'),
-    formatTimeUnit(timeLeft.seconds, 'sec'),
+    formatTimeUnit(timeLeft.seconds, 'sec', true), // Всегда показываем секунды
   ].filter(Boolean);
 
   const displayTime = timeUnits.slice(0, 2).join(', ');
