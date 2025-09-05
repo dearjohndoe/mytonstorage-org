@@ -12,6 +12,9 @@ import { getDeployTransaction, getOffers } from "@/lib/api";
 import { InitStorageContract, ProviderAddress, ProviderInfo, Transaction } from "@/lib/types";
 import { Offers, ProviderDecline } from "@/types/files";
 import { useTonAddress } from '@tonconnect/ui-react';
+import HintWithIcon from "../hint";
+import { ThreeStateField } from "../tri-state-field";
+import { TwoStateField } from "../two-state-field";
 
 const defaultInitBalance = 500000000; // 0.5 TON
 const feeMin = 50000000; // 0.05 TON
@@ -34,13 +37,104 @@ export default function ChooseProviders() {
   const [hasDeclines, setHasDeclines] = React.useState<boolean>(false);
   const [canContinue, setCanContinue] = React.useState<boolean>(false);
 
+  const [allProviders, setAllProviders] = React.useState<Provider[]>([]);
+  const [locationFilter, setLocationFilter] = React.useState<boolean>(true);
+  const [sortingFilter, setSortingFilter] = React.useState<boolean>(true);
+  const [randomFilter, setRandomFilter] = React.useState<boolean>(true);
+
   useEffect(() => {
     loadProviders();
   }, [widgetData.bagInfo]);
 
   useEffect(() => {
+    if (allProviders.length > 0) {
+      applyFilters();
+    }
+  }, [allProviders, locationFilter, sortingFilter, randomFilter, selectedProvidersCount]);
+
+  const handleLocationFilterChange = (value: boolean) => {
+    setLocationFilter(value);
+    setRandomFilter(false);
+  };
+
+  const handleSortingFilterChange = (value: boolean) => {
+    setSortingFilter(value);
+    setRandomFilter(false);
+  };
+
+  const applyFilters = () => {
+    const filteredProviders = filterAndSortProviders(allProviders, selectedProvidersCount);
+    setProviders(filteredProviders.map(provider => ({
+      provider,
+      offer: null,
+      decline: null
+    } as ProviderInfo)));
+  };
+
+  useEffect(() => {
     updateMinPrice();
   }, [providers]);
+
+  const filterAndSortProviders = (providersToFilter: Provider[], count: number): Provider[] => {
+    let filteredProviders = [...providersToFilter];
+
+    if (randomFilter === false) {
+      // Filtering by location/city
+      if (locationFilter === true) {
+        const countriesMap = new Map<string, Provider[]>();
+        filteredProviders.forEach(provider => {
+          const country = provider.location?.country || 'Unknown';
+          if (!countriesMap.has(country)) {
+            countriesMap.set(country, []);
+          }
+          countriesMap.get(country)!.push(provider);
+        });
+
+        filteredProviders = [];
+        for (const countryProviders of countriesMap.values()) {
+          const bestProvider = countryProviders.sort((a, b) => {
+            if (sortingFilter === true) {
+              return (b.rating || 0) - (a.rating || 0);
+            }
+
+            return (b.price || 0) - (a.price || 0);
+          })[0];
+          filteredProviders.push(bestProvider);
+        }
+      } else if (locationFilter === false) {
+        const citiesMap = new Map<string, Provider[]>();
+        filteredProviders.forEach(provider => {
+          const city = provider.location?.city || provider.location?.country || 'Unknown';
+          if (!citiesMap.has(city)) {
+            citiesMap.set(city, []);
+          }
+          citiesMap.get(city)!.push(provider);
+        });
+
+        filteredProviders = [];
+        for (const cityProviders of citiesMap.values()) {
+          const bestProvider = cityProviders.sort((a, b) => {
+            if (sortingFilter === true) {
+              return (b.rating || 0) - (a.rating || 0);
+            }
+
+            return (b.price || 0) - (a.price || 0);
+          })[0];
+          filteredProviders.push(bestProvider);
+        }
+      }
+
+      // Sorting by rating/price
+      if (sortingFilter === true) {
+        filteredProviders.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      } else {
+        filteredProviders.sort((a, b) => (a.price || 0) - (b.price || 0));
+      }
+    }
+
+    // If random
+    return shuffleProviders(filteredProviders, count);
+  };
 
   useEffect(() => {
     const hasDeclinesUpdate = providers.some(p => p.decline != null && p.decline !== undefined);
@@ -221,6 +315,12 @@ export default function ChooseProviders() {
     }
   }
 
+  useEffect(() => {
+    if (!isLoading) {
+      loadProviders();
+    }
+  }, [locationFilter, sortingFilter, randomFilter, selectedProvidersCount]);
+
   const loadProviders = async () => {
     if (isLoading) {
       return;
@@ -240,12 +340,7 @@ export default function ChooseProviders() {
     const prv = resp.data as Providers;
     if (prv) {
       console.info("Loaded providers:", prv);
-      const shuffledProviders = shuffleProviders(prv.providers, selectedProvidersCount)
-      setProviders(shuffledProviders.map(provider => ({
-        provider,
-        offer: null,
-        decline: null
-      } as ProviderInfo)));
+      setAllProviders(prv.providers);
     } else if (resp && resp.error) {
       console.error("Failed to load providers:", resp.error);
       setError(resp.error);
@@ -297,7 +392,39 @@ export default function ChooseProviders() {
           </button>
         </div>
 
-        <div className="mt-3">
+        {/* Filters */}
+        <div>
+          <p className="text-center text-gray-700 justify-self-start mt-4">
+            Filters:
+          </p>
+          <div className="flex flex-wrap items-center justify-center items-end gap-16">
+            <ThreeStateField
+              label=""
+              states={["From different Countries", "From different Cities", "Any Location"]}
+              colors={["bg-green-300", "bg-blue-300", "bg-gray-200"]}
+              value={locationFilter}
+              disabled={randomFilter}
+              onChange={handleLocationFilterChange}
+            />
+            <ThreeStateField
+              label=""
+              states={["Sort by Rating", "Sort by Price", "No Sorting"]}
+              colors={["bg-green-300", "bg-blue-300", "bg-gray-200"]}
+              value={sortingFilter}
+              disabled={randomFilter}
+              onChange={handleSortingFilterChange}
+            />
+            <TwoStateField
+              label=""
+              states={["Random", "Deterministic"]}
+              colors={["bg-yellow-300", "bg-gray-200"]}
+              value={randomFilter}
+              onChange={setRandomFilter}
+            />
+          </div>
+        </div>
+
+        <div className="mt-6">
           {!isLoading && providers.length > 0 && (
             <div className="overflow-x-auto">
               <table className="ton-table overscroll-x-auto">
@@ -326,6 +453,13 @@ export default function ChooseProviders() {
                     <th>
                       <div className="flex items-center">
                         Price per proof
+                        <HintWithIcon text="offered price" maxWidth={18} />
+                      </div>
+                    </th>
+                    <th>
+                      <div className="flex items-center">
+                        Price
+                        <HintWithIcon text="per 200 GB per 30 days" maxWidth={18} />
                       </div>
                     </th>
                     <th className="w-10"></th>
@@ -384,6 +518,11 @@ export default function ChooseProviders() {
                             ) : (
                               <span></span>
                             )}
+                          </div>
+                        </td>
+                        <td>
+                          <div className="flex items-center">
+                            {(p.provider.price / 1_000_000_000).toFixed(2)} TON
                           </div>
                         </td>
                         <td>

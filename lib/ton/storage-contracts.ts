@@ -2,7 +2,7 @@ import { ContractInfo, ContractProviders, ProviderInfo, StorageContractFull } fr
 import { Address, TonClient, TupleReader } from "@ton/ton";
 
 const requestCache = new Map<string, Promise<StorageContractFull | Error>>();
-const CACHE_TTL = 30000;
+const CACHE_TTL = 1000 * 60; // 1 minute
 
 export async function fetchStorageContractFullInfo(userAddr: string): Promise<StorageContractFull | Error> {
     const cacheKey = `full-${userAddr}`;
@@ -16,11 +16,13 @@ export async function fetchStorageContractFullInfo(userAddr: string): Promise<St
         try {
             const info = await fetchStorageInfo(userAddr);
             if (info instanceof Error) {
+                requestCache.delete(cacheKey);
                 return info;
             }
 
             const providers = await fetchProviders(userAddr);
             if (providers instanceof Error) {
+                requestCache.delete(cacheKey);
                 return providers;
             }
 
