@@ -129,7 +129,7 @@ export default function NewBagInfo({ canCancel }: NewBagInfoProps) {
       )}
 
       {
-        widgetData && widgetData.bagInfo && (
+        widgetData && widgetData.bagInfo && upload.currentWidget !== 4 && (
           <div>
             <div className="flex mt-4 justify-end">
               <div className="flex items-center w-64">

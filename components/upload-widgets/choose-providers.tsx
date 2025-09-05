@@ -14,6 +14,7 @@ import { Offers, ProviderDecline } from "@/types/files";
 import { useTonAddress } from '@tonconnect/ui-react';
 
 const defaultInitBalance = 500000000; // 0.5 TON
+const feeMin = 50000000; // 0.05 TON
 
 export default function ChooseProviders() {
   const { upload, updateWidgetData } = useAppStore();
@@ -29,14 +30,17 @@ export default function ChooseProviders() {
   const [newProviderPubkey, setNewProviderPubkey] = React.useState("");
   const [copiedKey, setCopiedKey] = React.useState<string | null>(null);
   const [initialBalance, setInitialBalance] = React.useState<number>(defaultInitBalance);
+  const [minInitialBalance, setMinInitialBalance] = React.useState<number>(defaultInitBalance);
   const [hasDeclines, setHasDeclines] = React.useState<boolean>(false);
   const [canContinue, setCanContinue] = React.useState<boolean>(false);
 
   useEffect(() => {
-    if (!isLoading) {
-      loadProviders();
-    }
-  }, []);
+    loadProviders();
+  }, [widgetData.bagInfo]);
+
+  useEffect(() => {
+    updateMinPrice();
+  }, [providers]);
 
   useEffect(() => {
     const hasDeclinesUpdate = providers.some(p => p.decline != null && p.decline !== undefined);
@@ -60,7 +64,25 @@ export default function ChooseProviders() {
     setWarn(null);
   };
 
+  const updateMinPrice = () => {
+    const providersPrice = providers.reduceRight((prev, curr) => {
+      var v = curr.offer?.price_per_proof || 0
+      if (v !== 0) {
+        v += feeMin
+      }
+      return prev + v;
+    }, 0);
+
+    const minBalance = Math.max(providersPrice, defaultInitBalance)
+    setInitialBalance(Math.max(minBalance, initialBalance));
+    setMinInitialBalance(minBalance)
+  }
+
   const addProvider = async (pubkey: string) => {
+    if (isLoading) {
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     setWarn(null);
@@ -71,12 +93,18 @@ export default function ChooseProviders() {
       return;
     }
 
+    if (providers.find(p => p.provider.pubkey === pubkey)) {
+      setWarn("Provider already added.");
+      setIsLoading(false);
+      return;
+    }
+
     var newProviders: Provider[] = [];
 
     const resp = await getProviders([pubkey]);
-    const providers = resp.data as Providers;
-    if (providers) {
-      newProviders = providers.providers;
+    const prs = resp.data as Providers;
+    if (prs) {
+      newProviders = prs.providers;
       if (newProviders.length === 0) {
         setWarn("No providers found with the given pubkey.");
         setIsLoading(false);
@@ -93,6 +121,10 @@ export default function ChooseProviders() {
   }
 
   const loadOffers = async () => {
+    if (isLoading || offersLoading) {
+      return;
+    }
+
     setError(null);
     setWarn(null);
 
@@ -102,13 +134,13 @@ export default function ChooseProviders() {
       return;
     }
 
-    if (!widgetData.bagInfo || providers.length === 0) {
+    if (providers.length === 0) {
       return;
     }
 
     setOffersLoading(true);
 
-    const resp = await getOffers(providers.map(p => p.provider.pubkey), widgetData.bagInfo.bag_id, 0);
+    const resp = await getOffers(providers.map(p => p.provider.pubkey), widgetData!.bagInfo!.bag_id, 0);
     const data = resp.data as Offers;
     if (data) {
       if (data.offers && data.offers.length > 0) {
@@ -139,6 +171,10 @@ export default function ChooseProviders() {
   }
 
   const getDeployTx = async () => {
+    if (isLoading) {
+      return;
+    }
+
     setError(null);
     setWarn(null);
 
@@ -177,8 +213,6 @@ export default function ChooseProviders() {
         console.error("Failed to get deploy transaction:", resp.error);
         setError(resp.error);
       }
-
-
     } catch (error) {
       console.error("Failed to get deploy transaction:", error);
       setError("Failed to get deploy transaction. Please try again later.");
@@ -338,7 +372,7 @@ export default function ChooseProviders() {
                             ) : (p.offer ? (
                               <span className="">{secondsToDays(p.offer.offer_span)} days</span>
                             ) : (
-                              <span className="text-gray-500">—</span>
+                              <span></span>
                             )
                             )}
                           </div>
@@ -348,7 +382,7 @@ export default function ChooseProviders() {
                             {p.offer ? (
                               <span className="">{(p.offer.price_per_proof / 1_000_000_000).toFixed(4)} TON</span>
                             ) : (
-                              <span className="text-gray-500">—</span>
+                              <span></span>
                             )}
                           </div>
                         </td>
@@ -365,6 +399,11 @@ export default function ChooseProviders() {
                   ))}
                 </tbody>
               </table>
+
+              {/* Selected providers count */}
+              <div className="m-4">
+                <p className="text-right text-sm text-gray-600">Providers count: {providers.length}</p>
+              </div>
             </div>
           )}
 
@@ -374,14 +413,17 @@ export default function ChooseProviders() {
               onChange={(value) => setNewProviderPubkey(value)}
               placeholder="Pubkey"
             />
-            <button
-              className="btn text-md flex items-center border rounded px-4 py-2 hover:bg-gray-100 mb-4"
-              onClick={() => addProvider(newProviderPubkey)}
-              disabled={isLoading || !newProviderPubkey}
-            >
-              <PackageOpen className="h-4 w-4 mr-2" />
-              Load info
-            </button>
+            {
+              newProviderPubkey && newProviderPubkey.length === 64 &&
+              <button
+                className="btn text-md flex items-center border rounded px-4 py-2 hover:bg-gray-100 mb-4"
+                onClick={() => addProvider(newProviderPubkey)}
+                disabled={isLoading || !newProviderPubkey}
+              >
+                <PackageOpen className="h-4 w-4 mr-2" />
+                Load info
+              </button>
+            }
           </div>
         </div>
 
@@ -410,7 +452,7 @@ export default function ChooseProviders() {
             <NumberField
               label="Init balance"
               initialValue={initialBalance / 1_000_000_000}
-              min={0.5}
+              min={minInitialBalance / 1_000_000_000}
               max={100}
               offValidator={true}
               onChange={(val) => {
@@ -419,7 +461,7 @@ export default function ChooseProviders() {
             />
           </div>
           <div className="flex justify-center text-sm text-gray-500">
-            <span>The minimum value is 0.5 TON</span>
+            <span>The minimum for 7 days is {minInitialBalance / 1_000_000_000} TON</span>
           </div>
         </div>
 

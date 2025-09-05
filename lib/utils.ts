@@ -2,17 +2,27 @@ import axios from "axios"
 import { Provider } from "@/types/mytonstorage"
 
 
-export const printSpace = (bytes: number | bigint): string => {
+export const printSpace = (bytes: number | bigint, addSource?: boolean): string => {
   const n = typeof bytes === "bigint" ? Number(bytes) : bytes;
   if (n <= 0) return ``
 
   if (n <= 1024) return `${n} bytes`
 
-  if (n <= 1024 * 1024) return `${(n / 1024).toFixed(2)} Kb`
+  var res = ``
+  if (n <= 1024 * 1024) {
+    res = `${(n / 1024).toFixed(2)} Kb`
+  } else if (n <= 1024 * 1024 * 1024) {
+    res = `${(n / 1024 / 1024).toFixed(2)} Mb`
+  } else {
+    res = `${(n / 1024 / 1024 / 1024).toFixed(2)} Gb`
+  }
 
-  if (n <= 1024 * 1024 * 1024) return `${(n / 1024 / 1024).toFixed(2)} Mb`
+  if (addSource) {
+    res += ` (${n} bytes)`
+  }
 
-  return `${(n / 1024 / 1024 / 1024).toFixed(2)} Gb`
+  return res
+
 }
 
 export async function readAllFiles(initialEntries: any[]): Promise<File[]> {
