@@ -3,6 +3,17 @@ export type Providers = {
     providers: Provider[]
 }
 
+export type ContractStatuses = {
+    contracts: ContractStatus[]
+}
+
+export type ContractStatus = {
+    address: string
+    provider_pubkey: string
+    reason: number | null
+    reason_timestamp: number | null
+}
+
 export type Provider = {
     location: Location
     pubkey: string

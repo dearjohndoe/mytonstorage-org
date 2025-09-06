@@ -12,6 +12,9 @@ import { ContractDetails } from '@/components/contract-details';
 import { TopupDetails } from '@/components/topup-details';
 import { UnpaidFilesList } from './unpaid-list';
 import { ErrorComponent } from '@/components/error';
+import HintWithIcon from '../hint';
+import { getProvidersStorageChecks } from '@/lib/thirdparty';
+import { ContractStatus, ContractStatuses } from '@/types/mytonstorage';
 
 export function FilesList() {
   const apiBase = (typeof process !== 'undefined' && process.env.PUBLIC_API_BASE) || "https://mytonstorage.org";
@@ -30,7 +33,14 @@ export function FilesList() {
   useEffect(() => {
     if (wallet?.account.address && !isLoading) {
       // Do not dudos toncenter
-      if (files.blockchain?.lastUpdate != null && files.blockchain.lastUpdate > Date.now() - 5 * 60 * 1000) {
+      var ttl = 5 * 60 * 1000; // 5 minutes
+      if (files.list.length > 0) {
+        const emptyRows = files.list.reduce((prev, curr) => prev + ((curr.info === null || curr.contractChecks.length === 0) ? 1 : 0), 0);
+        if (files.list.length / 2 > emptyRows) {
+          ttl = 60 * 1000; // 1 minute
+        }
+      }
+      if (files.blockchain?.lastUpdate != null && files.blockchain.lastUpdate > Date.now() - ttl) {
         return;
       }
 
@@ -88,6 +98,9 @@ export function FilesList() {
       createdAt: contract.createdAt,
       expiresAt: null,
       info: null,
+      contractChecks: [],
+      contractInfo: null,
+      lastContractUpdate: null,
       status: 'uploaded' as const
     } as UploadFile));
 
@@ -101,17 +114,20 @@ export function FilesList() {
 
     const addresses = contracts.map(contract => contract.address).filter(Boolean) as string[];
     if (addresses.length > 0) {
-      await loadBagsDescriptions(addresses, newFiles);
+      var updatedFiles = await loadBagsDescriptions(addresses, newFiles);
+      updatedFiles = await loadBagsChecks(addresses, updatedFiles);
+
+      setFiles(updatedFiles);
     }
 
     setIsLoading(false);
   };
 
-  const loadBagsDescriptions = async (addresses: string[], currentFiles: UploadFile[]) => {
+  const loadBagsDescriptions = async (addresses: string[], currentFiles: UploadFile[]): Promise<UploadFile[]> => {
     const desc = await getDescriptions(addresses);
     if (desc.error) {
       setError(desc.error);
-      return;
+      return [];
     }
 
     const data = desc.data as BagInfoShort[];
@@ -123,7 +139,27 @@ export function FilesList() {
       };
     });
 
-    setFiles(updatedFiles);
+    return updatedFiles;
+  }
+
+  const loadBagsChecks = async (addresses: string[], currentFiles: UploadFile[]): Promise<UploadFile[]> => {
+    const resp = await getProvidersStorageChecks(addresses);
+    const checks = resp.data as ContractStatuses;
+    if ((resp && resp.error) || !checks || !checks.contracts) {
+      console.error("Failed to load providers:", resp.error);
+      setError(resp.error);
+      return [];
+    }
+
+    const updatedFiles = currentFiles.map(file => {
+      const contractChecks = checks.contracts.filter(d => d.address === file.contractAddress);
+      return {
+        ...file,
+        contractChecks: contractChecks
+      };
+    });
+
+    return updatedFiles;
   }
 
   const topupBalance = async (storageContractAddress: string, amount?: number) => {
@@ -222,6 +258,29 @@ export function FilesList() {
     }
   }
 
+  const buildContractChecksBlock = (checks: ContractStatus[]) => {
+    var valid = (checks || []).filter(c => c.reason === 0).length;
+    var total = (checks || []).length;
+    var color = valid === total ? 'bg-green-100' : valid > total / 2 ? 'bg-yellow-100' : 'bg-red-100';
+
+    if (total === 0) {
+      color = 'bg-gray-100';
+    }
+
+    return (
+
+      <div className="flex items-center justify-center">
+        <div className={`flex rounded-full ${color} w-6 h-6 items-center justify-center text-sm font-mono text-gray-900`}>
+          <span>{valid}</span>
+        </div>
+        <span className='text-gray-500'>&nbsp;/&nbsp;</span>
+        <div className='flex rounded-full bg-gray-100 w-6 h-6 items-center justify-center text-sm font-mono text-gray-900'>
+          <span>{total}</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 relative">
       {/* Details modal */}
@@ -237,7 +296,7 @@ export function FilesList() {
 
             {selectedContract && (
               <div>
-                <div className="text-md text-gray-700 mb-2">
+                <div className="text-gray-700 mb-2">
                   <div className="flex items-center">
                     <span className="text-gray-900 font-semibold">Storage contract info:</span>
                     <a
@@ -303,7 +362,7 @@ export function FilesList() {
 
       {error && <ErrorComponent error={error} />}
 
-      {/* Список файлов */}
+      {/* Files list */}
       <div className="grid gap-4">
         {localFiles.length === 0 && (
           <div className="text-gray-500 text-center">
@@ -311,7 +370,6 @@ export function FilesList() {
           </div>
         )}
 
-        {/* Local files list */}
         {localFiles && (
           <div className="overflow-x-auto">
             <table className="ton-table overscroll-x-auto">
@@ -320,11 +378,6 @@ export function FilesList() {
                   <th>
                     <div className="flex items-center ml-2">
                       Contract Address
-                    </div>
-                  </th>
-                  <th>
-                    <div className="flex items-center">
-                      BagID
                     </div>
                   </th>
                   <th>
@@ -339,32 +392,43 @@ export function FilesList() {
                   </th>
                   <th>
                     <div className="flex items-center">
+                      Providers
+                      <HintWithIcon text="confirmed file storage / total checked providers (updated hourly by mytonprovider.org)" maxWidth={45} />
+                    </div>
+                  </th>
+                  <th>
+                    <div className="flex items-center">
+                      BagID
+                    </div>
+                  </th>
+                  <th>
+                    <div className="flex items-center">
                       Created At
                     </div>
                   </th>
-                  <th className="w-10">
+                  <th className="w-8">
                     Actions
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {localFiles.map((f, index) => (
-                  <React.Fragment key={f.contractAddress}>
-                    <tr key={f.contractAddress} className={`group ${index % 2 ? "" : "bg-gray-50"} transition-colors duration-200`}>
+                  <React.Fragment key={`rf-${f.contractAddress}-${Math.random().toString(36).substring(2, 8)}`}>
+                    <tr className={`group ${index % 2 ? "" : "bg-gray-50"} transition-colors duration-200`}>
                       <td>
-                        <div className="flex items-center ml-2">
+                        <div className="flex font-mono items-center ml-2">
                           <a
                             href={`https://tonscan.org/address/${f.contractAddress}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-blue-600 hover:underline"
                             title={f.contractAddress}>
-                            {shortenString(f.contractAddress, 15)}
+                            {shortenString(f.contractAddress, 10)}
                           </a>
                           <button
                             onClick={() => copyToClipboard(f.contractAddress, setCopiedKey)}
                             className={`ml-2 transition-colors duration-200
-                                ${copiedKey === f.contractAddress
+                          ${copiedKey === f.contractAddress
                                 ? "text-gray-100 font-extrabold drop-shadow-[0_0_6px_rgba(34,197,94,0.8)]"
                                 : "text-gray-700 hover:text-gray-400"
                               }`}
@@ -374,33 +438,7 @@ export function FilesList() {
                         </div>
                       </td>
                       <td>
-                        <div className="flex items-center">
-                          {f.info ? (
-                            <div>
-                              <a
-                                href={`${apiBase}/api/v1/gateway/${f.info.bag_id.toUpperCase()}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:underline"
-                                title={f.info.bag_id.toUpperCase()}>
-                                {shortenString(f.info.bag_id.toUpperCase(), 15)}
-                              </a>
-                              <button
-                                onClick={() => copyToClipboard(f.info!.bag_id.toUpperCase(), setCopiedKey)}
-                                className={`ml-2 transition-colors duration-200
-                                  ${copiedKey === f.info!.bag_id.toUpperCase()
-                                    ? "text-gray-100 font-extrabold drop-shadow-[0_0_6px_rgba(34,197,94,0.8)]"
-                                    : "text-gray-700 hover:text-gray-400"
-                                  }`}
-                              >
-                                <Copy className="h-4 w-4" />
-                              </button>
-                            </div>
-                          ) : ("")}
-                        </div>
-                      </td>
-                      <td>
-                        <div 
+                        <div
                           className="flex items-center"
                           title={f.info?.description || ''}>
                           {f.info ? (<span>{shortenString(f.info.description, 35)}</span>) : ("")}
@@ -409,6 +447,37 @@ export function FilesList() {
                       <td>
                         <div className="flex items-center">
                           {f.info ? (<span>{printSpace(f.info.size)}</span>) : ("")}
+                        </div>
+                      </td>
+                      <td>
+                        {
+                          buildContractChecksBlock(f.contractChecks)
+                        }
+                      </td>
+                      <td>
+                        <div className="flex font-mono items-center">
+                          {f.info ? (
+                            <div>
+                              <a
+                                href={`${apiBase}/api/v1/gateway/${f.info.bag_id.toUpperCase()}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline"
+                                title={f.info.bag_id.toUpperCase()}>
+                                {shortenString(f.info.bag_id.toUpperCase(), 8)}
+                              </a>
+                              <button
+                                onClick={() => copyToClipboard(f.info!.bag_id.toUpperCase(), setCopiedKey)}
+                                className={`ml-2 transition-colors duration-200
+                            ${copiedKey === f.info!.bag_id.toUpperCase()
+                                    ? "text-gray-100 font-extrabold drop-shadow-[0_0_6px_rgba(34,197,94,0.8)]"
+                                    : "text-gray-700 hover:text-gray-400"
+                                  }`}
+                              >
+                                <Copy className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ) : ("")}
                         </div>
                       </td>
                       <td>
@@ -439,14 +508,6 @@ export function FilesList() {
                           >
                             <Wallet className="h-5 w-5" />
                           </button>
-
-                          {/* <button
-                            onClick={() => { }}
-                            className="p-1 rounded-full text-gray-800 hover:text-gray-500"
-                            title='Edit providers list'
-                          >
-                            <SquarePen className="h-5 w-5" />
-                          </button> */}
 
                           <button
                             onClick={() => { cancelStorage(f.contractAddress) }}

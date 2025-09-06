@@ -1,4 +1,4 @@
-import { Providers } from "@/types/mytonstorage";
+import { ContractStatuses, Providers } from "@/types/mytonstorage";
 import { ApiResponse } from "./types";
 import { handleError } from "./utils";
 import axios from "axios"
@@ -7,7 +7,37 @@ import axios from "axios"
 const mtpoHost = (typeof process !== 'undefined' && process.env.PUBLIC_MTPO_HOST) || "https://mytonprovider.org"
 
 const requestCache = new Map<string, Promise<ApiResponse>>();
-const CACHE_TTL = 1000 * 60 * 60; // 1 hour
+const CACHE_TTL = 1000 * 60 * 30; // 30 minutes
+
+export async function getProvidersStorageChecks(addresses: string[]): Promise<ApiResponse> {
+    const cacheKey = `checks-${JSON.stringify(addresses)}`;
+    
+    if (requestCache.has(cacheKey)) {
+        console.log(`Using cached request for checks with addresses: ${JSON.stringify(addresses)}`);
+        return requestCache.get(cacheKey)!;
+    }
+    
+    const requestPromise = (async () => {
+        try {
+            const result = await fetchProvidersChecks(addresses);
+            
+            // Если есть ошибка, не кешируем результат
+            if (result.error) {
+                requestCache.delete(cacheKey);
+            }
+            
+            return result;
+        } finally {
+            setTimeout(() => {
+                requestCache.delete(cacheKey);
+            }, CACHE_TTL);
+        }
+    })();
+    
+    requestCache.set(cacheKey, requestPromise);
+    
+    return requestPromise;
+}
 
 export async function getProviders(exact?: string[]): Promise<ApiResponse> {
     const cacheKey = `providers-${JSON.stringify(exact || [])}`;
@@ -37,6 +67,24 @@ export async function getProviders(exact?: string[]): Promise<ApiResponse> {
     requestCache.set(cacheKey, requestPromise);
     
     return requestPromise;
+}
+
+async function fetchProvidersChecks(addresses: string[]): Promise<ApiResponse> {
+    var error: string | null = null;
+    var data: ContractStatuses | null = null;
+
+    try {
+        const response = await axios.post(`${mtpoHost}/api/v1/contracts/statuses`, {
+            contracts: addresses
+        }, {
+            headers: { 'Content-Type': 'application/json' },
+        });
+        data = response.data as ContractStatuses;
+    } catch (err) {
+        error = handleError(err);
+    }
+
+    return { error, data };
 }
 
 async function fetchProvidersData(exact?: string[]): Promise<ApiResponse> {
