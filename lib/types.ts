@@ -3,6 +3,7 @@ import { Provider } from "@/types/mytonstorage"
 
 export type ApiResponse = {
   error: string | null
+  status: number | null
   data: any | null
 }
 

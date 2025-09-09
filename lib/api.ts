@@ -8,6 +8,7 @@ const host = (typeof process !== 'undefined' && process.env.PUBLIC_API_BASE) || 
 
 export async function setBagStorageContract(bagId: string, addr: string): Promise<ApiResponse> {
   var error: string | null = null;
+  var status: number | null = null;
   var data: boolean | null = null;
 
   try {
@@ -15,18 +16,24 @@ export async function setBagStorageContract(bagId: string, addr: string): Promis
       withCredentials: true
     });
     data = response.status === 200;
+    status = response.status;
   } catch (err: AxiosError | any) {
     error = handleError(err);
+    if (err.response?.status) {
+      status = err.response.status;
+    }
   }
 
   return {
     error: error,
+    status: status,
     data: data
   }
 }
 
 export async function getDescriptions(addresses: string[]): Promise<ApiResponse> {
   var error: string | null = null;
+  var status: number | null = null;
   var data: BagInfoShort[] | null = null;
 
   try {
@@ -34,18 +41,24 @@ export async function getDescriptions(addresses: string[]): Promise<ApiResponse>
       withCredentials: true
     });
     data = response.data as BagInfoShort[];
+    status = response.status;
   } catch (err: AxiosError | any) {
     error = handleError(err);
+    if (err.response?.status) {
+      status = err.response.status;
+    }
   }
 
   return {
     error: error,
+    status: status,
     data: data
   }
 }
 
 export async function getDeployTransaction(initStorageContract: InitStorageContract): Promise<ApiResponse> {
   var error: string | null = null;
+  var status: number | null = null;
   var data: Transaction | null = null;
 
   try {
@@ -53,18 +66,24 @@ export async function getDeployTransaction(initStorageContract: InitStorageContr
       withCredentials: true
     });
     data = response.data as Transaction;
+    status = response.status;
   } catch (err: AxiosError | any) {
     error = handleError(err);
+    if (err.response?.status) {
+      status = err.response.status;
+    }
   }
 
   return {
     error: error,
+    status: status,
     data: data
   }
 }
 
 export async function getUpdateTransaction(updateStorageContract: UpdateStorageContract): Promise<ApiResponse> {
   var error: string | null = null;
+  var status: number | null = null;
   var data: Transaction | null = null;
 
   try {
@@ -72,18 +91,24 @@ export async function getUpdateTransaction(updateStorageContract: UpdateStorageC
       withCredentials: true
     });
     data = response.data as Transaction;
+    status = response.status;
   } catch (err: AxiosError | any) {
     error = handleError(err);
+    if (err.response?.status) {
+      status = err.response.status;
+    }
   }
 
   return {
     error: error,
+    status: status,
     data: data
   }
 }
 
 export async function getTopupBalanceTransaction(tb: TopupBalance): Promise<ApiResponse> {
   var error: string | null = null;
+  var status: number | null = null;
   var data: Transaction | null = null;
 
   try {
@@ -91,18 +116,24 @@ export async function getTopupBalanceTransaction(tb: TopupBalance): Promise<ApiR
       withCredentials: true
     });
     data = response.data as Transaction;
+    status = response.status;
   } catch (err: AxiosError | any) {
     error = handleError(err);
+    if (err.response?.status) {
+      status = err.response.status;
+    }
   }
 
   return {
     error: error,
+    status: status,
     data: data
   }
 }
 
 export async function getWithdrawTransaction(contractAddress: string): Promise<ApiResponse> {
   var error: string | null = null;
+  var status: number | null = null;
   var data: Transaction | null = null;
 
   try {
@@ -110,18 +141,24 @@ export async function getWithdrawTransaction(contractAddress: string): Promise<A
       withCredentials: true
     });
     data = response.data as Transaction;
+    status = response.status;
   } catch (err: AxiosError | any) {
     error = handleError(err);
+    if (err.response?.status) {
+      status = err.response.status;
+    }
   }
 
   return {
     error: error,
+    status: status,
     data: data
   }
 }
 
 export async function getOffers(providers: string[], bagID?: string, bagSize?: number, ): Promise<ApiResponse> {
   var error: string | null = null;
+  var status: number | null = null;
   var data: Offers | null = null;
 
   try {
@@ -133,18 +170,24 @@ export async function getOffers(providers: string[], bagID?: string, bagSize?: n
       withCredentials: true,
     });
     data = response.data as Offers;
+    status = response.status;
   } catch (err: AxiosError | any) {
     error = handleError(err);
+    if (err.response?.status) {
+      status = err.response.status;
+    }
   }
 
   return {
     error: error,
+    status: status,
     data: data
   }
 }
 
 export async function removeFile(bagId: string): Promise<ApiResponse> {
   var error: string | null = null;
+  var status: number | null = null;
   var data: boolean | null = null;
 
   try {
@@ -152,12 +195,17 @@ export async function removeFile(bagId: string): Promise<ApiResponse> {
       withCredentials: true
     });
     data = response.status === 200;
+    status = response.status;
   } catch (err: AxiosError | any) {
     error = handleError(err);
+    if (err.response?.status) {
+      status = err.response.status;
+    }
   }
 
   return {
     error: error,
+    status: status,
     data: data
   }
 }
@@ -168,6 +216,7 @@ export async function addFile(file: File, metadata: FileMetadata, setProgress: (
   formData.append('description', metadata.description);
   
   var error: string | null = null;
+  var status: number | null = null;
   var data: AddedBag | null = null;
 
   try {
@@ -186,18 +235,24 @@ export async function addFile(file: File, metadata: FileMetadata, setProgress: (
     });
 
     data = response.data as AddedBag
+    status = response.status;
   } catch (err: AxiosError | any) {
     error = handleError(err);
+    if (err.response?.status) {
+      status = err.response.status;
+    }
   }
 
   return {
     error: error,
+    status: status,
     data: data
   }
 }
 
 export async function getUnpaid(): Promise<ApiResponse> {
   var error: string | null = null;
+  var status: number | null = null;
   var data: UnpaidBags | null = null;
 
   try {
@@ -205,12 +260,17 @@ export async function getUnpaid(): Promise<ApiResponse> {
       withCredentials: true
     });
     data = response.data as UnpaidBags;
+    status = response.status;
   } catch (err: AxiosError | any) {
     error = handleError(err);
+    if (err.response?.status) {
+      status = err.response.status;
+    }
   }
 
   return {
     error: error,
+    status: status,
     data: data
   }
 }
@@ -225,6 +285,7 @@ export async function addFolder(files: File[], metadata: FileMetadata, setProgre
   formData.append('description', metadata.description);
 
   var error: string | null = null;
+  var status: number | null = null;
   var data: AddedBag | null = null;
 
   try {
@@ -242,35 +303,47 @@ export async function addFolder(files: File[], metadata: FileMetadata, setProgre
       }
     });
     data = response.data as AddedBag;
+    status = response.status;
   } catch (err: AxiosError | any) {
     error = handleError(err);
+    if (err.response?.status) {
+      status = err.response.status;
+    }
   }
 
   return {
     error: error,
+    status: status,
     data: data
   }
 }
 
 export async function proofPayload(): Promise<ApiResponse> {
   var error: string | null = null;
+  var status: number | null = null;
   var data: string | null = null;
 
   try {
     const response = await axios.get(`${host}/api/v1/ton-proof`);
     data = response.data?.data as string;
+    status = response.status;
   } catch (err: AxiosError | any) {
     error = handleError(err);
+    if (err.response?.status) {
+      status = err.response.status;
+    }
   }
 
   return {
     error: error,
+    status: status,
     data: data
   }
 }
 
 export async function login(address: string, proof: string, walletStateInit: any): Promise<ApiResponse> {
   var error: string | null = null;
+  var status: number | null = null;
   var data: boolean | null = null;
 
   try {
@@ -282,12 +355,17 @@ export async function login(address: string, proof: string, walletStateInit: any
       withCredentials: true
     });
     data = response.status === 200;
+    status = response.status;
   } catch (err: AxiosError | any) {
     error = handleError(err);
+    if (err.response?.status) {
+      status = err.response.status;
+    }
   }
 
   return {
     error: error,
+    status: status,
     data: data
   }
 }

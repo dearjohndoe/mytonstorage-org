@@ -35,7 +35,7 @@ export function FilesList() {
       // Do not dudos toncenter
       var ttl = 5 * 60 * 1000; // 5 minutes
       if (files.list.length > 0) {
-        const emptyRows = files.list.reduce((prev, curr) => prev + ((curr.info === null || curr.contractChecks.length === 0) ? 1 : 0), 0);
+        const emptyRows = files.list.reduce((prev, curr) => prev + ((curr.info === null || (curr.contractChecks || []).length === 0) ? 1 : 0), 0);
         if (files.list.length / 2 > emptyRows) {
           ttl = 60 * 1000; // 1 minute
         }
@@ -92,7 +92,7 @@ export function FilesList() {
       return;
     }
 
-    const newFiles = contracts.map(contract => ({
+    var newFiles = contracts.map(contract => ({
       contractAddress: contract.address,
       txLt: contract.lt.toString(),
       createdAt: contract.createdAt,
@@ -109,22 +109,26 @@ export function FilesList() {
       return lt > max ? lt : max;
     }, BigInt(0));
 
-    setFiles(newFiles);
     setBlockchain(maxLt.toString(), Date.now());
 
     const addresses = contracts.map(contract => contract.address).filter(Boolean) as string[];
     if (addresses.length > 0) {
-      var updatedFiles = await loadBagsDescriptions(addresses, newFiles);
-      updatedFiles = await loadBagsChecks(addresses, updatedFiles);
+      newFiles = await loadBagsDescriptions(addresses, newFiles);
+      newFiles = await loadBagsChecks(addresses, newFiles);
 
-      setFiles(updatedFiles);
     }
-
+    
+    setFiles(newFiles);
     setIsLoading(false);
   };
 
   const loadBagsDescriptions = async (addresses: string[], currentFiles: UploadFile[]): Promise<UploadFile[]> => {
     const desc = await getDescriptions(addresses);
+    if (desc.status === 401) {
+      setError('Unauthorized. Logging out.');
+      tonConnectUI.disconnect();
+      return [];
+    }
     if (desc.error) {
       setError(desc.error);
       return [];
@@ -177,6 +181,12 @@ export function FilesList() {
     setError(null);
 
     const resp = await getTopupBalanceTransaction({ address: storageContractAddress, amount });
+    if (resp.status === 401) {
+      setError('Unauthorized. Logging out.');
+      tonConnectUI.disconnect();
+      setLoadingTopupAddress(null);
+      return;
+    }
     if (resp.error) {
       setLoadingTopupAddress(null);
       setError(resp.error);
@@ -219,6 +229,12 @@ export function FilesList() {
     setIsLoading(false);
 
     const resp = await getWithdrawTransaction(storageContractAddress);
+    if (resp.status === 401) {
+      setError('Unauthorized. Logging out.');
+      tonConnectUI.disconnect();
+      setLoadingWithdrawalAddress(null);
+      return;
+    }
     if (resp.error) {
       setLoadingWithdrawalAddress(null);
       setError(resp.error);
@@ -392,7 +408,7 @@ export function FilesList() {
                   </th>
                   <th>
                     <div className="flex items-center">
-                      Providers
+                      Peers
                       <HintWithIcon text="confirmed file storage / total checked providers (updated hourly by mytonprovider.org)" maxWidth={45} />
                     </div>
                   </th>
@@ -451,7 +467,7 @@ export function FilesList() {
                       </td>
                       <td>
                         {
-                          buildContractChecksBlock(f.contractChecks)
+                          buildContractChecksBlock(f.contractChecks || [])
                         }
                       </td>
                       <td>

@@ -8,6 +8,7 @@ import React, { useEffect } from "react"
 import { RenderField } from "./render-field";
 import { CountdownTimer } from "./countdown-timer";
 import { UnpaidBags } from "@/types/files";
+import { useTonConnectUI } from '@tonconnect/ui-react';
 
 // props
 interface NewBagInfoProps {
@@ -17,6 +18,7 @@ interface NewBagInfoProps {
 export default function NewBagInfo({ canCancel }: NewBagInfoProps) {
   const apiBase = (typeof process !== 'undefined' && process.env.PUBLIC_API_BASE) || "https://mytonstorage.org";
   const [isLoading, setIsLoading] = React.useState(false);
+  const [tonConnectUI] = useTonConnectUI();
   const { upload, updateWidgetData, resetWidgetData } = useAppStore();
   const widgetData = upload.widgetData;
 
@@ -25,6 +27,12 @@ export default function NewBagInfo({ canCancel }: NewBagInfoProps) {
       (async () => {
         setIsLoading(true);
         const resp = await getUnpaid();
+        if (resp.status === 401) {
+          console.error('Unauthorized. Logging out.');
+          tonConnectUI.disconnect();
+          setIsLoading(false);
+          return;
+        }
         const bagInfo = resp.data as UnpaidBags;
         if (bagInfo && bagInfo.bags.length > 0) {
           updateWidgetData({
@@ -47,6 +55,12 @@ export default function NewBagInfo({ canCancel }: NewBagInfoProps) {
     setIsLoading(true);
 
     const resp = await removeFile(widgetData.newBagID as string);
+    if (resp.status === 401) {
+      console.error('Unauthorized. Logging out.');
+      tonConnectUI.disconnect();
+      setIsLoading(false);
+      return;
+    }
     const ok = resp.data === true;
     if (ok) {
       console.log("Storage cancelled successfully");

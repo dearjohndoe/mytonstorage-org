@@ -11,7 +11,7 @@ import { useAppStore } from "@/store/useAppStore";
 import { getDeployTransaction, getOffers } from "@/lib/api";
 import { InitStorageContract, ProviderAddress, ProviderInfo, Transaction } from "@/lib/types";
 import { Offers, ProviderDecline } from "@/types/files";
-import { useTonAddress } from '@tonconnect/ui-react';
+import { useTonAddress, useTonConnectUI } from '@tonconnect/ui-react';
 import HintWithIcon from "../hint";
 import { ThreeStateField } from "../tri-state-field";
 import { TwoStateField } from "../two-state-field";
@@ -23,6 +23,7 @@ export default function ChooseProviders() {
   const { upload, updateWidgetData } = useAppStore();
   const widgetData = upload.widgetData;
   const userAddress = useTonAddress(true);
+  const [tonConnectUI] = useTonConnectUI();
 
   const [isLoading, setIsLoading] = React.useState(false);
   const [offersLoading, setOffersLoading] = React.useState(false);
@@ -235,6 +236,12 @@ export default function ChooseProviders() {
     setOffersLoading(true);
 
     const resp = await getOffers(providers.map(p => p.provider.pubkey), widgetData!.bagInfo!.bag_id, 0);
+    if (resp.status === 401) {
+      setError('Unauthorized. Logging out.');
+      tonConnectUI.disconnect();
+      setOffersLoading(false);
+      return;
+    }
     const data = resp.data as Offers;
     if (data) {
       if (data.offers && data.offers.length > 0) {
@@ -294,6 +301,12 @@ export default function ChooseProviders() {
         owner_address: userAddress,
       } as InitStorageContract;
       const resp = await getDeployTransaction(req);
+      if (resp.status === 401) {
+        setError('Unauthorized. Logging out.');
+        tonConnectUI.disconnect();
+        setIsLoading(false);
+        return;
+      }
       var tx = resp.data as Transaction;
       if (tx) {
         console.log("Got deploy transaction:", tx);

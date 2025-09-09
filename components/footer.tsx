@@ -15,14 +15,18 @@ export default function Footer() {
               <MessageCircle className="h-4 w-4 mr-2" />
               Support EN
             </Link>
-            <Link href="https://github.com/dearjohndoe/mytonprovider-backend" target="_blank" className="flex my-2 items-center text-gray-500 hover:text-gray-900">
+            <Link href="https://github.com/dearjohndoe/mytonstorage-backend" target="_blank" className="flex my-2 items-center text-gray-500 hover:text-gray-900">
               <Github className="h-4 w-4 mr-2" />
               GitHub (backend)
             </Link>
-            <Link href="https://github.com/dearjohndoe/mytonprovider-org" target="_blank" className="flex my-2 items-center text-gray-500 hover:text-gray-900">
+            <Link href="https://github.com/dearjohndoe/mytonstorage-org" target="_blank" className="flex my-2 items-center text-gray-500 hover:text-gray-900">
               <Github className="h-4 w-4 mr-2" />
               GitHub (frontend)
             </Link> 
+            <Link href="https://github.com/dearjohndoe/mytonstorage-gateway" target="_blank" className="flex my-2 items-center text-gray-500 hover:text-gray-900">
+              <Github className="h-4 w-4 mr-2" />
+              GitHub (gateway)
+            </Link>
           </div>
 
           <div className="flex space-x-4 mt-4">

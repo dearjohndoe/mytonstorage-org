@@ -71,6 +71,7 @@ export async function getProviders(exact?: string[]): Promise<ApiResponse> {
 
 async function fetchProvidersChecks(addresses: string[]): Promise<ApiResponse> {
     var error: string | null = null;
+    var status: number | null = null;
     var data: ContractStatuses | null = null;
 
     try {
@@ -80,15 +81,20 @@ async function fetchProvidersChecks(addresses: string[]): Promise<ApiResponse> {
             headers: { 'Content-Type': 'application/json' },
         });
         data = response.data as ContractStatuses;
-    } catch (err) {
+        status = response.status;
+    } catch (err: any) {
         error = handleError(err);
+        if (err.response?.status) {
+            status = err.response.status;
+        }
     }
 
-    return { error, data };
+    return { error, status, data };
 }
 
 async function fetchProvidersData(exact?: string[]): Promise<ApiResponse> {
     var error: string | null = null;
+    var status: number | null = null;
     var data: Providers | null = null;
 
     try {
@@ -107,9 +113,13 @@ async function fetchProvidersData(exact?: string[]): Promise<ApiResponse> {
             headers: { 'Content-Type': 'application/json' },
         });
         data = response.data as Providers;
-    } catch (err) {
+        status = response.status;
+    } catch (err: any) {
         error = handleError(err);
+        if (err.response?.status) {
+            status = err.response.status;
+        }
     }
 
-    return { error, data };
+    return { error, status, data };
 }

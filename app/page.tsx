@@ -27,12 +27,17 @@ function HomeContent() {
       if (w.connectItems?.tonProof && "proof" in w.connectItems.tonProof) {
         try {
           console.log("Attempting to login with TON proof");
-          const ok = await login(
+          const result = await login(
             w.account.address,
             w.connectItems.tonProof.proof,
             w.account.walletStateInit
           );
-          if (ok) {
+          if (result.status === 401) {
+            console.error('Unauthorized. Logging out.');
+            await tonConnectUI.disconnect();
+            return;
+          }
+          if (result.data === true) {
             console.log("Login successful");
           } else {
             console.error("Login failed");
@@ -51,6 +56,11 @@ function HomeContent() {
 
     (async () => {
       const resp = await proofPayload();
+      if (resp.status === 401) {
+        console.error('Unauthorized. Logging out.');
+        tonConnectUI.disconnect();
+        return;
+      }
       const payload = resp.data as string | null;
       if (payload) {
         tonConnectUI.setConnectRequestParameters({

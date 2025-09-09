@@ -11,6 +11,7 @@ import { printSpace, readAllFiles } from "@/lib/utils"
 import { FileInfo } from "@/types/files"
 import { ErrorComponent } from "../error"
 import { FilesUploadList } from "../files-upload-list"
+import { useTonConnectUI } from '@tonconnect/ui-react';
 
 declare module "react" {
   interface InputHTMLAttributes<T> extends React.AriaAttributes, React.DOMAttributes<T> {
@@ -25,9 +26,10 @@ export default function StorageUpload() {
   const [isDragging, setIsDragging] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | React.ReactNode | null>(null)
   const [files, setFiles] = useState<File[]>([])
   const [description, setDescription] = useState<string>("")
+  const [tonConnectUI] = useTonConnectUI();
   const { updateWidgetData } = useAppStore()
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -81,9 +83,21 @@ export default function StorageUpload() {
     }
   }
 
-  const validateSize = (size: number): string | null => {
+  const validateSize = (size: number): string | React.ReactNode | null => {
     if (size > maxFileSize) {
-      return `File is too large. Maximum size is 4GB.`;
+      return (
+        <span>
+          File is too large. For files larger than 4GB use&nbsp;
+          <a 
+            href="https://github.com/xssnick/TON-Torrent" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-800 underline"
+          >
+            TON Torrent
+          </a>
+        </span>
+      );
     }
 
     if (size === 0) {
@@ -134,6 +148,11 @@ export default function StorageUpload() {
     }
 
     const resp = await addFile(file, { description } as FileMetadata, setProgressCallback)
+    if (resp.status === 401) {
+      setError('Unauthorized. Logging out.');
+      tonConnectUI.disconnect();
+      return;
+    }
     const addedBag = resp.data as AddedBag
     if (addedBag) {
       updateWidgetData({
@@ -154,6 +173,11 @@ export default function StorageUpload() {
     }
 
     const resp = await addFolder(files, { description } as FileMetadata, setProgressCallback)
+    if (resp.status === 401) {
+      setError('Unauthorized. Logging out.');
+      tonConnectUI.disconnect();
+      return;
+    }
     const addedBag = resp.data as AddedBag
     if (addedBag) {
       updateWidgetData({

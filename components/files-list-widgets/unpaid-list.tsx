@@ -7,9 +7,11 @@ import { useEffect, useState } from "react";
 import { ErrorComponent } from "../error";
 import React from "react";
 import { useAppStore } from "@/store/useAppStore";
+import { useTonConnectUI } from '@tonconnect/ui-react';
 
 export function UnpaidFilesList() {
     const { updateWidgetData } = useAppStore()
+    const [tonConnectUI] = useTonConnectUI();
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [unpaidFiles, setUnpaidFiles] = useState<UserBag[] | null>(null);
@@ -26,6 +28,12 @@ export function UnpaidFilesList() {
         setIsLoading(true);
 
         const resp = await getUnpaid();
+        if (resp.status === 401) {
+            setError('Unauthorized. Logging out.');
+            tonConnectUI.disconnect();
+            setIsLoading(false);
+            return;
+        }
         if (resp.error) {
             setError(resp.error);
         } else {
@@ -42,8 +50,14 @@ export function UnpaidFilesList() {
         setIsLoading(true);
 
         try {
-            const success = await removeFile(bagid);
-            if (success) {
+            const result = await removeFile(bagid);
+            if (result.status === 401) {
+                setError('Unauthorized. Logging out.');
+                tonConnectUI.disconnect();
+                setIsLoading(false);
+                return;
+            }
+            if (result.data === true) {
                 console.log("Unpaid file removed successfully");
 
                 updateWidgetData({
@@ -61,8 +75,8 @@ export function UnpaidFilesList() {
                     paymentStatus: undefined
                 });
                 fetchData();
-            } else {
-                console.error("Failed to remove unpaid file");
+            } else if (result.error) {
+                console.error("Failed to remove unpaid file:", result.error);
             }
         } catch (error) {
             console.error("Failed to remove unpaid file:", error);
