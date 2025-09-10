@@ -62,3 +62,24 @@ body {
 tbody > tr {
   @apply transition-colors;
 }
+
+/* Mobile utilities */
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+/* Mobile card animations */
+@media (max-width: 768px) {
+  .mobile-card-hover {
+    transform: translateY(0);
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+  }
+  
+  .mobile-card-hover:active {
+    transform: translateY(1px);
+  }
+}

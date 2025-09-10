@@ -25,7 +25,7 @@ export default function RootLayout({
         <div className="flex flex-col min-h-screen">
           <TonConnectProvider>
             <Header />
-            <main className="flex-grow w-full px-2 py-6">{children}</main>
+            <main className="flex-grow w-full px-2 py-4 sm:py-6">{children}</main>
             <Footer />
           </TonConnectProvider>
         </div>

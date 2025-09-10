@@ -19,10 +19,6 @@ export function FilesUploadList({ files, onRemoveFile, className = "" }: FilesUp
     const isFolder = files.some(file => file.webkitRelativePath)
 
     const getFileIcon = (file: File) => {
-        if (file.webkitRelativePath) {
-            return <Folder className="h-4 w-4 text-blue-500" />
-        }
-
         switch (file.type) {
             case "image/png":
             case "image/jpeg":

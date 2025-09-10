@@ -15,6 +15,9 @@ import { useTonAddress, useTonConnectUI } from '@tonconnect/ui-react';
 import HintWithIcon from "../hint";
 import { ThreeStateField } from "../tri-state-field";
 import { TwoStateField } from "../two-state-field";
+import { useIsMobile } from "@/hooks/useIsMobile";
+import { ProvidersListMobile } from "./providers-list-mobile";
+import { ProvidersListDesktop } from "./providers-list-desktop";
 
 const defaultInitBalance = 500000000; // 0.5 TON
 const feeMin = 50000000; // 0.05 TON
@@ -24,6 +27,7 @@ export default function ChooseProviders() {
   const widgetData = upload.widgetData;
   const userAddress = useTonAddress(true);
   const [tonConnectUI] = useTonConnectUI();
+  const isMobile = useIsMobile();
 
   const [isLoading, setIsLoading] = React.useState(false);
   const [offersLoading, setOffersLoading] = React.useState(false);
@@ -387,7 +391,7 @@ export default function ChooseProviders() {
           )
         }
 
-        <div className="flex justify-center items-end gap-4 mt-4">
+        <div className={`flex ${isMobile ? 'flex-col' : 'justify-center items-end'} gap-4 mt-4`}>
           <NumberField
             label="Choose providers count"
             initialValue={selectedProvidersCount}
@@ -396,7 +400,9 @@ export default function ChooseProviders() {
             onChange={setSelectedProvidersCount}
           />
           <button
-            className="btn flex items-center border rounded px-4 py-2 hover:bg-gray-100 mb-4"
+            className={`btn flex items-center border rounded px-4 py-2 hover:bg-gray-100 ${
+              isMobile ? 'mt-2 justify-center' : 'mb-4'
+            }`}
             onClick={loadProviders}
             disabled={isLoading}
           >
@@ -406,11 +412,11 @@ export default function ChooseProviders() {
         </div>
 
         {/* Filters */}
-        <div>
+        <div className={isMobile ? 'mt-6' : ''}>
           <p className="text-center text-gray-700 justify-self-start mt-4">
             Filters:
           </p>
-          <div className="flex flex-wrap items-center justify-center items-end gap-16">
+          <div className={`flex ${isMobile ? 'flex-col space-y-4' : 'flex-wrap items-center justify-center items-end gap-16'}`}>
             <ThreeStateField
               label=""
               states={["From different Countries", "From different Cities", "Any Location"]}
@@ -439,127 +445,33 @@ export default function ChooseProviders() {
 
         <div className="mt-6">
           {!isLoading && providers.length > 0 && (
-            <div className="overflow-x-auto">
-              <table className="ton-table overscroll-x-auto">
-                <thead>
-                  <tr>
-                    <th>
-                      <div className="flex items-center">
-                        Public Key
-                      </div>
-                    </th>
-                    <th>
-                      <div className="flex items-center">
-                        Location
-                      </div>
-                    </th>
-                    <th>
-                      <div className="flex items-center">
-                        Rating
-                      </div>
-                    </th>
-                    <th>
-                      <div className="flex items-center">
-                        Proof every
-                      </div>
-                    </th>
-                    <th>
-                      <div className="flex items-center">
-                        Price per proof
-                        <HintWithIcon text="offered price" maxWidth={18} />
-                      </div>
-                    </th>
-                    <th>
-                      <div className="flex items-center">
-                        Price
-                        <HintWithIcon text="per 200 GB per 30 days" maxWidth={18} />
-                      </div>
-                    </th>
-                    <th className="w-10"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {providers.map((p, index) => (
-                    <React.Fragment key={p.provider.pubkey}>
-                      <tr key={p.provider.pubkey} className={`group ${index % 2 ? "" : "bg-gray-50"} transition-colors duration-200`}>
-                        <td>
-                          <div className="flex items-center">
-                            <span className="font-mono text-sm">{shortenString(p.provider.pubkey, 15)}</span>
-                            <button
-                              onClick={() => copyToClipboard(p.provider.pubkey, setCopiedKey)}
-                              className={`ml-2 transition-colors duration-200
-                                ${copiedKey === p.provider.pubkey
-                                  ? "text-gray-100 font-extrabold drop-shadow-[0_0_6px_rgba(34,197,94,0.8)]"
-                                  : "text-gray-700 hover:text-gray-400"
-                                }`}
-                            >
-                              <Copy className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                        <td>
-                          {p.provider.location ? (
-                            <div className="flex items-center">
-                              <span className="text-sm">{p.provider.location.country}{p.provider.location.city ? `, ${p.provider.location.city}` : ""}</span>
-                            </div>
-                          ) : (
-                            <span className="text-sm text-gray-500">Unknown</span>
-                          )}
-                        </td>
-                        <td>
-                          <div className="flex items-center">
-                            <Star className="h-4 w-4 text-yellow-400 fill-transparent group-hover:fill-yellow-400 transition-all duration-200" />
-                            <span className="ml-2">{p.provider.rating.toFixed(2)}</span>
-                          </div>
-                        </td>
-                        <td>
-                          <div className="flex items-center">
-                            {p.decline ? (
-                              <span className="text-sm text-red-500">{p.decline}</span>
-                            ) : (p.offer ? (
-                              <span className="">{secondsToDays(p.offer.offer_span)} days</span>
-                            ) : (
-                              <span></span>
-                            )
-                            )}
-                          </div>
-                        </td>
-                        <td>
-                          <div className="flex items-center">
-                            {p.offer ? (
-                              <span className="">{(p.offer.price_per_proof / 1_000_000_000).toFixed(4)} TON</span>
-                            ) : (
-                              <span></span>
-                            )}
-                          </div>
-                        </td>
-                        <td>
-                          <div className="flex items-center">
-                            {(p.provider.price / 1_000_000_000).toFixed(2)} TON
-                          </div>
-                        </td>
-                        <td>
-                          <button
-                            onClick={() => removeProvider(p.provider.pubkey)}
-                            className="p-1 rounded-full hover:bg-gray-100"
-                          >
-                            <X className="h-5 w-5 text-red-500" />
-                          </button>
-                        </td>
-                      </tr>
-                    </React.Fragment>
-                  ))}
-                </tbody>
-              </table>
+            <>
+              {isMobile ? (
+                <ProvidersListMobile
+                  providers={providers}
+                  copiedKey={copiedKey}
+                  setCopiedKey={setCopiedKey}
+                  removeProvider={removeProvider}
+                />
+              ) : (
+                <ProvidersListDesktop
+                  providers={providers}
+                  copiedKey={copiedKey}
+                  setCopiedKey={setCopiedKey}
+                  removeProvider={removeProvider}
+                />
+              )}
 
               {/* Selected providers count */}
-              <div className="m-4">
-                <p className="text-right text-sm text-gray-600">Providers count: {providers.length}</p>
+              <div className={`${isMobile ? 'px-1' : 'm-4'}`}>
+                <p className={`text-sm text-gray-600 ${isMobile ? 'text-center mt-4' : 'text-right'}`}>
+                  Providers count: {providers.length}
+                </p>
               </div>
-            </div>
+            </>
           )}
 
-          <div className="flex justify-center items-end gap-4 mt-8">
+          <div className={`flex ${isMobile ? 'flex-col' : 'justify-center items-end'} gap-4 mt-8`}>
             <TextField
               label="Add custom provider"
               onChange={(value) => setNewProviderPubkey(value)}
@@ -568,7 +480,9 @@ export default function ChooseProviders() {
             {
               newProviderPubkey && newProviderPubkey.length === 64 &&
               <button
-                className="btn text-md flex items-center border rounded px-4 py-2 hover:bg-gray-100 mb-4"
+                className={`btn text-md flex items-center border rounded px-4 py-2 hover:bg-gray-100 ${
+                  isMobile ? 'mt-2 justify-center' : 'mb-4'
+                }`}
                 onClick={() => addProvider(newProviderPubkey)}
                 disabled={isLoading || !newProviderPubkey}
               >
@@ -599,8 +513,8 @@ export default function ChooseProviders() {
         </div> */}
 
         {/* Price info */}
-        <div className="m-10">
-          <div className="flex justify-center items-end gap-4 mt-4">
+        <div className={`${isMobile ? 'm-4' : 'm-10'}`}>
+          <div className={`flex ${isMobile ? 'flex-col' : 'justify-center items-end'} gap-4 mt-4`}>
             <NumberField
               label="Init balance"
               initialValue={initialBalance / 1_000_000_000}
@@ -612,7 +526,7 @@ export default function ChooseProviders() {
               }}
             />
           </div>
-          <div className="flex justify-center text-sm text-gray-500">
+          <div className={`flex justify-center text-sm text-gray-500 ${isMobile ? 'mt-2' : ''}`}>
             <span>The minimum for 7 days is {minInitialBalance / 1_000_000_000} TON</span>
           </div>
         </div>

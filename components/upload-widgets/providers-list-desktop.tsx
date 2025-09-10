@@ -1,0 +1,137 @@
+"use client"
+
+import React from 'react'
+import { ProviderInfo } from '@/lib/types'
+import { Copy, Star, X } from 'lucide-react'
+import { copyToClipboard, secondsToDays, shortenString } from '@/lib/utils'
+import HintWithIcon from '../hint'
+
+interface ProvidersListDesktopProps {
+  providers: ProviderInfo[]
+  copiedKey: string | null
+  setCopiedKey: (key: string | null) => void
+  removeProvider: (pubkey: string) => void
+}
+
+export function ProvidersListDesktop({
+  providers,
+  copiedKey,
+  setCopiedKey,
+  removeProvider
+}: ProvidersListDesktopProps) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="ton-table overscroll-x-auto">
+        <thead>
+          <tr>
+            <th>
+              <div className="flex items-center">
+                Public Key
+              </div>
+            </th>
+            <th>
+              <div className="flex items-center">
+                Location
+              </div>
+            </th>
+            <th>
+              <div className="flex items-center">
+                Rating
+              </div>
+            </th>
+            <th>
+              <div className="flex items-center">
+                Proof every
+              </div>
+            </th>
+            <th>
+              <div className="flex items-center">
+                Price per proof
+                <HintWithIcon text="offered price" maxWidth={18} />
+              </div>
+            </th>
+            <th>
+              <div className="flex items-center">
+                Price
+                <HintWithIcon text="per 200 GB per 30 days" maxWidth={18} />
+              </div>
+            </th>
+            <th className="w-10"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {providers.map((p, index) => (
+            <React.Fragment key={p.provider.pubkey}>
+              <tr key={p.provider.pubkey} className={`group ${index % 2 ? "" : "bg-gray-50"} transition-colors duration-200`}>
+                <td>
+                  <div className="flex items-center">
+                    <span className="font-mono text-sm">{shortenString(p.provider.pubkey, 15)}</span>
+                    <button
+                      onClick={() => copyToClipboard(p.provider.pubkey, setCopiedKey)}
+                      className={`ml-2 transition-colors duration-200
+                        ${copiedKey === p.provider.pubkey
+                          ? "text-gray-100 font-extrabold drop-shadow-[0_0_6px_rgba(34,197,94,0.8)]"
+                          : "text-gray-700 hover:text-gray-400"
+                        }`}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </button>
+                  </div>
+                </td>
+                <td>
+                  {p.provider.location ? (
+                    <div className="flex items-center">
+                      <span className="text-sm">{p.provider.location.country}{p.provider.location.city ? `, ${p.provider.location.city}` : ""}</span>
+                    </div>
+                  ) : (
+                    <span className="text-sm text-gray-500">Unknown</span>
+                  )}
+                </td>
+                <td>
+                  <div className="flex items-center">
+                    <Star className="h-4 w-4 text-yellow-400 fill-transparent group-hover:fill-yellow-400 transition-all duration-200" />
+                    <span className="ml-2">{p.provider.rating.toFixed(2)}</span>
+                  </div>
+                </td>
+                <td>
+                  <div className="flex items-center">
+                    {p.decline ? (
+                      <span className="text-sm text-red-500">{p.decline}</span>
+                    ) : (p.offer ? (
+                      <span className="">{secondsToDays(p.offer.offer_span)} days</span>
+                    ) : (
+                      <span></span>
+                    )
+                    )}
+                  </div>
+                </td>
+                <td>
+                  <div className="flex items-center">
+                    {p.offer ? (
+                      <span className="">{(p.offer.price_per_proof / 1_000_000_000).toFixed(4)} TON</span>
+                    ) : (
+                      <span></span>
+                    )}
+                  </div>
+                </td>
+                <td>
+                  <div className="flex items-center">
+                    {(p.provider.price / 1_000_000_000).toFixed(2)} TON
+                  </div>
+                </td>
+                <td>
+                  <button
+                    onClick={() => removeProvider(p.provider.pubkey)}
+                    className="p-1 rounded-full hover:bg-gray-100"
+                  >
+                    <X className="h-5 w-5 text-red-500" />
+                  </button>
+                </td>
+              </tr>
+            </React.Fragment>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}

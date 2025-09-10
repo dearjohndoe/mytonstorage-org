@@ -4,7 +4,8 @@ import { ApiResponse, BagInfoShort, InitStorageContract, TopupBalance, Transacti
 import { handleError } from "./utils";
 
 // API base URL from env with safe fallback
-const host = (typeof process !== 'undefined' && process.env.PUBLIC_API_BASE) || "https://mytonstorage.org";
+const host = (typeof process !== 'undefined' && process.env.PUBLIC_API_BASE) || "http://localhost:9092";
+// const host = (typeof process !== 'undefined' && process.env.PUBLIC_API_BASE) || "https://mytonstorage.org";
 
 export async function setBagStorageContract(bagId: string, addr: string): Promise<ApiResponse> {
   var error: string | null = null;

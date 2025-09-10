@@ -12,6 +12,7 @@ import { FileInfo } from "@/types/files"
 import { ErrorComponent } from "../error"
 import { FilesUploadList } from "../files-upload-list"
 import { useTonConnectUI } from '@tonconnect/ui-react';
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 declare module "react" {
   interface InputHTMLAttributes<T> extends React.AriaAttributes, React.DOMAttributes<T> {
@@ -31,6 +32,7 @@ export default function StorageUpload() {
   const [description, setDescription] = useState<string>("")
   const [tonConnectUI] = useTonConnectUI();
   const { updateWidgetData } = useAppStore()
+  const isMobile = useIsMobile();
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
@@ -224,7 +226,16 @@ export default function StorageUpload() {
     return (
       <div className="flex flex-col gap-1">
         <label className="text-sm text-gray-700" htmlFor={name}>{label}</label>
-        <input type="text" name={name} id={name} value={localValue} onChange={e => setLocalValue(e.target.value)} onBlur={e => setDescription(e.target.value)} className="border rounded px-2 py-1 focus:ring-2 focus:ring-blue-200" />
+        <input 
+          type="text" 
+          name={name} 
+          id={name} 
+          value={localValue} 
+          onChange={e => setLocalValue(e.target.value.slice(0, 100))} 
+          onBlur={e => setDescription(e.target.value.slice(0, 100))} 
+          className="border rounded px-2 py-1 focus:ring-2 focus:ring-blue-200" 
+          maxLength={100} 
+        />
       </div>
     )
   }
@@ -233,10 +244,10 @@ export default function StorageUpload() {
     <div>
       <ErrorComponent error={error} />
 
-      <div className="flex gap-4 items-stretch">
+      <div className={`flex gap-4 items-stretch ${isMobile ? 'flex-col' : ''}`}>
         {/* Drop area */}
         <div
-          className={`w-2/3 relative overflow-hidden m-0 border-2 border-dashed rounded-lg mt-8 flex flex-col items-center justify-center ${isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300"
+          className={`${isMobile ? 'w-full order-2' : 'w-2/3'} relative overflow-hidden m-0 border-2 border-dashed rounded-lg mt-8 flex flex-col items-center justify-center ${isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300"
             }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -266,7 +277,7 @@ export default function StorageUpload() {
                 )}
 
                 <div>
-                  <div className="flex justify-center">
+                  <div className={`flex justify-center ${isMobile ? 'flex-col gap-2' : ''}`}>
                     <button
                       className="btn text-md flex items-center gap-2 border rounded px-4 py-2 m-4 hover:bg-gray-100"
                       onClick={() => document.getElementById("fileInput")?.click()}
@@ -325,11 +336,11 @@ export default function StorageUpload() {
         </div>
 
         {/* Configure file details */}
-        <div className="w-1/3 mt-8 ml-4 p-4 flex flex-col border border-gray-200 rounded-lg bg-gray-50">
+        <div className={`${isMobile ? 'w-full order-1 mb-4' : 'w-1/3 mt-8 ml-4'} p-4 flex flex-col border border-gray-200 rounded-lg bg-gray-50`}>
           <h3 className="text-lg font-medium mb-4">Details</h3>
           <div className="flex-1 flex flex-col">
             <TextField label="Add description:" name="description" />
-            <div className="flex justify-end mt-auto pt-4">
+            <div className={`flex ${isMobile ? 'justify-center' : 'justify-end'} mt-auto pt-4`}>
               <button
                 className="btn bg-blue-500 text-white px-4 py-2 rounded"
                 onClick={sendFiles}

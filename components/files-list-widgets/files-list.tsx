@@ -15,6 +15,9 @@ import { ErrorComponent } from '@/components/error';
 import HintWithIcon from '../hint';
 import { getProvidersStorageChecks } from '@/lib/thirdparty';
 import { ContractStatus, ContractStatuses } from '@/types/mytonstorage';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import { StorageContractsMobile } from './storage-contracts-mobile';
+import { StorageContractsDesktop } from './storage-contracts-desktop';
 
 export function FilesList() {
   const apiBase = (typeof process !== 'undefined' && process.env.PUBLIC_API_BASE) || "https://mytonstorage.org";
@@ -29,20 +32,21 @@ export function FilesList() {
   const [selectedTopupContract, setSelectedTopupContract] = useState<string | null>(null);
   const [loadingWithdrawalAddress, setLoadingWithdrawalAddress] = useState<string | null>(null);
   const [loadingTopupAddress, setLoadingTopupAddress] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (wallet?.account.address && !isLoading) {
       // Do not dudos toncenter
-      var ttl = 5 * 60 * 1000; // 5 minutes
-      if (files.list.length > 0) {
-        const emptyRows = files.list.reduce((prev, curr) => prev + ((curr.info === null || (curr.contractChecks || []).length === 0) ? 1 : 0), 0);
-        if (files.list.length / 2 > emptyRows) {
-          ttl = 60 * 1000; // 1 minute
-        }
-      }
-      if (files.blockchain?.lastUpdate != null && files.blockchain.lastUpdate > Date.now() - ttl) {
-        return;
-      }
+      // var ttl = 5 * 60 * 1000; // 5 minutes
+      // if (files.list.length > 0) {
+      //   const emptyRows = files.list.reduce((prev, curr) => prev + ((curr.info === null || (curr.contractChecks || []).length === 0) ? 1 : 0), 0);
+      //   if (files.list.length / 2 > emptyRows) {
+      //     ttl = 60 * 1000; // 1 minute
+      //   }
+      // }
+      // if (files.blockchain?.lastUpdate != null && files.blockchain.lastUpdate > Date.now() - ttl) {
+      //   return;
+      // }
 
       fetchData();
     }
@@ -117,7 +121,7 @@ export function FilesList() {
       newFiles = await loadBagsChecks(addresses, newFiles);
 
     }
-    
+
     setFiles(newFiles);
     setIsLoading(false);
   };
@@ -277,22 +281,39 @@ export function FilesList() {
   const buildContractChecksBlock = (checks: ContractStatus[]) => {
     var valid = (checks || []).filter(c => c.reason === 0).length;
     var total = (checks || []).length;
-    var color = valid === total ? 'bg-green-100' : valid > total / 2 ? 'bg-yellow-100' : 'bg-red-100';
+
+    // Определяем цвета на основе статуса
+    var validColor, textColor;
 
     if (total === 0) {
-      color = 'bg-gray-100';
+      validColor = 'bg-gray-100';
+      textColor = 'text-gray-600';
+    } else if (valid === total) {
+      validColor = 'bg-green-100 border border-green-200';
+      textColor = 'text-green-700';
+    } else if (valid > total / 2) {
+      validColor = 'bg-yellow-100 border border-yellow-200';
+      textColor = 'text-yellow-700';
+    } else {
+      validColor = 'bg-red-100 border border-red-200';
+      textColor = 'text-red-700';
     }
 
     return (
-
-      <div className="flex items-center justify-center">
-        <div className={`flex rounded-full ${color} w-6 h-6 items-center justify-center text-sm font-mono text-gray-900`}>
-          <span>{valid}</span>
-        </div>
-        <span className='text-gray-500'>&nbsp;/&nbsp;</span>
-        <div className='flex rounded-full bg-gray-100 w-6 h-6 items-center justify-center text-sm font-mono text-gray-900'>
-          <span>{total}</span>
-        </div>
+      <div>
+        {total === 0 ? (
+          <span className="ml-2 text-xs text-gray-400 italic">No peers</span>
+        ) : (
+          <div className="flex items-center">
+            <div className={`flex rounded-lg ${validColor} w-7 h-6 items-center justify-center text-xs font-semibold ${textColor}`}>
+              <span>{valid}</span>
+            </div>
+            <span className='text-gray-400 mx-1 text-xs font-medium'>/</span>
+            <div className='flex rounded-lg bg-gray-100 w-7 h-6 items-center justify-center text-xs font-semibold text-gray-600'>
+              <span>{total}</span>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -301,8 +322,9 @@ export function FilesList() {
     <div className="space-y-4 relative">
       {/* Details modal */}
       {selectedContract !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto pointer-events-none">
-          <div className="relative bg-white border shadow-2xl rounded-xl p-8 mt-4 mb-4 mx-auto max-w-5xl w-full max-h-[100vh] overflow-y-auto pointer-events-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto pointer-events-none">
+          <div className={`relative bg-white border shadow-2xl rounded-xl mt-4 mb-4 mx-auto w-full max-h-[100vh] overflow-y-auto pointer-events-auto ${isMobile ? 'p-4 max-w-none' : 'p-8 max-w-5xl'
+            }`}>
             <button
               className="absolute top-4 right-4 z-10 flex items-center justify-center w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors duration-200"
               onClick={() => setSelectedContract(null)}
@@ -313,25 +335,27 @@ export function FilesList() {
             {selectedContract && (
               <div>
                 <div className="text-gray-700 mb-2">
-                  <div className="flex items-center">
+                  <div className={`flex items-center ${isMobile ? 'flex-col items-start space-y-2' : ''}`}>
                     <span className="text-gray-900 font-semibold">Storage contract info:</span>
-                    <a
-                      href={`https://tonscan.org/address/${selectedContract}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="ml-2 text-blue-600 hover:underline"
-                      title={selectedContract}>
-                      {shortenString(selectedContract, 48)}
-                    </a>
-                    <button
-                      onClick={() => copyToClipboard(selectedContract, setCopiedKey)}
-                      className={`ml-2 transition-colors duration-200
-                          ${copiedKey === selectedContract
-                          ? "text-gray-100 font-extrabold drop-shadow-[0_0_6px_rgba(34,197,94,0.8)]"
-                          : "text-gray-700 hover:text-gray-400"
-                        }`}>
-                      <Copy className="h-4 w-4" />
-                    </button>
+                    <div className={`flex items-center ${isMobile ? '' : 'ml-2'}`}>
+                      <a
+                        href={`https://tonscan.org/address/${selectedContract}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline break-all"
+                        title={selectedContract}>
+                        {shortenString(selectedContract, isMobile ? 24 : 48)}
+                      </a>
+                      <button
+                        onClick={() => copyToClipboard(selectedContract, setCopiedKey)}
+                        className={`ml-2 transition-colors duration-200
+                            ${copiedKey === selectedContract
+                            ? "text-gray-100 font-extrabold drop-shadow-[0_0_6px_rgba(34,197,94,0.8)]"
+                            : "text-gray-700 hover:text-gray-400"
+                          }`}>
+                        <Copy className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                   <br />
                   <ContractDetails contractAddress={selectedContract} />
@@ -344,8 +368,9 @@ export function FilesList() {
 
       {/* Topup modal */}
       {selectedTopupContract !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto pointer-events-none">
-          <div className="relative bg-white border shadow-2xl rounded-xl mt-4 mb-4 mx-auto max-w-lg w-full pointer-events-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto pointer-events-none">
+          <div className={`relative bg-white border shadow-2xl rounded-xl mt-4 mb-4 mx-auto w-full pointer-events-auto ${isMobile ? 'max-w-none' : 'max-w-lg'
+            }`}>
             <button
               className="absolute top-4 right-4 z-10 flex items-center justify-center w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors duration-200"
               onClick={() => setSelectedTopupContract(null)}
@@ -369,10 +394,12 @@ export function FilesList() {
       </div>
 
       {/* Paid - from blockchain */}
-      <div className="flex items-center justify-between gap-2 mb-4">
+      <div className={`flex items-center justify-between gap-2 mb-4 ${isMobile ? 'px-1' : ''}`}>
         <div className="flex items-center">
-          <ReceiptText className="w-5 h-5 text-blue-600" />
-          <h2 className="text-lg pl-2 font-semibold text-gray-900">Storage contracts</h2>
+          <ReceiptText className={`text-blue-600 ${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
+          <h2 className={`pl-2 font-semibold text-gray-900 ${isMobile ? 'text-base' : 'text-lg'}`}>
+            Storage contracts
+          </h2>
         </div>
       </div>
 
@@ -381,170 +408,49 @@ export function FilesList() {
       {/* Files list */}
       <div className="grid gap-4">
         {localFiles.length === 0 && (
-          <div className="text-gray-500 text-center">
-            No storage contracts found.
+          <div className={`text-gray-500 text-center py-8 ${isMobile ? 'px-4' : ''}`}>
+            <div className="text-gray-300 mb-2">
+              <ReceiptText className="w-12 h-12 mx-auto" />
+            </div>
+            <p className={`font-medium ${isMobile ? 'text-sm' : 'text-base'}`}>
+              No storage contracts found
+            </p>
+            <p className={`text-gray-400 ${isMobile ? 'text-xs mt-1' : 'text-sm mt-2'}`}>
+              Upload your first file to get started
+            </p>
           </div>
         )}
 
-        {localFiles && (
-          <div className="overflow-x-auto">
-            <table className="ton-table overscroll-x-auto">
-              <thead>
-                <tr>
-                  <th>
-                    <div className="flex items-center ml-2">
-                      Contract Address
-                    </div>
-                  </th>
-                  <th>
-                    <div className="flex items-center">
-                      Description
-                    </div>
-                  </th>
-                  <th>
-                    <div className="flex items-center">
-                      Size
-                    </div>
-                  </th>
-                  <th>
-                    <div className="flex items-center">
-                      Peers
-                      <HintWithIcon text="confirmed file storage / total checked providers (updated hourly by mytonprovider.org)" maxWidth={45} />
-                    </div>
-                  </th>
-                  <th>
-                    <div className="flex items-center">
-                      BagID
-                    </div>
-                  </th>
-                  <th>
-                    <div className="flex items-center">
-                      Created At
-                    </div>
-                  </th>
-                  <th className="w-8">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {localFiles.map((f, index) => (
-                  <React.Fragment key={`rf-${f.contractAddress}-${Math.random().toString(36).substring(2, 8)}`}>
-                    <tr className={`group ${index % 2 ? "" : "bg-gray-50"} transition-colors duration-200`}>
-                      <td>
-                        <div className="flex font-mono items-center ml-2">
-                          <a
-                            href={`https://tonscan.org/address/${f.contractAddress}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline"
-                            title={f.contractAddress}>
-                            {shortenString(f.contractAddress, 10)}
-                          </a>
-                          <button
-                            onClick={() => copyToClipboard(f.contractAddress, setCopiedKey)}
-                            className={`ml-2 transition-colors duration-200
-                          ${copiedKey === f.contractAddress
-                                ? "text-gray-100 font-extrabold drop-shadow-[0_0_6px_rgba(34,197,94,0.8)]"
-                                : "text-gray-700 hover:text-gray-400"
-                              }`}
-                          >
-                            <Copy className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </td>
-                      <td>
-                        <div
-                          className="flex items-center"
-                          title={f.info?.description || ''}>
-                          {f.info ? (<span>{shortenString(f.info.description, 35)}</span>) : ("")}
-                        </div>
-                      </td>
-                      <td>
-                        <div className="flex items-center">
-                          {f.info ? (<span>{printSpace(f.info.size)}</span>) : ("")}
-                        </div>
-                      </td>
-                      <td>
-                        {
-                          buildContractChecksBlock(f.contractChecks || [])
-                        }
-                      </td>
-                      <td>
-                        <div className="flex font-mono items-center">
-                          {f.info ? (
-                            <div>
-                              <a
-                                href={`${apiBase}/api/v1/gateway/${f.info.bag_id.toUpperCase()}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:underline"
-                                title={f.info.bag_id.toUpperCase()}>
-                                {shortenString(f.info.bag_id.toUpperCase(), 8)}
-                              </a>
-                              <button
-                                onClick={() => copyToClipboard(f.info!.bag_id.toUpperCase(), setCopiedKey)}
-                                className={`ml-2 transition-colors duration-200
-                            ${copiedKey === f.info!.bag_id.toUpperCase()
-                                    ? "text-gray-100 font-extrabold drop-shadow-[0_0_6px_rgba(34,197,94,0.8)]"
-                                    : "text-gray-700 hover:text-gray-400"
-                                  }`}
-                              >
-                                <Copy className="h-4 w-4" />
-                              </button>
-                            </div>
-                          ) : ("")}
-                        </div>
-                      </td>
-                      <td>
-                        <div className="flex items-center">
-                          {new Date(f.createdAt * 1000).toLocaleString('ru-RU', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </div>
-                      </td>
-                      <td>
-                        <div className="flex items-center">
-                          <button
-                            onClick={() => setSelectedContract(f.contractAddress)}
-                            className="p-1 mx-3 rounded-full text-gray-500 hover:text-gray-300"
-                            title='Topup balance'
-                          >
-                            <Info className="h-5 w-5" />
-                          </button>
-
-                          <button
-                            onClick={() => topupBalance(f.contractAddress)}
-                            className="p-1 rounded-full text-gray-800 hover:text-gray-500"
-                            title='Topup balance'
-                          >
-                            <Wallet className="h-5 w-5" />
-                          </button>
-
-                          <button
-                            onClick={() => { cancelStorage(f.contractAddress) }}
-                            className="p-1 rounded-full"
-                            title='Withdraw funds'
-                            disabled={loadingWithdrawalAddress !== null || isLoading}
-                          >
-                            {
-                              loadingWithdrawalAddress === f.contractAddress ?
-                                <RefreshCw className="h-5 w-5 text-blue-500 animate-spin" /> :
-                                <CircleX className="h-5 w-5 text-red-500  hover:text-red-300" />
-                            }
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  </React.Fragment>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        {localFiles.length > 0 && (
+          <>
+            {isMobile ? (
+              <StorageContractsMobile
+                files={localFiles}
+                copiedKey={copiedKey}
+                setCopiedKey={setCopiedKey}
+                onSelectContract={setSelectedContract}
+                onTopupBalance={topupBalance}
+                onCancelStorage={cancelStorage}
+                loadingWithdrawalAddress={loadingWithdrawalAddress}
+                isLoading={isLoading}
+                buildContractChecksBlock={buildContractChecksBlock}
+                apiBase={apiBase}
+              />
+            ) : (
+              <StorageContractsDesktop
+                files={localFiles}
+                copiedKey={copiedKey}
+                setCopiedKey={setCopiedKey}
+                onSelectContract={setSelectedContract}
+                onTopupBalance={topupBalance}
+                onCancelStorage={cancelStorage}
+                loadingWithdrawalAddress={loadingWithdrawalAddress}
+                isLoading={isLoading}
+                buildContractChecksBlock={buildContractChecksBlock}
+                apiBase={apiBase}
+              />
+            )}
+          </>
         )}
       </div>
     </div >
