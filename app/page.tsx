@@ -27,12 +27,17 @@ function HomeContent() {
       if (w.connectItems?.tonProof && "proof" in w.connectItems.tonProof) {
         try {
           console.log("Attempting to login with TON proof");
-          const ok = await login(
+          const result = await login(
             w.account.address,
             w.connectItems.tonProof.proof,
             w.account.walletStateInit
           );
-          if (ok) {
+          if (result.status === 401) {
+            console.error('Unauthorized. Logging out.');
+            await tonConnectUI.disconnect();
+            return;
+          }
+          if (result.data === true) {
             console.log("Login successful");
           } else {
             console.error("Login failed");
@@ -51,6 +56,11 @@ function HomeContent() {
 
     (async () => {
       const resp = await proofPayload();
+      if (resp.status === 401) {
+        console.error('Unauthorized. Logging out.');
+        tonConnectUI.disconnect();
+        return;
+      }
       const payload = resp.data as string | null;
       if (payload) {
         tonConnectUI.setConnectRequestParameters({
@@ -157,21 +167,30 @@ function HomeContent() {
 
   return (
     <div className="relative">
-      <div className="space-y-12 min-w-80 py-12 max-w-7xl mx-auto px-4">
-        <div className="flex justify-center space-x-20">
+      <div className="space-y-8 sm:space-y-12 min-w-80 py-6 sm:py-12 max-w-7xl mx-auto px-2 sm:px-4">
+        <div className="flex justify-center space-x-4 sm:space-x-20">
           <button
-            className={`${currentPage === 1 ? "text-blue-500 font-bold" : "text-gray-700 font-bold"
-              }`}
+            className={`px-3 py-2 rounded-lg text-sm sm:text-base font-bold transition-colors ${
+              currentPage === 1 
+                ? "text-blue-500 bg-blue-50" 
+                : "text-gray-700 hover:text-blue-500"
+            }`}
             onClick={() => setCurrentPage(1)}
           >
-            Upload new Bag
+            <span className="hidden sm:inline">Upload new Bag</span>
+            <span className="sm:hidden">Upload</span>
           </button>
           <button
-            className={`${currentPage === 2 ? "text-blue-500 font-bold" : "text-gray-700 font-bold"
-              }`}
+            className={`px-3 py-2 rounded-lg text-sm sm:text-base font-bold transition-colors ${
+              currentPage === 2 
+                ? "text-blue-500 bg-blue-50" 
+                : "text-gray-700 hover:text-blue-500"
+            }`}
             onClick={() => setCurrentPage(2)}
           >
-            My stored Bags <span className="text-gray-500 font-normal">({files.list.length})</span>
+            <span className="hidden sm:inline">My stored Bags</span>
+            <span className="sm:hidden">My Bags</span>
+            <span className="text-gray-500 font-normal ml-1">({files.list.length})</span>
           </button>
         </div>
 
@@ -195,10 +214,6 @@ function HomeContent() {
 export default function Home() {
   const isMobile = useIsMobile()
   const [mounted, setMounted] = useState(false)
-
-  if (isMobile || isMobile === undefined) {
-    return <div className="text-center">Mobile view is not supported yet. Please use desktop version.</div>
-  }
 
   useEffect(() => {
     setMounted(true)

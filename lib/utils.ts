@@ -110,8 +110,10 @@ export const handleError = (err: any): string | null => {
       error = err.response.data.error;
     } else if (err.code === 'NETWORK_ERROR' || err.code === 'ERR_NETWORK') {
       error = 'Network error. Check your internet connection and try again.';
+    } else if (err.response?.status === 401) {
+      error = 'Unauthorized. Please log in again.';
     } else {
-      error = `Upload error: ${err.message}`;
+      error = `Got error: ${err.message}`;
     }
   }
   

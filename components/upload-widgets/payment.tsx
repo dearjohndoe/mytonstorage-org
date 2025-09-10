@@ -77,6 +77,12 @@ export default function Payment() {
         setError(null);
 
         const response = await setBagStorageContract(bagid, storageContractAddress);
+        if (response.status === 401) {
+            setError('Unauthorized. Logging out.');
+            tonConnectUI.disconnect();
+            setLoading(false);
+            return;
+        }
         if (response.error) {
             setError("Try resend address. Got error: " + response.error);
             console.error("Failed to set bag storage contract:", response.error);

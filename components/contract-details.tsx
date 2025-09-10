@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useAppStore } from "@/store/useAppStore";
+import { UploadFile, useAppStore } from "@/store/useAppStore";
 import { ProviderInfo, StorageContractFull } from "@/types/blockchain";
 import React, { useEffect } from "react";
 import { ErrorComponent } from "./error";
@@ -14,6 +14,7 @@ import { getOffers, getUpdateTransaction } from "@/lib/api";
 import { Offers } from "@/types/files";
 import { Transaction } from "@/lib/types";
 import { useTonConnectUI } from "@tonconnect/ui-react";
+import HintWithIcon from "./hint";
 
 export interface ContractDetailsProps {
     contractAddress: string;
@@ -34,6 +35,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
     const [isLoadingContractInfo, setIsLoadingContractInfo] = React.useState(false);
     const [isLoading, setIsLoading] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);
+    const [warn, setWarn] = React.useState<string | null>(null);
     const [copiedKey, setCopiedKey] = React.useState<string | null>(null);
     const [isEdit, setIsEdit] = React.useState(false);
     const [newPubkey, setNewPubkey] = React.useState<string | null>(null);
@@ -60,7 +62,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
     }, [contractAddress]);
 
     useEffect(() => {
-        if (files.list.length === 0 || !localContractInfo) return; setLocalContractInfo
+        if (files.list.length === 0 || !localContractInfo) return;
 
         const updatedFiles = files.list.map(file => {
             if (file.contractAddress === contractAddress) {
@@ -68,6 +70,24 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
             }
             return file;
         });
+
+        const proofs = localContractInfo.providers.providers.reduce((acc, p) => {
+            if (p.lastProof) {
+                acc += 1;
+            }
+
+            return acc;
+        }, 0);
+
+        if (localContractInfo.providers.providers.length > 0) {
+            if (proofs === 0) {
+                setWarn("No proofs from providers yet");
+            } else if (proofs < localContractInfo.providers.providers.length) {
+                setWarn("Some providers have not submitted proofs yet");
+            }
+        } else {
+            setWarn(null);
+        }
 
         setFiles(updatedFiles);
     }, [localContractInfo]);
@@ -81,7 +101,6 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
         const date = new Date(nextProofTimestamp * 1000).toLocaleString('ru-RU', {
             day: '2-digit',
             month: '2-digit',
-            year: '2-digit',
             hour: '2-digit',
             minute: '2-digit'
         });
@@ -97,6 +116,22 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
         }
 
         return <span className={colorClass}>{date}</span>;
+    }
+
+    const computeStorageProofStatus = (bagID: string, providerCID: string, files: UploadFile[]) => {
+        const file = files.find(f => f.info?.bag_id.toLowerCase() === bagID.toLowerCase());
+        if (!file) return <span className="text-gray-500">N/A</span>;
+
+        const proof = (file.contractChecks || []).find(c => c.provider_pubkey.toLowerCase() === providerCID.toLowerCase());
+        if (!proof) return <span className="text-gray-500">N/A</span>;
+
+        if (proof.reason === 0) {
+            return <span>Ok</span>;
+        } else if (proof.reason === null) {
+            return <span className="text-gray-500">N/A</span>;
+        }
+        
+        return <span className="text-red-600">No</span>;
     }
 
     const fetchContractInfo = async () => {
@@ -137,6 +172,12 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
 
         try {
             const resp = await getOffers([pubkey], "", Number(localContractInfo!.info.fileSize));
+            if (resp.status === 401) {
+                setError('Unauthorized. Logging out.');
+                tonConnectUI.disconnect();
+                setIsLoading(false);
+                return;
+            }
             const offers = resp.data as Offers;
             console.info("Offers", offers);
             if (offers?.declines?.length > 0) {
@@ -185,6 +226,13 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                 amount: 300_000_000,
                 address: contractAddress,
             });
+            if (resp.status === 401) {
+                setError('Unauthorized. Logging out.');
+                tonConnectUI.disconnect();
+                setIsLoading(false);
+                setIsEdit(false);
+                return;
+            }
             if (resp && resp.error) {
                 console.error("Failed to get update transaction:", resp.error);
                 setError(resp.error);
@@ -232,7 +280,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                     <td>
                         <div className="flex items-center font-medium">
                             <p>
-                                {shortenString(provider.provider.cid, 15)}
+                                {shortenString(provider.provider.cid, 8)}
                             </p>
                             <button
                                 onClick={() => copyToClipboard(provider.provider.cid, setCopiedKey)}
@@ -267,9 +315,6 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                                     minute: '2-digit'
                                 })) : ("")}
                         </div>
-                    </td>
-                    <td>
-                        {computeNextProofTime(provider.provider)}
                     </td>
                     <td>
                         <div className="flex items-center">
@@ -341,7 +386,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                         <td>
                             <div className="flex items-center font-medium">
                                 <p>
-                                    {shortenString(provider.cid, 15)}
+                                    {shortenString(provider.cid, 8)}
                                 </p>
                                 <button
                                     onClick={() => copyToClipboard(provider.cid, setCopiedKey)}
@@ -379,6 +424,9 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                         </td>
                         <td>
                             {computeNextProofTime(provider)}
+                        </td>
+                        <td>
+                            {computeStorageProofStatus(localContractInfo.info.bagID, provider.cid, files.list)}
                         </td>
                         <td>
                             <div className="flex items-center">
@@ -481,6 +529,13 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                         }
                     </div>
                 </div>
+                {
+                    !error && warn && (
+                        <div className="flex flex-col items-center p-4 bg-yellow-50 rounded-lg">
+                            <p>{warn}</p>
+                        </div>
+                    )
+                }
                 <div>
                     {localContractInfo.providers.providers.length === 0 ? (
                         <div className="text-gray-500 text-center py-4">
@@ -511,11 +566,26 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                                                 Last Proof
                                             </div>
                                         </th>
-                                        <th>
-                                            <div className="flex items-center">
-                                                Next Proof Time
-                                            </div>
-                                        </th>
+                                        {
+                                            !isEdit && (
+                                                <th>
+                                                    <div className="flex items-center">
+                                                        Next Proof Time
+                                                        <HintWithIcon text="computed" maxWidth={9} />
+                                                    </div>
+                                                </th>
+                                            )
+                                        }
+                                        {
+                                            !isEdit && (
+                                                <th>
+                                                    <div className="flex items-center">
+                                                        Check
+                                                        <HintWithIcon text="storage check by mytonprovider.org" maxWidth={17} />
+                                                    </div>
+                                                </th>
+                                            )
+                                        }
                                         <th>
                                             <div className="flex items-center">
                                                 Next Proof Byte

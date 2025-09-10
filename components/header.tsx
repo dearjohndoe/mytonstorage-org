@@ -4,9 +4,11 @@ import Link from "next/link"
 import Image from "next/image"
 import { TonConnectButton } from "@tonconnect/ui-react"
 import { useEffect, useState } from "react"
+import { useIsMobile } from "@/hooks/useIsMobile"
 
 export default function Header() {
   const [mounted, setMounted] = useState(false)
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     setMounted(true)
@@ -14,14 +16,24 @@ export default function Header() {
 
   return (
     <header className="pt-4">
-      <div className="flex m-auto w-[80%] justify-between">
+      <div className={`flex m-auto justify-between ${isMobile ? 'w-[95%] px-2' : 'w-[80%]'}`}>
         <Link href="/" className="flex font-medium">
           <span>
-            <Image className="rounded-full" src="/logo_48x48.png" alt="Logo" width={26} height={26} />
+            <Image 
+              className="rounded-full" 
+              src="/logo_48x48.png" 
+              alt="Logo" 
+              width={isMobile ? 22 : 26} 
+              height={isMobile ? 22 : 26} 
+            />
           </span>
-          <span className="text-xl font-bold ml-2">My TON Storage</span>
+          <span className={`font-bold ml-2 ${isMobile ? 'text-lg' : 'text-xl'}`}>My TON Storage</span>
         </Link>
-        {mounted && <TonConnectButton />}
+        {mounted && (
+          <div className={isMobile ? 'scale-90 origin-right' : ''}>
+            <TonConnectButton />
+          </div>
+        )}
       </div>
     </header>
   )
