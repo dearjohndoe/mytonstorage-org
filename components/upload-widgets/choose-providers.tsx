@@ -416,25 +416,22 @@ export default function ChooseProviders() {
           <p className="text-center text-gray-700 justify-self-start mt-4">
             Filters:
           </p>
-          <div className={`flex ${isMobile ? 'flex-col space-y-4' : 'flex-wrap items-center justify-center items-end gap-16'}`}>
+          <div className={`flex ${isMobile ? 'gap-4' : ' gap-16'} flex-wrap items-center justify-center items-end`}>
             <ThreeStateField
-              label=""
               states={["From different Countries", "From different Cities", "Any Location"]}
-              colors={["bg-green-300", "bg-blue-300", "bg-gray-200"]}
+              colors={["bg-blue-300", "bg-blue-300", "bg-gray-200"]}
               value={locationFilter}
               disabled={randomFilter}
               onChange={handleLocationFilterChange}
             />
             <ThreeStateField
-              label=""
               states={["Sort by Rating", "Sort by Price", "No Sorting"]}
-              colors={["bg-green-300", "bg-blue-300", "bg-gray-200"]}
+              colors={["bg-blue-300", "bg-blue-300", "bg-gray-200"]}
               value={sortingFilter}
               disabled={randomFilter}
               onChange={handleSortingFilterChange}
             />
             <TwoStateField
-              label=""
               states={["Random", "Deterministic"]}
               colors={["bg-yellow-300", "bg-gray-200"]}
               value={randomFilter}
@@ -514,7 +511,7 @@ export default function ChooseProviders() {
 
         {/* Price info */}
         <div className={`${isMobile ? 'm-4' : 'm-10'}`}>
-          <div className={`flex ${isMobile ? 'flex-col' : 'justify-center items-end'} gap-4 mt-4`}>
+          <div className={`flex justify-center items-end gap-4 mt-4`}>
             <NumberField
               label="Init balance"
               initialValue={initialBalance / 1_000_000_000}
@@ -533,7 +530,7 @@ export default function ChooseProviders() {
 
         {/* Go next step */}
         <div className="flex flex-col gap-4">
-          <div className="flex justify-end mt-8">
+          <div className={`flex ${isMobile ? 'justify-center' : 'justify-end'} mt-8`}>
             {!canContinue && (
               <button
                 className="btn flex items-center border rounded px-4 py-2 hover:bg-gray-100"

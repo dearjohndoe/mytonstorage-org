@@ -4,8 +4,7 @@ import { ApiResponse, BagInfoShort, InitStorageContract, TopupBalance, Transacti
 import { handleError } from "./utils";
 
 // API base URL from env with safe fallback
-const host = (typeof process !== 'undefined' && process.env.PUBLIC_API_BASE) || "http://localhost:9092";
-// const host = (typeof process !== 'undefined' && process.env.PUBLIC_API_BASE) || "https://mytonstorage.org";
+const host = (typeof process !== 'undefined' && process.env.PUBLIC_API_BASE) || "https://mytonstorage.org";
 
 export async function setBagStorageContract(bagId: string, addr: string): Promise<ApiResponse> {
   var error: string | null = null;
@@ -215,11 +214,12 @@ export async function addFile(file: File, metadata: FileMetadata, setProgress: (
   const formData = new FormData();
   formData.append('file', file);
   formData.append('description', metadata.description);
-  
+
   var error: string | null = null;
   var status: number | null = null;
   var data: AddedBag | null = null;
 
+  console.info("___1")
   try {
     const response = await axios.post(`${host}/api/v1/files`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
@@ -234,6 +234,8 @@ export async function addFile(file: File, metadata: FileMetadata, setProgress: (
         }
       }
     });
+
+    console.info("___2")
 
     data = response.data as AddedBag
     status = response.status;
