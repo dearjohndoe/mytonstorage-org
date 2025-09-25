@@ -14,6 +14,7 @@ import { getOffers, getUpdateTransaction } from "@/lib/api";
 import { Offers } from "@/types/files";
 import { Transaction } from "@/lib/types";
 import { useTonConnectUI } from "@tonconnect/ui-react";
+import { safeDisconnect } from '@/lib/ton/safeDisconnect';
 import HintWithIcon from "./hint";
 
 export interface ContractDetailsProps {
@@ -174,7 +175,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
             const resp = await getOffers([pubkey], "", Number(localContractInfo!.info.fileSize));
             if (resp.status === 401) {
                 setError('Unauthorized. Logging out.');
-                tonConnectUI.disconnect();
+                safeDisconnect(tonConnectUI);
                 setIsLoading(false);
                 return;
             }
@@ -228,7 +229,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
             });
             if (resp.status === 401) {
                 setError('Unauthorized. Logging out.');
-                tonConnectUI.disconnect();
+                safeDisconnect(tonConnectUI);
                 setIsLoading(false);
                 setIsEdit(false);
                 return;

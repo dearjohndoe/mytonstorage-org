@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Github, MessageCircle, ArrowBigUp, Server } from "lucide-react"
+import { Github, MessageCircle } from "lucide-react"
 
 export default function Footer() {
   return (

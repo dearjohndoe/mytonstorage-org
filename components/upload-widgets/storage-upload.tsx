@@ -12,6 +12,7 @@ import { FileInfo } from "@/types/files"
 import { ErrorComponent } from "../error"
 import { FilesUploadList } from "../files-upload-list"
 import { useTonConnectUI } from '@tonconnect/ui-react';
+import { safeDisconnect } from '@/lib/ton/safeDisconnect';
 import { useIsMobile } from "@/hooks/useIsMobile";
 
 declare module "react" {
@@ -152,7 +153,7 @@ export default function StorageUpload() {
     const resp = await addFile(file, { description } as FileMetadata, setProgressCallback)
     if (resp.status === 401) {
       setError('Unauthorized. Logging out.');
-      tonConnectUI.disconnect();
+      safeDisconnect(tonConnectUI);
       return;
     }
     const addedBag = resp.data as AddedBag
@@ -177,7 +178,7 @@ export default function StorageUpload() {
     const resp = await addFolder(files, { description } as FileMetadata, setProgressCallback)
     if (resp.status === 401) {
       setError('Unauthorized. Logging out.');
-      tonConnectUI.disconnect();
+      safeDisconnect(tonConnectUI);
       return;
     }
     const addedBag = resp.data as AddedBag
