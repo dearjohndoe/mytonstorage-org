@@ -7,7 +7,6 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 
 export interface UploadFile {
   contractAddress: string
-  txLt: string
   createdAt: number
   expiresAt: number | null
   info: BagInfoShort | null
@@ -18,8 +17,9 @@ export interface UploadFile {
 }
 
 export interface Blockchain {
-  lt: string | null
+  lt: string | undefined
   lastUpdate: number | null
+  headLt?: string | undefined
 }
 
 export interface UploadWidgetData {
@@ -79,6 +79,7 @@ export interface AppActions {
   addFile: (file: UploadFile) => void
   setFiles: (files: UploadFile[]) => void
   setBlockchain: (lt: string, lastUpdate: number) => void
+  setHeadLt: (headLt: string) => void
   setSearchQuery: (query: string) => void
   setSortBy: (sortBy: 'name' | 'date' | 'size', order: 'asc' | 'desc') => void
 
@@ -99,8 +100,9 @@ const initialState: AppState = {
   },
   files: {
     blockchain: {
-      lt: null,
-      lastUpdate: null
+      lt: undefined,
+      lastUpdate: null,
+      headLt: undefined,
     },
     list: [],
     searchQuery: '',
@@ -171,7 +173,19 @@ export const useAppStore = create<AppStore>()(
             ...state.files,
             blockchain: {
               lt,
-              lastUpdate
+              lastUpdate,
+              headLt: state.files.blockchain.headLt
+            }
+          }
+        })),
+
+      setHeadLt: (headLt) =>
+        set((state) => ({
+          files: {
+            ...state.files,
+            blockchain: {
+              ...state.files.blockchain,
+              headLt,
             }
           }
         })),
