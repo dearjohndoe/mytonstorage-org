@@ -12,6 +12,7 @@ import { FileInfo } from "@/types/files"
 import { ErrorComponent } from "../error"
 import { FilesUploadList } from "../files-upload-list"
 import { useTonConnectUI } from '@tonconnect/ui-react';
+import { safeDisconnect } from '@/lib/ton/safeDisconnect';
 import { useIsMobile } from "@/hooks/useIsMobile";
 
 declare module "react" {
@@ -90,9 +91,9 @@ export default function StorageUpload() {
       return (
         <span>
           File is too large. For files larger than 4GB use&nbsp;
-          <a 
-            href="https://github.com/xssnick/TON-Torrent" 
-            target="_blank" 
+          <a
+            href="https://github.com/xssnick/TON-Torrent"
+            target="_blank"
             rel="noopener noreferrer"
             className="text-blue-600 hover:text-blue-800 underline"
           >
@@ -152,7 +153,7 @@ export default function StorageUpload() {
     const resp = await addFile(file, { description } as FileMetadata, setProgressCallback)
     if (resp.status === 401) {
       setError('Unauthorized. Logging out.');
-      tonConnectUI.disconnect();
+      safeDisconnect(tonConnectUI);
       return;
     }
     const addedBag = resp.data as AddedBag
@@ -177,7 +178,7 @@ export default function StorageUpload() {
     const resp = await addFolder(files, { description } as FileMetadata, setProgressCallback)
     if (resp.status === 401) {
       setError('Unauthorized. Logging out.');
-      tonConnectUI.disconnect();
+      safeDisconnect(tonConnectUI);
       return;
     }
     const addedBag = resp.data as AddedBag
@@ -226,15 +227,15 @@ export default function StorageUpload() {
     return (
       <div className="flex flex-col gap-1">
         <label className="text-sm text-gray-700" htmlFor={name}>{label}</label>
-        <input 
-          type="text" 
-          name={name} 
-          id={name} 
-          value={localValue} 
-          onChange={e => setLocalValue(e.target.value.slice(0, 100))} 
-          onBlur={e => setDescription(e.target.value.slice(0, 100))} 
-          className="border rounded px-2 py-1 focus:ring-2 focus:ring-blue-200" 
-          maxLength={100} 
+        <input
+          type="text"
+          name={name}
+          id={name}
+          value={localValue}
+          onChange={e => setLocalValue(e.target.value.slice(0, 100))}
+          onBlur={e => setDescription(e.target.value.slice(0, 100))}
+          className="border rounded px-2 py-1 focus:ring-2 focus:ring-blue-200"
+          maxLength={100}
         />
       </div>
     )
@@ -247,7 +248,7 @@ export default function StorageUpload() {
       <div className={`flex gap-4 items-stretch ${isMobile ? 'flex-col' : ''}`}>
         {/* Drop area */}
         <div
-          className={`${isMobile ? 'w-full order-2' : 'w-2/3'} relative overflow-hidden m-0 border-2 border-dashed rounded-lg mt-8 flex flex-col items-center justify-center ${isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300"
+          className={`${isMobile ? 'w-full' : 'w-2/3'} relative overflow-hidden m-0 border-2 border-dashed rounded-lg mt-2 flex flex-col items-center justify-center ${isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300"
             }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -272,7 +273,10 @@ export default function StorageUpload() {
                 ) : (
                   <div className="text-center">
                     <h3 className="text-lg font-medium mb-2">No Files Selected</h3>
-                    <p className="text-sm text-gray-500">Drag and drop files here or use the buttons below</p>
+                    {
+                      !isMobile &&
+                      <p className="text-sm text-gray-500">Drag and drop files here or use the buttons below</p>
+                    }
                   </div>
                 )}
 
@@ -336,7 +340,7 @@ export default function StorageUpload() {
         </div>
 
         {/* Configure file details */}
-        <div className={`${isMobile ? 'w-full order-1 mb-4' : 'w-1/3 mt-8 ml-4'} p-4 flex flex-col border border-gray-200 rounded-lg bg-gray-50`}>
+        <div className={`${isMobile ? 'w-full mb-4' : 'w-1/3 mt-8 ml-4'} p-4 mt-4 flex flex-col border border-gray-200 rounded-lg bg-gray-50`}>
           <h3 className="text-lg font-medium mb-4">Details</h3>
           <div className="flex-1 flex flex-col">
             <TextField label="Add description:" name="description" />

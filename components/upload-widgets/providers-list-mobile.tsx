@@ -43,11 +43,10 @@ export function ProvidersListMobile({
                   </span>
                   <button
                     onClick={() => copyToClipboard(provider.pubkey, setCopiedKey)}
-                    className={`p-1 rounded-md transition-all duration-200 ${
-                      copiedKey === provider.pubkey
+                    className={`p-1 rounded-md transition-all duration-200 ${copiedKey === provider.pubkey
                         ? "text-green-600 bg-green-50 scale-110"
                         : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"
-                    }`}
+                      }`}
                   >
                     <Copy className="h-3.5 w-3.5" />
                   </button>
@@ -65,8 +64,8 @@ export function ProvidersListMobile({
             <div className="mb-3">
               <div className="text-xs font-medium text-gray-500 mb-1">Location</div>
               <p className="text-sm text-gray-700">
-                {provider.location ? 
-                  `${provider.location.city || '--'}, ${provider.location.country || '--'}` : 
+                {provider.location ?
+                  `${provider.location.city || '--'}, ${provider.location.country || '--'}` :
                   '--'
                 }
               </p>
@@ -95,9 +94,11 @@ export function ProvidersListMobile({
 
               {/* Price */}
               <div>
-                <div className="text-xs font-medium text-gray-500 mb-1">Price/MB</div>
+                <div className="flex items-center text-xs font-medium text-gray-500 mb-1">
+                  Price per proof
+                </div>
                 <span className="text-sm text-gray-700">
-                  {offer?.price_per_mb ? `${(offer.price_per_mb / 1000000000).toFixed(3)} TON` : '--'}
+                  {offer?.price_per_mb ? `${(offer.price_per_proof / 1000000000).toFixed(3)} TON` : '--'}
                 </span>
               </div>
             </div>

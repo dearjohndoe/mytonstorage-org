@@ -5,6 +5,7 @@ import { useAppStore } from "@/store/useAppStore"
 import React, { useEffect, useState } from "react";
 import { useTonWallet, useTonConnectUI } from "@tonconnect/ui-react";
 import { login, proofPayload } from "@/lib/api"
+import { safeDisconnect } from "@/lib/ton/safeDisconnect"
 import NewBagInfo from "@/components/new-bag-info"
 import WidgetsMap from "@/components/widgets-map"
 import StorageUpload from "@/components/upload-widgets/storage-upload";
@@ -23,7 +24,12 @@ function HomeContent() {
   useEffect(() => {
     tonConnectUI.onStatusChange(async (w: any) => {
       console.log("TonConnect status changed:", w);
-      if (!w) return;
+
+      if (!w) {
+        useAppStore.getState().resetAll();
+        return;
+      }
+
       if (w.connectItems?.tonProof && "proof" in w.connectItems.tonProof) {
         try {
           console.log("Attempting to login with TON proof");
@@ -34,18 +40,18 @@ function HomeContent() {
           );
           if (result.status === 401) {
             console.error('Unauthorized. Logging out.');
-            await tonConnectUI.disconnect();
+            await safeDisconnect(tonConnectUI);
             return;
           }
           if (result.data === true) {
             console.log("Login successful");
           } else {
             console.error("Login failed");
-            await tonConnectUI.disconnect();
+            await safeDisconnect(tonConnectUI);
           }
         } catch (e) {
           console.error("Failed to login: " + e);
-          await tonConnectUI.disconnect();
+          await safeDisconnect(tonConnectUI);
         }
       }
 
@@ -58,7 +64,7 @@ function HomeContent() {
       const resp = await proofPayload();
       if (resp.status === 401) {
         console.error('Unauthorized. Logging out.');
-        tonConnectUI.disconnect();
+        await safeDisconnect(tonConnectUI);
         return;
       }
       const payload = resp.data as string | null;
@@ -170,22 +176,20 @@ function HomeContent() {
       <div className="space-y-8 sm:space-y-12 min-w-80 py-6 sm:py-12 max-w-7xl mx-auto px-2 sm:px-4">
         <div className="flex justify-center space-x-4 sm:space-x-20">
           <button
-            className={`px-3 py-2 rounded-lg text-sm sm:text-base font-bold transition-colors ${
-              currentPage === 1 
-                ? "text-blue-500 bg-blue-50" 
-                : "text-gray-700 hover:text-blue-500"
-            }`}
+            className={`px-3 py-2 rounded-lg text-sm sm:text-base font-bold transition-colors ${currentPage === 1
+              ? "text-blue-500 bg-blue-50"
+              : "text-gray-700 hover:text-blue-500"
+              }`}
             onClick={() => setCurrentPage(1)}
           >
             <span className="hidden sm:inline">Upload new Bag</span>
             <span className="sm:hidden">Upload</span>
           </button>
           <button
-            className={`px-3 py-2 rounded-lg text-sm sm:text-base font-bold transition-colors ${
-              currentPage === 2 
-                ? "text-blue-500 bg-blue-50" 
-                : "text-gray-700 hover:text-blue-500"
-            }`}
+            className={`px-3 py-2 rounded-lg text-sm sm:text-base font-bold transition-colors ${currentPage === 2
+              ? "text-blue-500 bg-blue-50"
+              : "text-gray-700 hover:text-blue-500"
+              }`}
             onClick={() => setCurrentPage(2)}
           >
             <span className="hidden sm:inline">My stored Bags</span>

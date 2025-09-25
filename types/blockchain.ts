@@ -1,6 +1,10 @@
+export type StorageContracts = {
+    contracts: Contract[];
+    endLt: string;
+}
+
 export type Contract = {
     address: string;
-    lt: bigint;
     createdAt: number;
 }
 
@@ -29,4 +33,16 @@ export type ContractProviders = {
 export type StorageContractFull = {
     info: ContractInfo;
     providers: ContractProviders;
+}
+
+export type OutMsg = {
+    opcode?: string;
+    created_at: string;
+    destination: string;
+}
+
+export type Transaction = {
+    lt: string;
+    prev_trans_lt: string;
+    out_msgs: OutMsg[];
 }

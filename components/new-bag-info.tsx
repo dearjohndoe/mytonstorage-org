@@ -9,6 +9,7 @@ import { RenderField } from "./render-field";
 import { CountdownTimer } from "./countdown-timer";
 import { UnpaidBags } from "@/types/files";
 import { useTonConnectUI } from '@tonconnect/ui-react';
+import { safeDisconnect } from '@/lib/ton/safeDisconnect';
 
 // props
 interface NewBagInfoProps {
@@ -29,7 +30,7 @@ export default function NewBagInfo({ canCancel }: NewBagInfoProps) {
         const resp = await getUnpaid();
         if (resp.status === 401) {
           console.error('Unauthorized. Logging out.');
-          tonConnectUI.disconnect();
+          safeDisconnect(tonConnectUI);
           setIsLoading(false);
           return;
         }
@@ -57,7 +58,7 @@ export default function NewBagInfo({ canCancel }: NewBagInfoProps) {
     const resp = await removeFile(widgetData.newBagID as string);
     if (resp.status === 401) {
       console.error('Unauthorized. Logging out.');
-      tonConnectUI.disconnect();
+      safeDisconnect(tonConnectUI);
       setIsLoading(false);
       return;
     }

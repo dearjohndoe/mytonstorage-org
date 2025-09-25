@@ -1,60 +1,57 @@
 "use client"
 
 import React, { useEffect, useState } from 'react'
-import { UploadFile, useAppStore } from '@/store/useAppStore'
-import { fetchNewContracts } from '@/lib/ton/transactions';
+import { useAppStore } from '@/store/useAppStore'
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
-import { getDescriptions, getTopupBalanceTransaction, getWithdrawTransaction } from '@/lib/api';
-import { BagInfoShort, Transaction } from '@/lib/types';
-import { CircleX, Copy, Info, Wallet, ReceiptText, RefreshCw } from 'lucide-react';
-import { copyToClipboard, printSpace, shortenString } from '@/lib/utils';
+import { safeDisconnect } from '@/lib/ton/safeDisconnect';
+import { getTopupBalanceTransaction, getWithdrawTransaction } from '@/lib/api';
+import { Transaction } from '@/lib/types';
+import { Copy, ReceiptText } from 'lucide-react';
+import { copyToClipboard, shortenString } from '@/lib/utils';
 import { ContractDetails } from '@/components/contract-details';
 import { TopupDetails } from '@/components/topup-details';
 import { UnpaidFilesList } from './unpaid-list';
 import { ErrorComponent } from '@/components/error';
-import HintWithIcon from '../hint';
-import { getProvidersStorageChecks } from '@/lib/thirdparty';
-import { ContractStatus, ContractStatuses } from '@/types/mytonstorage';
+import { ContractStatus } from '@/types/mytonstorage';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { StorageContractsMobile } from './storage-contracts-mobile';
 import { StorageContractsDesktop } from './storage-contracts-desktop';
+import { useStorageContracts } from '@/hooks/useStorageContracts';
 
 export function FilesList() {
   const apiBase = (typeof process !== 'undefined' && process.env.PUBLIC_API_BASE) || "https://mytonstorage.org";
   const [tonConnectUI] = useTonConnectUI();
   const wallet = useTonWallet();
   const [error, setError] = useState<string | null>(null);
-  const { files, setFiles, setBlockchain } = useAppStore();
-  const [localFiles, setLocalFiles] = useState<UploadFile[]>([]);
+  const { files, setFiles } = useAppStore();
   const [copiedKey, setCopiedKey] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedContract, setSelectedContract] = useState<string | null>(null);
   const [selectedTopupContract, setSelectedTopupContract] = useState<string | null>(null);
   const [loadingWithdrawalAddress, setLoadingWithdrawalAddress] = useState<string | null>(null);
   const [loadingTopupAddress, setLoadingTopupAddress] = useState<string | null>(null);
+  const [lastUpdate, setLastUpdate] = useState<number | null>(null);
   const isMobile = useIsMobile();
 
-  useEffect(() => {
-    if (wallet?.account.address && !isLoading) {
-      // Do not dudos toncenter
-      // var ttl = 5 * 60 * 1000; // 5 minutes
-      // if (files.list.length > 0) {
-      //   const emptyRows = files.list.reduce((prev, curr) => prev + ((curr.info === null || (curr.contractChecks || []).length === 0) ? 1 : 0), 0);
-      //   if (files.list.length / 2 > emptyRows) {
-      //     ttl = 60 * 1000; // 1 minute
-      //   }
-      // }
-      // if (files.blockchain?.lastUpdate != null && files.blockchain.lastUpdate > Date.now() - ttl) {
-      //   return;
-      // }
+  const {
+    items: pagedItems,
+    loadMore,
+    loadNewer,
+    isLoading: hookLoading,
+    isCheckingNewer,
+    error: hookError,
+    reachedEnd,
+  } = useStorageContracts({ address: wallet?.account.address, pageSize: 100, maxAutoPages: 10 });
 
-      fetchData();
-    }
+  useEffect(() => {
+    const fetchData = async () => {
+      if (wallet?.account.address) {
+        await loadNewer();
+        setLastUpdate(Date.now());
+      }
+    };
+    fetchData();
   }, [wallet?.account.address]);
-
-  useEffect(() => {
-    setLocalFiles(files.list);
-  }, [files.list]);
 
   // Handle Esc key to close modals
   useEffect(() => {
@@ -74,105 +71,10 @@ export function FilesList() {
     };
   }, [selectedContract, selectedTopupContract]);
 
-  const fetchData = async () => {
-    if (isLoading) {
-      console.log('fetchData already in progress, skipping');
-      return;
-    }
-
-    if (!wallet?.account.address) {
-      console.info("no account")
-      return
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    const contracts = await fetchNewContracts(wallet?.account.address);
-
-    if (contracts instanceof Error) {
-      setError(contracts.message);
-      setIsLoading(false);
-      return;
-    }
-
-    var newFiles = contracts.map(contract => ({
-      contractAddress: contract.address,
-      txLt: contract.lt.toString(),
-      createdAt: contract.createdAt,
-      expiresAt: null,
-      info: null,
-      contractChecks: [],
-      contractInfo: null,
-      lastContractUpdate: null,
-      status: 'uploaded' as const
-    } as UploadFile));
-
-    const maxLt = newFiles.reduce((max, file) => {
-      const lt = BigInt(file.txLt);
-      return lt > max ? lt : max;
-    }, BigInt(0));
-
-    setBlockchain(maxLt.toString(), Date.now());
-
-    const addresses = contracts.map(contract => contract.address).filter(Boolean) as string[];
-    if (addresses.length > 0) {
-      newFiles = await loadBagsDescriptions(addresses, newFiles);
-      newFiles = await loadBagsChecks(addresses, newFiles);
-
-    }
-
-    setFiles(newFiles);
-    setIsLoading(false);
-  };
-
-  const loadBagsDescriptions = async (addresses: string[], currentFiles: UploadFile[]): Promise<UploadFile[]> => {
-    const desc = await getDescriptions(addresses);
-    if (desc.status === 401) {
-      setError('Unauthorized. Logging out.');
-      tonConnectUI.disconnect();
-      return [];
-    }
-    if (desc.error) {
-      setError(desc.error);
-      return [];
-    }
-
-    const data = desc.data as BagInfoShort[];
-    const updatedFiles = currentFiles.map(file => {
-      const info = data.find(d => d.contract_address === file.contractAddress);
-      return {
-        ...file,
-        info: info || null
-      };
-    });
-
-    return updatedFiles;
-  }
-
-  const loadBagsChecks = async (addresses: string[], currentFiles: UploadFile[]): Promise<UploadFile[]> => {
-    const resp = await getProvidersStorageChecks(addresses);
-    const checks = resp.data as ContractStatuses;
-    if ((resp && resp.error) || !checks || !checks.contracts) {
-      console.error("Failed to load providers:", resp.error);
-      setError(resp.error);
-      return [];
-    }
-
-    const updatedFiles = currentFiles.map(file => {
-      const contractChecks = checks.contracts.filter(d => d.address === file.contractAddress);
-      return {
-        ...file,
-        contractChecks: contractChecks
-      };
-    });
-
-    return updatedFiles;
-  }
 
   const topupBalance = async (storageContractAddress: string, amount?: number) => {
     if (!amount) {
-      // Открываем модалку для ввода суммы
+      // Open modal to input amount
       setSelectedTopupContract(storageContractAddress);
       return;
     }
@@ -187,7 +89,7 @@ export function FilesList() {
     const resp = await getTopupBalanceTransaction({ address: storageContractAddress, amount });
     if (resp.status === 401) {
       setError('Unauthorized. Logging out.');
-      tonConnectUI.disconnect();
+      safeDisconnect(tonConnectUI);
       setLoadingTopupAddress(null);
       return;
     }
@@ -235,7 +137,7 @@ export function FilesList() {
     const resp = await getWithdrawTransaction(storageContractAddress);
     if (resp.status === 401) {
       setError('Unauthorized. Logging out.');
-      tonConnectUI.disconnect();
+      safeDisconnect(tonConnectUI);
       setLoadingWithdrawalAddress(null);
       return;
     }
@@ -267,14 +169,8 @@ export function FilesList() {
     console.log("Transaction response:", wResp);
 
     if (wResp.boc.length > 0) {
-      let filesCopy: UploadFile[] = [];
-      localFiles.forEach(f => {
-        if (f.contractAddress !== tx.address) {
-          filesCopy.push(f);
-        }
-      });
-
-      setLocalFiles(filesCopy);
+      const filtered = files.list.filter(f => f.contractAddress !== tx.address);
+      setFiles(filtered);
     }
   }
 
@@ -401,13 +297,22 @@ export function FilesList() {
             Storage contracts
           </h2>
         </div>
+        <div>
+          <button
+            onClick={() => loadNewer()}
+            disabled={true}
+            className={`px-3 py-1 cursor-default rounded-full text-gray-600 bg-gray-100`}
+          >
+            {isCheckingNewer ? 'Checking…' : (lastUpdate  && lastUpdate < Date.now() - 1000 * 60 * 10 ? 'Reload page to refresh' : 'List updated')}
+          </button>
+        </div>
       </div>
 
-      {error && <ErrorComponent error={error} />}
+      {(hookError || error) && <ErrorComponent error={hookError || error} />}
 
       {/* Files list */}
       <div className="grid gap-4">
-        {localFiles.length === 0 && (
+        {pagedItems.length === 0 && (
           <div className={`text-gray-500 text-center py-8 ${isMobile ? 'px-4' : ''}`}>
             <div className="text-gray-300 mb-2">
               <ReceiptText className="w-12 h-12 mx-auto" />
@@ -421,34 +326,54 @@ export function FilesList() {
           </div>
         )}
 
-        {localFiles.length > 0 && (
+        {pagedItems.length > 0 && (
           <>
             {isMobile ? (
               <StorageContractsMobile
-                files={localFiles}
+                files={pagedItems}
                 copiedKey={copiedKey}
                 setCopiedKey={setCopiedKey}
                 onSelectContract={setSelectedContract}
                 onTopupBalance={topupBalance}
                 onCancelStorage={cancelStorage}
                 loadingWithdrawalAddress={loadingWithdrawalAddress}
-                isLoading={isLoading}
+                isLoading={hookLoading}
                 buildContractChecksBlock={buildContractChecksBlock}
                 apiBase={apiBase}
               />
             ) : (
               <StorageContractsDesktop
-                files={localFiles}
+                files={pagedItems}
                 copiedKey={copiedKey}
                 setCopiedKey={setCopiedKey}
                 onSelectContract={setSelectedContract}
                 onTopupBalance={topupBalance}
                 onCancelStorage={cancelStorage}
                 loadingWithdrawalAddress={loadingWithdrawalAddress}
-                isLoading={isLoading}
+                isLoading={hookLoading}
                 buildContractChecksBlock={buildContractChecksBlock}
                 apiBase={apiBase}
               />
+            )}
+
+            {/* Load more button */}
+            {!reachedEnd && (
+              <div className='flex justify-center mt-4 mb-8'>
+                <button
+                  onClick={() => loadMore()}
+                  disabled={hookLoading}
+                  className="px-4 py-2 border border-gray-300 rounded-full text-gray-600 hover:bg-gray-100"
+                >
+
+                  <div className="flex">
+                    {hookLoading ? (
+                      'Looking for more...'
+                    ) : (
+                      'Load More'
+                    )}
+                  </div>
+                </button>
+              </div>
             )}
           </>
         )}

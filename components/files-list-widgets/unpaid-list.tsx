@@ -8,6 +8,7 @@ import { ErrorComponent } from "../error";
 import React from "react";
 import { useAppStore } from "@/store/useAppStore";
 import { useTonConnectUI } from '@tonconnect/ui-react';
+import { safeDisconnect } from '@/lib/ton/safeDisconnect';
 
 export function UnpaidFilesList() {
     const { updateWidgetData } = useAppStore()
@@ -30,7 +31,7 @@ export function UnpaidFilesList() {
         const resp = await getUnpaid();
         if (resp.status === 401) {
             setError('Unauthorized. Logging out.');
-            tonConnectUI.disconnect();
+            safeDisconnect(tonConnectUI);
             setIsLoading(false);
             return;
         }
@@ -53,7 +54,7 @@ export function UnpaidFilesList() {
             const result = await removeFile(bagid);
             if (result.status === 401) {
                 setError('Unauthorized. Logging out.');
-                tonConnectUI.disconnect();
+                safeDisconnect(tonConnectUI);
                 setIsLoading(false);
                 return;
             }

@@ -2,6 +2,7 @@
 
 import { useAppStore } from "@/store/useAppStore";
 import { useTonConnectUI } from "@tonconnect/ui-react";
+import { safeDisconnect } from '@/lib/ton/safeDisconnect';
 import { ChevronLeft, ReceiptText } from "lucide-react";
 import { useState } from "react";
 import { ErrorComponent } from "../error";
@@ -70,7 +71,7 @@ export default function Payment() {
         }
 
         setLoading(false);
-    } 
+    }
 
     const sendStorageContract = async (bagid: string, storageContractAddress: string) => {
         setLoading(true);
@@ -79,7 +80,7 @@ export default function Payment() {
         const response = await setBagStorageContract(bagid, storageContractAddress);
         if (response.status === 401) {
             setError('Unauthorized. Logging out.');
-            tonConnectUI.disconnect();
+            safeDisconnect(tonConnectUI);
             setLoading(false);
             return;
         }

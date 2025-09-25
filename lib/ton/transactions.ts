@@ -1,70 +1,71 @@
-import { Contract as StorageContract } from "@/types/blockchain";
-import { TonClient, Address, Transaction, Message } from "@ton/ton";
+import { OutMsg, StorageContracts, Transaction } from "@/types/blockchain";
+import { Address } from "@ton/ton";
+import axios from "axios";
 
 require("buffer");
 
-export async function fetchNewContracts(userAddr: string): Promise<StorageContract[] | Error> {
-    let txs: Transaction[] | Error = await fetchUserTransactions(userAddr);
-    if (txs instanceof Error) {
-        return txs;
-    }
+export async function fetchContractsPage(
+    userAddr: string,
+    endLt?: string,
+    limit: number = 100,
+): Promise<
+    | { items: { address: string; createdAt: number; txLt: string }[]; nextLt: string; reachedEnd: boolean; pageMaxLt: string; pageMinLt: string }
+    | Error
+> {
+    const txs = await fetchUserTransactions(userAddr, endLt, limit);
+    if (txs instanceof Error) return txs;
 
-    let resp: StorageContract[] = [];
-
-    console.debug(`Found ${txs.length} transactions for user ${userAddr}`);
+    const items: { address: string; createdAt: number; txLt: string }[] = [];
+    let nextLt = endLt ?? "";
+    let pageMaxLt = "0";
+    let pageMinLt: string | null = null;
 
     for (const tx of txs) {
-        if (!tx.outMessages) { continue; }
-
-        if (tx.outMessages.size === 0) { continue; }
-
-        const msg: Message = tx.outMessages.values()[0];
-        if (msg.info.type !== "internal") { continue; }
-
-        const originalBody = msg.body.beginParse();
-        let body = originalBody.clone();
-        if (body.remainingBits < 64) {
-            continue
+        nextLt = tx.prev_trans_lt;
+        const txLt = tx.lt;
+        if (txLt) {
+            if (pageMaxLt === "0" || BigInt(txLt) > BigInt(pageMaxLt)) pageMaxLt = txLt;
+            if (pageMinLt === null || BigInt(txLt) < BigInt(pageMinLt)) pageMinLt = txLt;
         }
 
-        let op: number;
-        body.skip(32);
+        if (!tx.out_msgs || tx.out_msgs.length === 0) continue;
 
-        let b = msg.body.beginParse()
-        op = b.loadUint(32);
-        if (op != 1036419246) {  // 0x3dc680ae
-            continue;
-        }
+        const msg: OutMsg = tx.out_msgs[0];
+        if (msg.opcode !== "0x3dc680ae") continue;
 
-        resp.push({
-            address: msg.info.dest.toString({ testOnly: false }),
-            lt: tx.lt,
-            createdAt: msg.info.createdAt
+        const createdAt = Number(msg.created_at);
+        items.push({
+            address: Address.parseRaw(msg.destination).toString({ testOnly: false }),
+            createdAt,
+            txLt: txLt || "0",
         });
     }
 
-    return resp;
+    const reachedEnd = nextLt === "0" || txs.length < limit;
+    return { items, nextLt, reachedEnd, pageMaxLt, pageMinLt: pageMinLt || "0" };
 }
 
-async function fetchUserTransactions(userAddr: string): Promise<Transaction[] | Error> {
-    let transactions: Transaction[]
-
+async function fetchUserTransactions(userAddr: string, endLt?: string, limit: number = 100): Promise<Transaction[] | Error> {
     try {
-        const client = new TonClient({
-            endpoint: 'https://toncenter.com/api/v2/jsonRPC',
-        });
-
-        const address = Address.parse(userAddr);
-        let opts = {
-            limit: 100,
+        const params: any = {
+            account: userAddr,
+            limit,
+            sort: "desc",
             archival: true,
+        };
+        if (endLt) {
+            params.end_lt = endLt;
         }
 
-        transactions = await client.getTransactions(address, opts);
+        const response = await axios.get('https://toncenter.com/api/v3/transactions', { params });
+
+        if (response.data && response.data.transactions) {
+            return response.data.transactions as Transaction[];
+        } else {
+            return new Error('Invalid response from TON Center');
+        }
     } catch (err) {
         console.error(err);
         return new Error('Failed to fetch transactions');
     }
-
-    return transactions;
 }
