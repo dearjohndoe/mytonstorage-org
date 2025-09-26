@@ -4,18 +4,30 @@ import axios from "axios";
 
 require("buffer");
 
+export type ContractTx = {
+    address: string;
+    opcode: string;
+    createdAt: number;
+    txLt: string;
+};
+
+export type FetchContractsPageResult = {
+    items: ContractTx[];
+    nextLt: string;
+    reachedEnd: boolean;
+    pageMaxLt: string;
+    pageMinLt: string;
+} | Error;
+
 export async function fetchContractsPage(
     userAddr: string,
     endLt?: string,
     limit: number = 100,
-): Promise<
-    | { items: { address: string; createdAt: number; txLt: string }[]; nextLt: string; reachedEnd: boolean; pageMaxLt: string; pageMinLt: string }
-    | Error
-> {
+): Promise<FetchContractsPageResult | Error> {
     const txs = await fetchUserTransactions(userAddr, endLt, limit);
     if (txs instanceof Error) return txs;
 
-    const items: { address: string; createdAt: number; txLt: string }[] = [];
+    const items: ContractTx[] = [];
     let nextLt = endLt ?? "";
     let pageMaxLt = "0";
     let pageMinLt: string | null = null;
@@ -31,12 +43,13 @@ export async function fetchContractsPage(
         if (!tx.out_msgs || tx.out_msgs.length === 0) continue;
 
         const msg: OutMsg = tx.out_msgs[0];
-        if (msg.opcode !== "0x3dc680ae") continue;
+        if (msg.opcode !== "0x3dc680ae" && msg.opcode !== "0x61fff683") continue;
 
         const createdAt = Number(msg.created_at);
         items.push({
             address: Address.parseRaw(msg.destination).toString({ testOnly: false }),
             createdAt,
+            opcode: msg.opcode,
             txLt: txLt || "0",
         });
     }

@@ -7,13 +7,13 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 
 export interface UploadFile {
   contractAddress: string
-  createdAt: number
+  updatedAt: number
   expiresAt: number | null
   info: BagInfoShort | null
   contractChecks: ContractStatus[]
   contractInfo: StorageContractFull | null
   lastContractUpdate: number | null
-  status: 'uploaded' | 'uploading' | 'error' // -
+  status: 'closed' | 'uploaded' | 'uploading' | 'error' // -
 }
 
 export interface Blockchain {
@@ -61,6 +61,9 @@ export interface AppState {
     searchQuery?: string
     sortBy?: 'name' | 'date' | 'size'
     sortOrder?: 'asc' | 'desc'
+
+    // Настройки отображения
+    hideClosed: boolean
   }
 }
 
@@ -82,6 +85,7 @@ export interface AppActions {
   setHeadLt: (headLt: string) => void
   setSearchQuery: (query: string) => void
   setSortBy: (sortBy: 'name' | 'date' | 'size', order: 'asc' | 'desc') => void
+  setHideClosed: (value: boolean) => void
 
   // Сброс состояния
   resetAll: () => void
@@ -107,7 +111,8 @@ const initialState: AppState = {
     list: [],
     searchQuery: '',
     sortBy: 'date',
-    sortOrder: 'desc'
+    sortOrder: 'desc',
+    hideClosed: false,
   }
 }
 
@@ -159,13 +164,25 @@ export const useAppStore = create<AppStore>()(
           }
         })),
 
-      setFiles: (files) =>
+      setFiles: (files) => {
+        // combine statuses
+        const uniqueFilesMap = new Map<string, UploadFile>()
+        files
+          .sort((a, b) => b.updatedAt - a.updatedAt)
+          .forEach(file => {
+            if (!uniqueFilesMap.has(file.contractAddress)) {
+              uniqueFilesMap.set(file.contractAddress, file)
+            }
+          })
+        const dedupedFiles = Array.from(uniqueFilesMap.values())
+
         set((state) => ({
           files: {
             ...state.files,
-            list: files
+            list: dedupedFiles
           }
-        })),
+        }))
+      },
 
       setBlockchain: (lt, lastUpdate) =>
         set((state) => ({
@@ -207,6 +224,14 @@ export const useAppStore = create<AppStore>()(
           }
         })),
 
+      setHideClosed: (value) =>
+        set((state) => ({
+          files: {
+            ...state.files,
+            hideClosed: value,
+          }
+        })),
+
       // todo: unused?
       resetAll: () => set(initialState)
     }),
@@ -223,7 +248,8 @@ export const useAppStore = create<AppStore>()(
           list: state.files.list,
           searchQuery: state.files.searchQuery,
           sortBy: state.files.sortBy,
-          sortOrder: state.files.sortOrder
+          sortOrder: state.files.sortOrder,
+          hideClosed: state.files.hideClosed,
         }
       }),
 
