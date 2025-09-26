@@ -12,6 +12,7 @@ export type ContractStatus = {
     provider_pubkey: string
     reason: number | null
     reason_timestamp: number | null
+    status: string
 }
 
 export type Provider = {

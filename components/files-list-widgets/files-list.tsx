@@ -23,7 +23,7 @@ export function FilesList() {
   const [tonConnectUI] = useTonConnectUI();
   const wallet = useTonWallet();
   const [error, setError] = useState<string | null>(null);
-  const { files, setFiles } = useAppStore();
+  const { files, setFiles, setHideClosed } = useAppStore();
   const [copiedKey, setCopiedKey] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedContract, setSelectedContract] = useState<string | null>(null);
@@ -31,6 +31,7 @@ export function FilesList() {
   const [loadingWithdrawalAddress, setLoadingWithdrawalAddress] = useState<string | null>(null);
   const [loadingTopupAddress, setLoadingTopupAddress] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<number | null>(null);
+  const hideClosed = files.hideClosed;
   const isMobile = useIsMobile();
 
   const {
@@ -174,7 +175,15 @@ export function FilesList() {
     }
   }
 
-  const buildContractChecksBlock = (checks: ContractStatus[]) => {
+  const buildContractChecksBlock = (checks: ContractStatus[], status: string) => {
+    if (status === 'closed') {
+      return (
+        <div className="flex rounded-lg border border-red-200 bg-red-50 w-14 h-6 items-center justify-center text-xs font-semibold text-gray-600">
+          Closed
+        </div>
+      );
+    }
+
     var valid = (checks || []).filter(c => c.reason === 0).length;
     var total = (checks || []).length;
 
@@ -298,13 +307,30 @@ export function FilesList() {
           </h2>
         </div>
         <div>
-          <button
-            onClick={() => loadNewer()}
-            disabled={true}
-            className={`px-3 py-1 cursor-default rounded-full text-gray-600 bg-gray-100`}
-          >
-            {isCheckingNewer ? 'Checking…' : (lastUpdate  && lastUpdate < Date.now() - 1000 * 60 * 10 ? 'Reload page to refresh' : 'List updated')}
-          </button>
+            <div className="flex items-center space-x-6">
+              <label className="flex items-center space-x-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={hideClosed}
+                  onChange={e => setHideClosed(e.target.checked)}
+                  className="form-checkbox h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-600">
+                  Hide closed contracts
+                </span>
+              </label>
+              <button
+                onClick={() => loadNewer()}
+                disabled={true}
+                className="px-3 py-1 cursor-default rounded-full text-gray-600 bg-gray-100"
+              >
+                {isCheckingNewer
+                  ? 'Checking…'
+                  : lastUpdate && lastUpdate < Date.now() - 1000 * 60 * 10
+                  ? 'Reload page to refresh'
+                  : 'List updated'}
+              </button>
+            </div>
         </div>
       </div>
 
@@ -338,6 +364,7 @@ export function FilesList() {
                 onCancelStorage={cancelStorage}
                 loadingWithdrawalAddress={loadingWithdrawalAddress}
                 isLoading={hookLoading}
+                hideClosed={hideClosed}
                 buildContractChecksBlock={buildContractChecksBlock}
                 apiBase={apiBase}
               />
@@ -351,6 +378,7 @@ export function FilesList() {
                 onCancelStorage={cancelStorage}
                 loadingWithdrawalAddress={loadingWithdrawalAddress}
                 isLoading={hookLoading}
+                hideClosed={hideClosed}
                 buildContractChecksBlock={buildContractChecksBlock}
                 apiBase={apiBase}
               />

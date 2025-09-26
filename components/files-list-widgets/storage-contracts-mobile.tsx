@@ -14,7 +14,8 @@ interface StorageContractsMobileProps {
     onCancelStorage: (address: string) => void
     loadingWithdrawalAddress: string | null
     isLoading: boolean
-    buildContractChecksBlock: (checks: any[]) => React.ReactNode
+    hideClosed: boolean
+    buildContractChecksBlock: (checks: any[], status: string) => React.ReactNode
     apiBase: string
 }
 
@@ -27,12 +28,17 @@ export function StorageContractsMobile({
     onCancelStorage,
     loadingWithdrawalAddress,
     isLoading,
+    hideClosed,
     buildContractChecksBlock,
     apiBase
 }: StorageContractsMobileProps) {
+    if (hideClosed) {
+        files = files.filter(f => f.status !== 'closed');
+    }
+
     return (
         <div className="space-y-3">
-            {files.map((f, index) => (
+            {files.map((f, _) => (
                 <div
                     key={`mobile-${f.contractAddress}-${Math.random().toString(36).substring(2, 8)}`}
                     className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-blue-200 transition-all duration-200"
@@ -71,7 +77,7 @@ export function StorageContractsMobile({
                                 )}
                             </div>
                             <div className="text-xs text-gray-500">
-                                {new Date(f.createdAt * 1000).toLocaleDateString('ru-RU', {
+                                {new Date(f.updatedAt * 1000).toLocaleDateString('ru-RU', {
                                     day: '2-digit',
                                     month: '2-digit',
                                     year: '2-digit'
@@ -127,7 +133,7 @@ export function StorageContractsMobile({
                         {/* Providers checks */}
                         <div className='justify-self-end'>
                             <div className="text-right text-xs font-medium text-gray-500 mb-2">Providers checks</div>
-                            {buildContractChecksBlock(f.contractChecks || [])}
+                            {buildContractChecksBlock(f.contractChecks || [], f.status)}
                         </div>
                     </div>
 

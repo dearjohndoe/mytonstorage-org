@@ -15,7 +15,8 @@ interface StorageContractsDesktopProps {
   onCancelStorage: (address: string) => void
   loadingWithdrawalAddress: string | null
   isLoading: boolean
-  buildContractChecksBlock: (checks: any[]) => React.ReactNode
+  hideClosed: boolean
+  buildContractChecksBlock: (checks: any[], status: string) => React.ReactNode
   apiBase: string
 }
 
@@ -28,9 +29,14 @@ export function StorageContractsDesktop({
   onCancelStorage,
   loadingWithdrawalAddress,
   isLoading,
+  hideClosed,
   buildContractChecksBlock,
   apiBase
 }: StorageContractsDesktopProps) {
+  if (hideClosed) {
+    files = files.filter(f => f.status !== 'closed');
+  }
+
   return (
     <div className="overflow-x-auto">
       <table className="ton-table overscroll-x-auto">
@@ -53,7 +59,7 @@ export function StorageContractsDesktop({
             </th>
             <th>
               <div className="flex items-center">
-                Peers
+                Status
                 <HintWithIcon text="confirmed file storage / total checked providers (updated hourly by mytonprovider.org)" maxWidth={45} />
               </div>
             </th>
@@ -64,7 +70,7 @@ export function StorageContractsDesktop({
             </th>
             <th>
               <div className="flex items-center">
-                Created At
+                Updated At
               </div>
             </th>
             <th className="w-8">
@@ -111,7 +117,7 @@ export function StorageContractsDesktop({
                   </div>
                 </td>
                 <td>
-                  {buildContractChecksBlock(f.contractChecks || [])}
+                  {buildContractChecksBlock(f.contractChecks || [], f.status)}
                 </td>
                 <td>
                   <div className="flex font-mono items-center">
@@ -141,7 +147,7 @@ export function StorageContractsDesktop({
                 </td>
                 <td>
                   <div className="flex items-center">
-                    {new Date(f.createdAt * 1000).toLocaleString('ru-RU', {
+                    {new Date(f.updatedAt * 1000).toLocaleString('ru-RU', {
                       day: '2-digit',
                       month: '2-digit',
                       year: 'numeric',
@@ -160,26 +166,33 @@ export function StorageContractsDesktop({
                       <Info className="h-5 w-5" />
                     </button>
 
-                    <button
-                      onClick={() => onTopupBalance(f.contractAddress)}
-                      className="p-1 rounded-full text-gray-800 hover:text-gray-500"
-                      title='Topup balance'
-                    >
-                      <Wallet className="h-5 w-5" />
-                    </button>
+                    {
+                      f.status !== "closed" && (
+                        <div className="flex items-center">
+                          <button
+                            onClick={() => onTopupBalance(f.contractAddress)}
+                            className="p-1 rounded-full text-gray-800 hover:text-gray-500"
+                            title='Topup balance'
+                          >
+                            <Wallet className="h-5 w-5" />
+                          </button>
 
-                    <button
-                      onClick={() => onCancelStorage(f.contractAddress)}
-                      className="p-1 rounded-full"
-                      title='Withdraw funds'
-                      disabled={loadingWithdrawalAddress !== null || isLoading}
-                    >
-                      {
-                        loadingWithdrawalAddress === f.contractAddress ?
-                          <RefreshCw className="h-5 w-5 text-blue-500 animate-spin" /> :
-                          <CircleX className="h-5 w-5 text-red-500  hover:text-red-300" />
-                      }
-                    </button>
+                          <button
+                            onClick={() => onCancelStorage(f.contractAddress)}
+                            className="p-1 rounded-full"
+                            title='Withdraw funds'
+                            disabled={loadingWithdrawalAddress !== null || isLoading}
+                          >
+                            {
+                              loadingWithdrawalAddress === f.contractAddress ?
+                                <RefreshCw className="h-5 w-5 text-blue-500 animate-spin" /> :
+                                <CircleX className="h-5 w-5 text-red-500  hover:text-red-300" />
+                            }
+                          </button>
+                        </div>
+                      )
+                    }
+
                   </div>
                 </td>
               </tr>

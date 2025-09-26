@@ -24,7 +24,7 @@ export function useStorageContracts({
   const [reachedEnd, setReachedEnd] = useState(false);
   const [isCheckingNewer, setIsCheckingNewer] = useState(false);
   const cursorRef = useRef<string | undefined>(files.blockchain.lt);
-  const seen = useRef<Set<string>>(new Set(files.list.map(f => f.contractAddress)));
+  const seen = useRef<Set<string>>(new Set(files.list.map(f => f.status + ":" + f.contractAddress)));
   const reqId = useRef(0);
   const newerReqId = useRef(0);
 
@@ -88,10 +88,10 @@ export function useStorageContracts({
       localReachedEnd = end;
 
       // normalize & dedup
-      const fresh = contracts
+      const fresh: UploadFile[] = contracts
         .map(c => ({
           contractAddress: c.address,
-          createdAt: c.createdAt,
+          updatedAt: c.createdAt,
           expiresAt: null,
           info: null,
           contractChecks: [],
@@ -99,9 +99,9 @@ export function useStorageContracts({
           lastContractUpdate: null,
           status: 'uploaded' as const,
         }))
-        .filter(f => !seen.current.has(f.contractAddress));
+        .filter(f => !seen.current.has(f.status + ":" + f.contractAddress));
 
-      fresh.forEach(f => seen.current.add(f.contractAddress));
+      fresh.forEach(f => seen.current.add(f.status + ":" + f.contractAddress));
 
       // if we found something — enrich and stop auto-advance
       if (fresh.length > 0) {
@@ -157,13 +157,13 @@ export function useStorageContracts({
       // Update head candidate
       if (!newHeadLt || BigInt(pageMaxLt) > BigInt(newHeadLt)) newHeadLt = pageMaxLt;
 
-      // Stop if we reached or passed the known head
+      // Stop after processing the crossing page when we reached or passed the known head
       if (headLt && BigInt(pageMinLt) <= BigInt(headLt)) {
         const freshContracts = contracts.filter(c => BigInt(c.txLt) > BigInt(headLt));
         const fresh = freshContracts
           .map(c => ({
             contractAddress: c.address,
-            createdAt: c.createdAt,
+            updatedAt: c.createdAt,
             expiresAt: null,
             info: null,
             contractChecks: [],
@@ -171,8 +171,8 @@ export function useStorageContracts({
             lastContractUpdate: null,
             status: 'uploaded' as const,
           }))
-          .filter(f => !seen.current.has(f.contractAddress));
-        fresh.forEach(f => seen.current.add(f.contractAddress));
+          .filter(f => !seen.current.has(f.status + ":" + f.contractAddress));
+        fresh.forEach(f => seen.current.add(f.status + ":" + f.contractAddress));
         if (fresh.length > 0) {
           const addresses = fresh.map(f => f.contractAddress);
           const enriched = await enrich(addresses, fresh);
@@ -181,27 +181,28 @@ export function useStorageContracts({
         break;
       }
 
-      const fresh = contracts
+      const fresh: UploadFile[]  = contracts
         .map(c => ({
           contractAddress: c.address,
-          createdAt: c.createdAt,
+          updatedAt: c.createdAt,
           expiresAt: null,
           info: null,
           contractChecks: [],
           contractInfo: null,
           lastContractUpdate: null,
-          status: 'uploaded' as const,
+          status: c.opcode === "0x61fff683" ? 'closed' as const : 'uploaded' as const,
         }))
-        .filter(f => !seen.current.has(f.contractAddress));
-      fresh.forEach(f => seen.current.add(f.contractAddress));
+        .filter(f => !seen.current.has(f.status + ":" + f.contractAddress));
+      fresh.forEach(f => seen.current.add(f.status + ":" + f.contractAddress));
       if (fresh.length > 0) {
         const addresses = fresh.map(f => f.contractAddress);
         const enriched = await enrich(addresses, fresh);
         aggregated = enriched.concat(aggregated);
       }
 
+      // Continue until we cross headLt; if no headLt yet, keep a small page limit to avoid long initial scans
       pagesTried += 1;
-      if (end || pagesTried >= 3) break;
+      if (end || (!headLt && pagesTried >= 3)) break;
       await new Promise(r => setTimeout(r, 1100));
     }
 
