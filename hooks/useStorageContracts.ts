@@ -137,11 +137,11 @@ export function useStorageContracts({
     newerReqId.current = reqId.current;
     const myReq = newerReqId.current;
 
-    const headLt = useAppStore.getState().files.blockchain.headLt;
+    const oldHeadLt = useAppStore.getState().files.blockchain.headLt;
     let pageCursor: string | undefined = undefined;
     let pagesTried = 0;
     let aggregated: UploadFile[] = [];
-    let newHeadLt = headLt;
+    let newHeadLt = oldHeadLt;
 
     while (true) {
       const page = await fetchContractsPage(address, pageCursor, pageSize);
@@ -157,31 +157,7 @@ export function useStorageContracts({
       // Update head candidate
       if (!newHeadLt || BigInt(pageMaxLt) > BigInt(newHeadLt)) newHeadLt = pageMaxLt;
 
-      // Stop after processing the crossing page when we reached or passed the known head
-      if (headLt && BigInt(pageMinLt) <= BigInt(headLt)) {
-        const freshContracts = contracts.filter(c => BigInt(c.txLt) > BigInt(headLt));
-        const fresh = freshContracts
-          .map(c => ({
-            contractAddress: c.address,
-            updatedAt: c.createdAt,
-            expiresAt: null,
-            info: null,
-            contractChecks: [],
-            contractInfo: null,
-            lastContractUpdate: null,
-            status: 'uploaded' as const,
-          }))
-          .filter(f => !seen.current.has(f.status + ":" + f.contractAddress));
-        fresh.forEach(f => seen.current.add(f.status + ":" + f.contractAddress));
-        if (fresh.length > 0) {
-          const addresses = fresh.map(f => f.contractAddress);
-          const enriched = await enrich(addresses, fresh);
-          aggregated = enriched.concat(aggregated);
-        }
-        break;
-      }
-
-      const fresh: UploadFile[]  = contracts
+      const fresh: UploadFile[] = contracts
         .map(c => ({
           contractAddress: c.address,
           updatedAt: c.createdAt,
@@ -200,9 +176,13 @@ export function useStorageContracts({
         aggregated = enriched.concat(aggregated);
       }
 
-      // Continue until we cross headLt; if no headLt yet, keep a small page limit to avoid long initial scans
+      // Continue until we cross oldHeadLt; if no oldHeadLt yet, keep a small page limit to avoid long initial scans
       pagesTried += 1;
-      if (end || (!headLt && pagesTried >= 3)) break;
+      if (end
+        || (oldHeadLt && BigInt(pageMinLt) <= BigInt(oldHeadLt))
+        || (!oldHeadLt && pagesTried >= 3)) {
+        break;
+      }
       await new Promise(r => setTimeout(r, 1100));
     }
 

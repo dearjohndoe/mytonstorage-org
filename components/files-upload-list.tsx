@@ -100,7 +100,7 @@ export function FilesUploadList({ files, onRemoveFile, className = "" }: FilesUp
                                         </span>
                                     </div>
                                 </td>
-                                <td>
+                                <td style={{ whiteSpace: "nowrap", minWidth: 100 }}>
                                     <div className="flex items-center">
                                         <span className="text-sm">{printSpace(file.size)}</span>
                                     </div>
