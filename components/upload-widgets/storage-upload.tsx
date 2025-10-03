@@ -103,10 +103,6 @@ export default function StorageUpload() {
       );
     }
 
-    if (size === 0) {
-      return `File is empty.`;
-    }
-
     return null;
   };
 
@@ -340,7 +336,7 @@ export default function StorageUpload() {
         </div>
 
         {/* Configure file details */}
-        <div className={`${isMobile ? 'w-full mb-4' : 'w-1/3 mt-8 ml-4'} p-4 mt-4 flex flex-col border border-gray-200 rounded-lg bg-gray-50`}>
+        <div className={`${isMobile ? 'w-full mb-4' : 'w-1/3 mt-2 ml-4'} p-4 flex flex-col border border-gray-200 rounded-lg bg-gray-50`}>
           <h3 className="text-lg font-medium mb-4">Details</h3>
           <div className="flex-1 flex flex-col">
             <TextField label="Add description:" name="description" />

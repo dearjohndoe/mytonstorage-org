@@ -219,14 +219,13 @@ export async function addFile(file: File, metadata: FileMetadata, setProgress: (
   var status: number | null = null;
   var data: AddedBag | null = null;
 
-  console.info("___1")
   try {
     const response = await axios.post(`${host}/api/v1/files`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
       withCredentials: true,
-      timeout: 1200000, // 20 minutes for large files
-      maxContentLength: 4 * 1024 * 1024 * 1024, // 4 GB max file size
-      maxBodyLength: 4 * 1024 * 1024 * 1024, // 4 GB max body size
+      timeout: 600000, // 10 minutes for large files
+      maxContentLength: 4 << 30, // 4 GB max file size
+      maxBodyLength: 4 << 30, // 4 GB max body size
       onUploadProgress: (progressEvent) => {
         if (progressEvent.total) {
           const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
@@ -234,8 +233,6 @@ export async function addFile(file: File, metadata: FileMetadata, setProgress: (
         }
       }
     });
-
-    console.info("___2")
 
     data = response.data as AddedBag
     status = response.status;
@@ -296,8 +293,8 @@ export async function addFolder(files: File[], metadata: FileMetadata, setProgre
       headers: { 'Content-Type': 'multipart/form-data' },
       withCredentials: true,
       timeout: 600000, // 10 minutes for large files
-      maxContentLength: 10 * 1024 * 1024 * 1024, // 10 GB max file size
-      maxBodyLength: 10 * 1024 * 1024 * 1024, // 10 GB max body size
+      maxContentLength: 4 << 30, // 4 GB max file size
+      maxBodyLength: 4 << 30, // 4 GB max body size
       onUploadProgress: (progressEvent) => {
         if (progressEvent.total) {
           const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
