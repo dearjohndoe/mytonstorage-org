@@ -2,10 +2,11 @@
 
 **[Русская версия](README.ru.md)**
 
-Frontend for https://mytonstorage.org - ...
+Frontend for https://mytonstorage.org
 
-## Getting Started
+**Tech stack:** Next.js, TypeScript, TailwindCSS, TON Connect for wallet integration, Zustand with localStorage persistence.
 
+**Backends:** TonCenter API for transactions list and contracts detailed info, mytonstorage.org backend upload files and manage contracts, mytonprovider.org backend for some providers info.
 
 ### Installation
 
@@ -48,3 +49,7 @@ public/             # Static assets
 ## License
 
 Apache-2.0
+
+
+
+This project was created by order of a TON Foundation community member.

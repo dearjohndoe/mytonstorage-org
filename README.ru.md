@@ -1,9 +1,10 @@
 # mytonstorage.org
 
-Фронтенд для https://mytonstorage.org - ...
+Фронтенд для https://mytonstorage.org
 
-## Начало работы
+**Стек:** Next.js, TypeScript, TailwindCSS, TON Connect для подключения кошелька, Zustand с сохранением состояния в localStorage.
 
+**Бэкенды:** TonCenter API для списка транзакций и детальной информации о контрактах, бэкенд mytonstorage.org для загрузки файлов и управления контрактами, бэкенд mytonprovider.org для информации о провайдерах.
 
 ### Установка
 
@@ -45,3 +46,12 @@ public/             # Статические файлы
 ## Лицензия
 
 Apache-2.0
+
+
+
+Этот проект был создан по заказу участника сообщества TON Foundation.
+
+
+
+
+Этот проект был создан по заказу участника сообщества TON Foundation.
