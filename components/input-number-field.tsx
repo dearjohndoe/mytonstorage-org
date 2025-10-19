@@ -7,11 +7,12 @@ interface NumberFieldProps {
   min?: number
   max?: number
   offValidator?: boolean
+  disabled?: boolean
   onChange: (value: number) => void
   initialValue: number
 }
 
-export function NumberField({ label, min, max, offValidator, onChange, initialValue }: NumberFieldProps) {
+export function NumberField({ label, min, max, offValidator, onChange, initialValue, disabled }: NumberFieldProps) {
   const [input, setInput] = useState<string>(initialValue.toString())
 
   useEffect(() => {
@@ -85,11 +86,13 @@ export function NumberField({ label, min, max, offValidator, onChange, initialVa
           value={input}
           min={min}
           max={max}
+          disabled={disabled}
           onChange={e => handleInputChange(e.target.value)}
           onBlur={handleInputFinish}
           onKeyDown={e => handleKeyDown(e)}
           className={
-            "border bg-gray-100 border-gray-100 rounded px-2 py-2 focus:ring-2 focus:ring-blue-200 outline-none transition-colors w-24 text-center text-gray-700"
+            `border bg-gray-100 border-gray-100 rounded px-2 py-2 focus:ring-2 focus:ring-blue-200 outline-none transition-colors w-24 text-center text-gray-700` +
+            (disabled ? " opacity-50 cursor-not-allowed" : " hover:bg-gray-200")
           }
           autoComplete="off"
         />

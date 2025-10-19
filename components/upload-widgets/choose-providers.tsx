@@ -3,6 +3,7 @@
 import { ListChecks, PackageOpen, RefreshCw } from "lucide-react";
 import React, { useEffect } from "react"
 import { NumberField } from "../input-number-field";
+import { DateField } from "../input-date-field";
 import { getProviders } from "@/lib/thirdparty";
 import { Provider, Providers } from "@/types/mytonstorage";
 import { shuffleProviders } from "@/lib/utils";
@@ -20,7 +21,35 @@ import { ProvidersListMobile } from "./providers-list-mobile";
 import { ProvidersListDesktop } from "./providers-list-desktop";
 
 const defaultInitBalance = 500000000; // 0.5 TON
-const feeMin = 50000000; // 0.05 TON
+const feeMin = 60000000; // 0.06 TON
+const initFee = 10000000; // 0.01 TON
+
+const week = 7;
+const maxStorageDays = 3650;
+
+const getInputDateFromToday = (days: number): string => {
+  const base = new Date();
+  base.setHours(0, 0, 0, 0);
+  base.setDate(base.getDate() + days);
+
+  const local = new Date(base.getTime() - base.getTimezoneOffset() * 60000);
+  return local.toISOString().split("T")[0];
+};
+
+const normalizeStorageDays = (value: number, proofEveryDays: number): number => {
+  if (!Number.isFinite(value)) {
+    return proofEveryDays;
+  }
+
+  value = Math.min(maxStorageDays, Math.max(proofEveryDays, Math.floor(value)));
+  const remainder = value % proofEveryDays;
+  if (remainder !== 0) {
+    value += proofEveryDays - remainder;
+  }
+
+  const normalized = Math.min(maxStorageDays, value);
+  return normalized;
+};
 
 export default function ChooseProviders() {
   const { upload, updateWidgetData } = useAppStore();
@@ -47,6 +76,10 @@ export default function ChooseProviders() {
   const [sortingFilter, setSortingFilter] = React.useState<boolean>(true);
   const [randomFilter, setRandomFilter] = React.useState<boolean>(true);
 
+  const [storageDays, setStorageDays] = React.useState<number>(week * 4);
+  const [storageDate, setStorageDate] = React.useState<string>(() => getInputDateFromToday(week * 4));
+  const [storageDaysVersion, setStorageDaysVersion] = React.useState(0);
+
   useEffect(() => {
     loadProviders();
   }, [widgetData.bagInfo]);
@@ -56,6 +89,12 @@ export default function ChooseProviders() {
       applyFilters();
     }
   }, [allProviders, locationFilter, sortingFilter, randomFilter, selectedProvidersCount]);
+
+  useEffect(() => {
+    const normalized = normalizeStorageDays(storageDays, getMinSpan());
+    updateStoragePeriod(normalized);
+    updatePriceBasedOnDays(normalized);
+  }, [providers]);
 
   const handleLocationFilterChange = (value: boolean) => {
     setLocationFilter(value);
@@ -75,10 +114,6 @@ export default function ChooseProviders() {
       decline: null
     } as ProviderInfo)));
   };
-
-  useEffect(() => {
-    updateMinPrice();
-  }, [providers]);
 
   const filterAndSortProviders = (providersToFilter: Provider[], count: number): Provider[] => {
     let filteredProviders = [...providersToFilter];
@@ -163,8 +198,8 @@ export default function ChooseProviders() {
     setWarn(null);
   };
 
-  const updateMinPrice = () => {
-    const providersPrice = providers.reduceRight((prev, curr) => {
+  const updatePriceBasedOnDays = (selectedDays: number) => {
+    var allProvidersPricePerProof = providers.reduceRight((prev, curr) => {
       var v = curr.offer?.price_per_proof || 0
       if (v !== 0) {
         v += feeMin
@@ -172,10 +207,30 @@ export default function ChooseProviders() {
       return prev + v;
     }, 0);
 
-    const minBalance = Math.max(providersPrice, defaultInitBalance)
-    setInitialBalance(Math.max(minBalance, initialBalance));
-    setMinInitialBalance(minBalance)
+    var pricePerProof = allProvidersPricePerProof + initFee;
+    const payments = Math.ceil(selectedDays / getMinSpan());
+    const totalPrice = Math.max(pricePerProof * payments, defaultInitBalance);
+
+    setInitialBalance(totalPrice);
+    setMinInitialBalance(Math.max(pricePerProof, defaultInitBalance));
   }
+
+  const updateDaysBasedOnPrice = (newInitBalance: number) => {
+    var allProvidersPricePerProof = providers.reduceRight((prev, curr) => {
+      var v = curr.offer?.price_per_proof || 0
+      if (v !== 0) {
+        v += feeMin
+      }
+      return prev + v;
+    }, 0);
+
+    var pricePerProof = allProvidersPricePerProof + initFee;
+    const minSpan = getMinSpan();
+    const coverDays = Math.floor(newInitBalance / pricePerProof) * minSpan;
+
+    const normalized = normalizeStorageDays(coverDays, minSpan);
+    updateStoragePeriod(normalized);
+  };
 
   const addProvider = async (pubkey: string) => {
     if (isLoading) {
@@ -366,6 +421,47 @@ export default function ChooseProviders() {
     setIsLoading(false);
   };
 
+  const updateStoragePeriod = (normalized: number) => {
+    setStorageDate(getInputDateFromToday(normalized));
+    setStorageDays((prev) => {
+      if (prev === normalized) {
+        setStorageDaysVersion((version) => version + 1);
+        return prev;
+      }
+
+      return normalized;
+    });
+  };
+
+  const handleDaysChange = (value: number) => {
+    const normalized = normalizeStorageDays(value, getMinSpan());
+    updateStoragePeriod(normalized);
+    updatePriceBasedOnDays(normalized);
+  };
+
+  const handleDateChange = (daysFromToday: number) => {
+    const normalized = normalizeStorageDays(daysFromToday, getMinSpan());
+    updateStoragePeriod(normalized);
+    updatePriceBasedOnDays(normalized);
+  };
+
+  const computeMinDate = () => getInputDateFromToday(getMinSpan());
+
+  const getMinSpan = (): number => {
+    if (!providers || providers.length === 0) return week;
+
+    var min = Number.MAX_SAFE_INTEGER;
+    providers.map(p => {
+      const spanSeconds = p.provider.min_span || 0;
+      const spanDays = Math.ceil(spanSeconds / (24 * 3600));
+      if (spanDays > week && spanDays < min) {
+        min = spanDays;
+      }
+    });
+
+    return min === Number.MAX_SAFE_INTEGER ? week : min;
+  };
+
   return (
     <div>
       {/* Provider list */}
@@ -400,8 +496,7 @@ export default function ChooseProviders() {
             onChange={setSelectedProvidersCount}
           />
           <button
-            className={`btn flex items-center border rounded px-4 py-2 hover:bg-gray-100 ${
-              isMobile ? 'mt-2 justify-center' : 'mb-4'
+            className={`btn flex items-center border rounded px-4 py-2 hover:bg-gray-100 ${isMobile ? 'mt-2 justify-center' : 'mb-4'
               }`}
             onClick={loadProviders}
             disabled={isLoading}
@@ -477,8 +572,7 @@ export default function ChooseProviders() {
             {
               newProviderPubkey && newProviderPubkey.length === 64 &&
               <button
-                className={`btn text-md flex items-center border rounded px-4 py-2 hover:bg-gray-100 ${
-                  isMobile ? 'mt-2 justify-center' : 'mb-4'
+                className={`btn text-md flex items-center border rounded px-4 py-2 hover:bg-gray-100 ${isMobile ? 'mt-2 justify-center' : 'mb-4'
                   }`}
                 onClick={() => addProvider(newProviderPubkey)}
                 disabled={isLoading || !newProviderPubkey}
@@ -490,24 +584,55 @@ export default function ChooseProviders() {
           </div>
         </div>
 
+
+        {!canContinue ? (
+          <div className="flex flex-col gap-4 mt-6 h-16">
+            <div className={`flex ${isMobile ? 'justify-center' : 'justify-end'} mt-8`}>
+              <button
+                className="btn flex items-center border rounded px-4 py-2 hover:bg-gray-100"
+                onClick={loadOffers}
+                disabled={offersLoading || hasDeclines || isLoading}
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${offersLoading ? 'animate-spin' : ''}`} />
+                Load offers
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4 mt-6 h-16">
+            <div className={`flex justify-center mt-8 text-gray-700`}>
+              <p>
+                Providers and offers are set. You can change storage period and initial balance now.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Storage period */}
-        {/* <div className="m-10">
+        <div className="m-10">
           <div className="flex justify-center items-end gap-4 mt-4">
             <NumberField
+              key={storageDaysVersion}
               label="Set storage period in days"
               initialValue={storageDays}
-              min={secondsToDays(minRange || oneDayInSeconds)}
-              max={3650}
+              min={getMinSpan()}
+              max={maxStorageDays}
+              disabled={isLoading || offersLoading || !canContinue}
               onChange={handleDaysChange}
             />
             <DateField
+              key={`storage-date-${storageDaysVersion}`}
               label="or pick a date"
+              disabled={isLoading || offersLoading || !canContinue}
               onChange={handleDateChange}
               minDate={computeMinDate()}
-              value={computeDateFromDays(storageDays)}
+              value={storageDate}
             />
           </div>
-        </div> */}
+          <div className={`flex justify-center text-sm text-gray-500 text-center ${isMobile ? 'mt-2' : ''}`}>
+            <span>The number of days will always be a multiple of 7 or the minimum value <b>Proof every</b></span>
+          </div>
+        </div>
 
         {/* Price info */}
         <div className={`${isMobile ? 'm-4' : 'm-10'}`}>
@@ -518,31 +643,23 @@ export default function ChooseProviders() {
               min={minInitialBalance / 1_000_000_000}
               max={100}
               offValidator={true}
+              disabled={isLoading || offersLoading || !canContinue}
               onChange={(val) => {
-                setInitialBalance(Math.ceil(val * 1_000_000_000));
+                const newInitBalance = Math.ceil(val * 1_000_000_000);
+                setInitialBalance(newInitBalance);
+                updateDaysBasedOnPrice(newInitBalance);
               }}
             />
           </div>
           <div className={`flex justify-center text-sm text-gray-500 ${isMobile ? 'mt-2' : ''}`}>
-            <span>The minimum for 7 days is {minInitialBalance / 1_000_000_000} TON</span>
+            <span>The absolute minimum is {(minInitialBalance / 1_000_000_000).toFixed(3)} TON</span>
           </div>
         </div>
 
         {/* Go next step */}
-        <div className="flex flex-col gap-4">
-          <div className={`flex ${isMobile ? 'justify-center' : 'justify-end'} mt-8`}>
-            {!canContinue && (
-              <button
-                className="btn flex items-center border rounded px-4 py-2 hover:bg-gray-100"
-                onClick={loadOffers}
-                disabled={offersLoading || hasDeclines || isLoading}
-              >
-                <RefreshCw className={`h-4 w-4 mr-2 ${offersLoading ? 'animate-spin' : ''}`} />
-                Load offers
-              </button>
-            )}
-
-            {canContinue && (
+        {canContinue && (
+          <div className="flex flex-col gap-4">
+            <div className={`flex ${isMobile ? 'justify-center' : 'justify-end'} mt-8`}>
               <button
                 className="btn px-4 py-2 rounded bg-blue-500 text-white"
                 onClick={getDeployTx}
@@ -550,9 +667,9 @@ export default function ChooseProviders() {
               >
                 Confirm and continue
               </button>
-            )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )
