@@ -105,8 +105,6 @@ export function FilesList() {
     const message = {
       address: tx.address,
       amount: tx.amount.toString(),
-      stateInit: tx.state_init,
-      payload: tx.body,
     };
 
     setLoadingTopupAddress(null);
@@ -153,7 +151,6 @@ export function FilesList() {
     const message = {
       address: tx.address,
       amount: tx.amount.toString(),
-      stateInit: tx.state_init,
       payload: tx.body,
     };
 

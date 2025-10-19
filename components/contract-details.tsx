@@ -6,7 +6,7 @@ import { ProviderInfo, StorageContractFull } from "@/types/blockchain";
 import React, { useEffect } from "react";
 import { ErrorComponent } from "./error";
 import { RenderField } from "./render-field";
-import { CircleX, Copy, Info, ListMinus, Loader2, PackageOpen, Pencil, Undo2 } from "lucide-react";
+import { CircleX, Copy, Info, ListMinus, Loader2, PackageOpen, Pencil, RefreshCcw, Undo2 } from "lucide-react";
 import { copyToClipboard, printSpace, shortenString } from "@/lib/utils";
 import { fetchStorageContractFullInfo } from "@/lib/ton/storage-contracts";
 import { TextField } from "./input-text-field";
@@ -131,7 +131,6 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
         } else if (proof.reason === null) {
             return <span className="text-gray-500">N/A</span>;
         }
-        
         return <span className="text-red-600">No</span>;
     }
 
@@ -244,7 +243,6 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
             const message = {
                 address: tx.address,
                 amount: tx.amount.toString(),
-                stateInit: tx.state_init,
                 payload: tx.body,
             };
 
@@ -518,14 +516,25 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                                     </button>
                                 </div>
                             ) : (
-                                <button
-                                    type="button"
-                                    className="flex items-center text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-md text-sm transition-all duration-200 group"
-                                    onClick={() => { setIsEdit(true); }}
-                                >
-                                    <Pencil className="w-4 h-4 mr-1" />
-                                    <span>Edit</span>
-                                </button>
+                                <div className="flex">
+                                    <button
+                                        type="button"
+                                        className="flex items-center text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-md text-sm transition-all duration-200 group"
+                                        onClick={() => { setLocalContractInfo(null); fetchContractInfo(); }}
+                                    >
+                                        <RefreshCcw className="w-4 h-4 mr-1" />
+                                        <span>Reload list</span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        className="flex items-center text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-md text-sm transition-all duration-200 group"
+                                        onClick={() => { setIsEdit(true); }}
+                                    >
+                                        <Pencil className="w-4 h-4 mr-1" />
+                                        <span>Edit</span>
+                                    </button>
+                                </div>
                             )
                         }
                     </div>
