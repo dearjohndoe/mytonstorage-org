@@ -184,6 +184,80 @@ export const shuffleProviders = (providers: Provider[], count: number): Provider
   return result
 }
 
+export const filterAndSortProviders = (
+  providersToFilter: Provider[],
+  count: number,
+  proofPeriodDays: number,
+  locationFilter: boolean,
+  sortingFilter: boolean,
+  randomFilter: boolean
+): Provider[] => {
+  let filteredProviders = [...providersToFilter];
+
+  // Filter by proof period - only keep providers that support the selected period
+  const proofPeriodSeconds = proofPeriodDays * 24 * 3600;
+  filteredProviders = filteredProviders.filter(provider => {
+    return provider.min_span <= proofPeriodSeconds && provider.max_span >= proofPeriodSeconds;
+  });
+
+  if (randomFilter === false) {
+    // Filtering by location/city
+    if (locationFilter === true) {
+      const countriesMap = new Map<string, Provider[]>();
+      filteredProviders.forEach(provider => {
+        const country = provider.location?.country || 'Unknown';
+        if (!countriesMap.has(country)) {
+          countriesMap.set(country, []);
+        }
+        countriesMap.get(country)!.push(provider);
+      });
+
+      filteredProviders = [];
+      for (const countryProviders of countriesMap.values()) {
+        const bestProvider = countryProviders.sort((a, b) => {
+          if (sortingFilter === true) {
+            return (b.rating || 0) - (a.rating || 0);
+          }
+
+          return (b.price || 0) - (a.price || 0);
+        })[0];
+        filteredProviders.push(bestProvider);
+      }
+    } else if (locationFilter === false) {
+      const citiesMap = new Map<string, Provider[]>();
+      filteredProviders.forEach(provider => {
+        const city = provider.location?.city || provider.location?.country || 'Unknown';
+        if (!citiesMap.has(city)) {
+          citiesMap.set(city, []);
+        }
+        citiesMap.get(city)!.push(provider);
+      });
+
+      filteredProviders = [];
+      for (const cityProviders of citiesMap.values()) {
+        const bestProvider = cityProviders.sort((a, b) => {
+          if (sortingFilter === true) {
+            return (b.rating || 0) - (a.rating || 0);
+          }
+
+          return (b.price || 0) - (a.price || 0);
+        })[0];
+        filteredProviders.push(bestProvider);
+      }
+    }
+
+    // Sorting by rating/price
+    if (sortingFilter === true) {
+      filteredProviders.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    } else {
+      filteredProviders.sort((a, b) => (a.price || 0) - (b.price || 0));
+    }
+  }
+
+  // If random
+  return shuffleProviders(filteredProviders, count);
+};
+
 export const shortenString = (key: string, maxLen: number = 10) => {
   if (!key) return null
 

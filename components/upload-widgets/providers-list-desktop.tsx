@@ -9,18 +9,36 @@ import HintWithIcon from '../hint'
 interface ProvidersListDesktopProps {
   providers: ProviderInfo[]
   copiedKey: string | null
+  advanced: boolean
   setCopiedKey: (key: string | null) => void
   removeProvider: (pubkey: string) => void
+}
+
+function normalizeDays(days: number): string {
+  if (days < 90) {
+    return `${days} d`
+  }
+
+  const months = Math.floor(days / 30)
+  return `${months} mo`
+}
+
+function dateRange(start: number, end: number): string {
+  const from = secondsToDays(start)
+  const to = secondsToDays(end)
+
+  return `${normalizeDays(from)} - ${normalizeDays(to)}`
 }
 
 export function ProvidersListDesktop({
   providers,
   copiedKey,
+  advanced,
   setCopiedKey,
   removeProvider
 }: ProvidersListDesktopProps) {
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto relative">
       <table className="ton-table overscroll-x-auto">
         <thead>
           <tr>
@@ -41,21 +59,22 @@ export function ProvidersListDesktop({
             </th>
             <th>
               <div className="flex items-center">
-                Proof every
-              </div>
-            </th>
-            <th>
-              <div className="flex items-center">
-                Price per proof
-                <HintWithIcon text="offered price" maxWidth={18} />
-              </div>
-            </th>
-            <th>
-              <div className="flex items-center">
                 Price
                 <HintWithIcon text="per 200 GB per 30 days" maxWidth={18} />
               </div>
             </th>
+            <th>
+              <div className="flex items-center">Proof every</div>
+            </th>
+            {
+              advanced && (
+                <th>
+                  <div className="flex items-center">
+                    Price per proof
+                  </div>
+                </th>
+              )
+            }
             <th className="w-10"></th>
           </tr>
         </thead>
@@ -65,7 +84,7 @@ export function ProvidersListDesktop({
               <tr key={p.provider.pubkey} className={`group ${index % 2 ? "" : "bg-gray-50"} transition-colors duration-200`}>
                 <td>
                   <div className="flex items-center">
-                    <span className="font-mono text-sm">{shortenString(p.provider.pubkey, 15)}</span>
+                    <span className="font-mono ">{shortenString(p.provider.pubkey, 15)}</span>
                     <button
                       onClick={() => copyToClipboard(p.provider.pubkey, setCopiedKey)}
                       className={`ml-2 transition-colors duration-200
@@ -81,10 +100,10 @@ export function ProvidersListDesktop({
                 <td>
                   {p.provider.location ? (
                     <div className="flex items-center">
-                      <span className="text-sm">{p.provider.location.country}{p.provider.location.city ? `, ${p.provider.location.city}` : ""}</span>
+                      <span className="">{p.provider.location.country}{p.provider.location.city ? `, ${p.provider.location.city}` : ""}</span>
                     </div>
                   ) : (
-                    <span className="text-sm text-gray-500">Unknown</span>
+                    <span className=" text-gray-500">Unknown</span>
                   )}
                 </td>
                 <td>
@@ -95,30 +114,34 @@ export function ProvidersListDesktop({
                 </td>
                 <td>
                   <div className="flex items-center">
+                    {(p.provider.price / 1_000_000_000).toFixed(2)} TON
+                  </div>
+                </td>
+                <td>
+                  <div className="flex items-center">
                     {p.decline ? (
-                      <span className="text-sm text-red-500">{p.decline}</span>
+                      <span className=" text-red-500">{p.decline}</span>
                     ) : (p.offer ? (
-                      <span className="">{secondsToDays(p.offer.offer_span)} days</span>
-                    ) : (
-                      <span></span>
+                      <span className=''>{secondsToDays(p.offer.offer_span)} days</span>
+                    ) : advanced && (
+                      <span className=' text-gray-500'>{dateRange(p.provider.min_span, p.provider.max_span)}</span>
                     )
                     )}
                   </div>
                 </td>
-                <td>
-                  <div className="flex items-center">
-                    {p.offer ? (
-                      <span className="">{(p.offer.price_per_proof / 1_000_000_000).toFixed(4)} TON</span>
-                    ) : (
-                      <span></span>
-                    )}
-                  </div>
-                </td>
-                <td>
-                  <div className="flex items-center">
-                    {(p.provider.price / 1_000_000_000).toFixed(2)} TON
-                  </div>
-                </td>
+                {
+                  advanced && (
+                    <td>
+                      <div className="flex items-center">
+                        {p.offer ? (
+                          <span className="">{(p.offer.price_per_proof / 1_000_000_000).toFixed(4)} TON</span>
+                        ) : (
+                          <span></span>
+                        )}
+                      </div>
+                    </td>
+                  )
+                }
                 <td>
                   <button
                     onClick={() => removeProvider(p.provider.pubkey)}
