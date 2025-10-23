@@ -44,6 +44,7 @@ export type UpdateStorageContract = {
   bag_size: number
   amount: number
   address: string
+  span: number
 }
 
 export type TopupBalance = {

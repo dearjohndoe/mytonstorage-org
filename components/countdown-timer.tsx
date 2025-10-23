@@ -3,6 +3,7 @@
 import React from 'react';
 import { Clock, AlertTriangle } from 'lucide-react';
 import { useCountdown } from '@/hooks/useCountdown';
+import { DAY_SECONDS } from '@/lib/storage-constants';
 
 interface CountdownTimerProps {
   expirationTime: number;
@@ -36,7 +37,7 @@ export function CountdownTimer({ expirationTime, className = '' }: CountdownTime
   const displayTime = timeUnits.slice(0, 2).join(', ');
 
   const getTotalSeconds = () => {
-    return timeLeft.days * 24 * 60 * 60 + 
+    return timeLeft.days * DAY_SECONDS + 
            timeLeft.hours * 60 * 60 + 
            timeLeft.minutes * 60 + 
            timeLeft.seconds;

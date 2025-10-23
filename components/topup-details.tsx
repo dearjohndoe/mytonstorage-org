@@ -33,6 +33,7 @@ export function TopupDetails({ onConfirm, onCancel, isLoading = false }: TopupDe
                     initialValue={topupAmount}
                     min={0.1}
                     max={100}
+                    isFloating={true}
                     offValidator={true}
                     onChange={setTopupAmount}
                 />

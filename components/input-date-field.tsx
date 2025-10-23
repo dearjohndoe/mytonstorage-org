@@ -1,5 +1,6 @@
 "use client"
 
+import { DAY_SECONDS } from "@/lib/storage-constants"
 import React, { useState, useRef, useEffect } from "react"
 
 interface DateFieldProps {
@@ -29,7 +30,7 @@ export function DateField({ label, disabled, onChange, minDate, value }: DateFie
     if (!isNaN(date.getTime())) {
       const today = new Date()
       const timeDiff = date.getTime() - today.getTime()
-      const days = Math.ceil(timeDiff / (1000 * 3600 * 24))
+      const days = Math.ceil(timeDiff / (1000 * DAY_SECONDS))
       onChange(days)
     } else {
       onChange(0)

@@ -1,5 +1,7 @@
 import axios from "axios"
 import { Provider } from "@/types/mytonstorage"
+import { locationStates, sortingStates } from "@/components/filters";
+import { DAY_SECONDS } from "./storage-constants";
 
 
 export const printSpace = (bytes: number | bigint, addSource?: boolean): string => {
@@ -70,31 +72,9 @@ export async function readAllFiles(initialEntries: any[]): Promise<File[]> {
 }
 
 export function secondsToDays(seconds: number): number {
-    return Math.floor(seconds / 86400)
+  return Math.floor(seconds / 86400)
 }
 
-export function formatSpanTime(seconds: number | null, short: boolean): string {
-    if (!seconds) return "—"
-
-    const hours = Math.floor(seconds / 3600)
-    const minutes = Math.floor((seconds % 3600) / 60)
-
-    if (hours >= 24) {
-        const days = Math.floor(hours / 24)
-        if (short) {
-            return `${days}d`
-        }
-
-        const remainingHours = hours % 24
-        return remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`
-    }
-
-    if (hours > 0) {
-        return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`
-    }
-
-    return `${minutes}m`
-}
 
 export const handleError = (err: any): string | null => {
   let error: string | null = null;
@@ -116,62 +96,62 @@ export const handleError = (err: any): string | null => {
       error = `Got error: ${err.message}`;
     }
   }
-  
+
   return error;
 }
 
 export const shuffleProviders = (providers: Provider[], count: number): Provider[] => {
   if (providers.length <= 1) return [...providers]
-  
+
   const hasIntersection = (providers: Provider[]): boolean => {
     if (providers.length <= 1) return true
-    
+
     let maxMinSpan = Math.max(...providers.map(p => p.min_span))
     let minMaxSpan = Math.min(...providers.map(p => p.max_span))
-    
+
     return maxMinSpan <= minMaxSpan
   }
-  
+
   const filterWithIntersection = (candidateProviders: Provider[], maxCount: number): Provider[] => {
     const result: Provider[] = []
-    
+
     for (const provider of candidateProviders) {
       const testGroup = [...result, provider]
       if (hasIntersection(testGroup) && result.length < maxCount) {
         result.push(provider)
       }
     }
-    
+
     return result
   }
-  
+
   const ratings = providers.map(p => p.rating || 0)
   const minRating = Math.min(...ratings)
   const maxRating = Math.max(...ratings)
   const ratingRange = maxRating - minRating || 1
-  
+
   const weighted: { provider: Provider; weight: number }[] = providers.map(provider => {
     const normalizedRating = ((provider.rating || 0) - minRating) / ratingRange
     const weight = Math.max(1, Math.floor(normalizedRating * 9) + 1)
     return { provider, weight }
   })
-  
+
   const pool: Provider[] = []
   weighted.forEach(({ provider, weight }) => {
     for (let i = 0; i < weight; i++) {
       pool.push(provider)
     }
   })
-  
+
   // shuffle
   for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[pool[i], pool[j]] = [pool[j], pool[i]]
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]]
   }
 
   const uniqueProviders: Provider[] = []
   const seen = new Set()
-  
+
   for (const provider of pool) {
     if (!seen.has(provider.pubkey)) {
       seen.add(provider.pubkey)
@@ -179,82 +159,80 @@ export const shuffleProviders = (providers: Provider[], count: number): Provider
     }
   }
 
-  const result = filterWithIntersection(uniqueProviders, count)
-  
-  return result
+  return filterWithIntersection(uniqueProviders, count)
 }
 
 export const filterAndSortProviders = (
   providersToFilter: Provider[],
   count: number,
-  proofPeriodDays: number,
-  locationFilter: boolean,
-  sortingFilter: boolean,
-  randomFilter: boolean
+  proofPeriodDays: number | null,
+  locationFilter: keyof typeof locationStates,
+  sortingFilter: keyof typeof sortingStates,
 ): Provider[] => {
   let filteredProviders = [...providersToFilter];
 
-  // Filter by proof period - only keep providers that support the selected period
-  const proofPeriodSeconds = proofPeriodDays * 24 * 3600;
-  filteredProviders = filteredProviders.filter(provider => {
-    return provider.min_span <= proofPeriodSeconds && provider.max_span >= proofPeriodSeconds;
-  });
-
-  if (randomFilter === false) {
-    // Filtering by location/city
-    if (locationFilter === true) {
-      const countriesMap = new Map<string, Provider[]>();
-      filteredProviders.forEach(provider => {
-        const country = provider.location?.country || 'Unknown';
-        if (!countriesMap.has(country)) {
-          countriesMap.set(country, []);
-        }
-        countriesMap.get(country)!.push(provider);
-      });
-
-      filteredProviders = [];
-      for (const countryProviders of countriesMap.values()) {
-        const bestProvider = countryProviders.sort((a, b) => {
-          if (sortingFilter === true) {
-            return (b.rating || 0) - (a.rating || 0);
-          }
-
-          return (b.price || 0) - (a.price || 0);
-        })[0];
-        filteredProviders.push(bestProvider);
-      }
-    } else if (locationFilter === false) {
-      const citiesMap = new Map<string, Provider[]>();
-      filteredProviders.forEach(provider => {
-        const city = provider.location?.city || provider.location?.country || 'Unknown';
-        if (!citiesMap.has(city)) {
-          citiesMap.set(city, []);
-        }
-        citiesMap.get(city)!.push(provider);
-      });
-
-      filteredProviders = [];
-      for (const cityProviders of citiesMap.values()) {
-        const bestProvider = cityProviders.sort((a, b) => {
-          if (sortingFilter === true) {
-            return (b.rating || 0) - (a.rating || 0);
-          }
-
-          return (b.price || 0) - (a.price || 0);
-        })[0];
-        filteredProviders.push(bestProvider);
-      }
-    }
-
-    // Sorting by rating/price
-    if (sortingFilter === true) {
-      filteredProviders.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-    } else {
-      filteredProviders.sort((a, b) => (a.price || 0) - (b.price || 0));
-    }
+  // Remove out of span range
+  if (proofPeriodDays !== null) {
+    const proofPeriodSeconds = proofPeriodDays * DAY_SECONDS;
+    filteredProviders = filteredProviders.filter(provider => {
+      return provider.min_span <= proofPeriodSeconds && provider.max_span >= proofPeriodSeconds;
+    });
   }
 
-  // If random
+  // Filtering by location/city
+  if (locationFilter === "differentCountries") {
+    const countriesMap = new Map<string, Provider[]>();
+    filteredProviders.forEach(provider => {
+      const country = provider.location?.country || 'Unknown';
+      if (!countriesMap.has(country)) {
+        countriesMap.set(country, []);
+      }
+      countriesMap.get(country)!.push(provider);
+    });
+
+    filteredProviders = [];
+    for (const countryProviders of countriesMap.values()) {
+      const bestProvider = countryProviders.sort((a, b) => {
+        if (sortingFilter === "sortByRating") {
+          return (b.rating || 0) - (a.rating || 0);
+        }
+
+        // sortByPrice
+        return (a.price || 0) - (b.price || 0);
+      })[0];
+      filteredProviders.push(bestProvider);
+    }
+  } else if (locationFilter === "differentCities") {
+    const citiesMap = new Map<string, Provider[]>();
+    filteredProviders.forEach(provider => {
+      const city = provider.location?.city || provider.location?.country || 'Unknown';
+      if (!citiesMap.has(city)) {
+        citiesMap.set(city, []);
+      }
+      citiesMap.get(city)!.push(provider);
+    });
+
+    filteredProviders = [];
+    for (const cityProviders of citiesMap.values()) {
+      const bestProvider = cityProviders.sort((a, b) => {
+        if (sortingFilter === "sortByRating") {
+          return (b.rating || 0) - (a.rating || 0);
+        }
+        // sortByPrice
+        return (a.price || 0) - (b.price || 0);
+      })[0];
+      filteredProviders.push(bestProvider);
+    }
+  }
+  // if locationFilter === "all", no location filtering is applied
+
+  // Sorting by rating/price
+  if (sortingFilter === "sortByRating") {
+    return filteredProviders.sort((a, b) => b.rating - a.rating).slice(0, count);
+  } else if (sortingFilter === "sortByPrice") {
+    return filteredProviders.sort((a, b) => a.price - b.price).slice(0, count);
+  }
+
   return shuffleProviders(filteredProviders, count);
 };
 

@@ -11,6 +11,7 @@ interface PeriodFieldProps {
     isMobile?: boolean
 }
 
+const minProofDays = 7
 const maxProofDays = 365 * 10
 const warnProofDays = 90
 
@@ -48,6 +49,10 @@ export function PeriodField({
     const handleCustomInputChange = (inputValue: string) => {
         setCustomInput(inputValue)
         const numValue = parseInt(inputValue)
+        if (numValue < minProofDays) {
+            return
+        }
+
         if (!isNaN(numValue) && numValue > 0 && numValue <= maxProofDays) {
             onChange(numValue)
         }
@@ -55,9 +60,9 @@ export function PeriodField({
 
     const handleCustomInputBlur = () => {
         const numValue = parseInt(customInput)
-        if (isNaN(numValue) || numValue < 1) {
-            setCustomInput("7")
-            onChange(7)
+        if (isNaN(numValue) || numValue < minProofDays) {
+            setCustomInput(minProofDays.toString())
+            onChange(minProofDays)
         } else if (numValue > maxProofDays) {
             setCustomInput(maxProofDays.toString())
             onChange(maxProofDays)
@@ -102,8 +107,8 @@ export function PeriodField({
                         {isCustom && (
                             <input
                                 type="number"
-                                min="1"
-                                max="365"
+                                min={minProofDays}
+                                max={maxProofDays}
                                 value={customInput}
                                 onChange={(e) => handleCustomInputChange(e.target.value)}
                                 onBlur={handleCustomInputBlur}

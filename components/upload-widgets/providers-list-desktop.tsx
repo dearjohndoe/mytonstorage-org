@@ -63,9 +63,13 @@ export function ProvidersListDesktop({
                 <HintWithIcon text="per 200 GB per 30 days" maxWidth={18} />
               </div>
             </th>
-            <th>
-              <div className="flex items-center">Proof every</div>
-            </th>
+            {
+              advanced && (
+                <th>
+                  <div className="flex items-center">Proofs range</div>
+                </th>
+              )
+            }
             {
               advanced && (
                 <th>
@@ -117,18 +121,22 @@ export function ProvidersListDesktop({
                     {(p.provider.price / 1_000_000_000).toFixed(2)} TON
                   </div>
                 </td>
-                <td>
-                  <div className="flex items-center">
-                    {p.decline ? (
-                      <span className=" text-red-500">{p.decline}</span>
-                    ) : (p.offer ? (
-                      <span className=''>{secondsToDays(p.offer.offer_span)} days</span>
-                    ) : advanced && (
-                      <span className=' text-gray-500'>{dateRange(p.provider.min_span, p.provider.max_span)}</span>
-                    )
-                    )}
-                  </div>
-                </td>
+                {
+                  advanced && (
+                    <td>
+                      <div className="flex items-center">
+                        {p.decline ? (
+                          <span className=" text-red-500">{p.decline}</span>
+                        ) : (p.offer ? (
+                          <span className=''>{secondsToDays(p.offer.offer_span)} days</span>
+                        ) : (
+                          <span className=' text-gray-500'>{dateRange(p.provider.min_span, p.provider.max_span)}</span>
+                        )
+                        )}
+                      </div>
+                    </td>
+                  )
+                }
                 {
                   advanced && (
                     <td>

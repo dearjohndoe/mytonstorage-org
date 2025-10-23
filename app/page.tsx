@@ -182,7 +182,7 @@ function HomeContent() {
               }`}
             onClick={() => setCurrentPage(1)}
           >
-            <span className="hidden sm:inline">Upload new Bag</span>
+            <span className="hidden sm:inline">Bags upload</span>
             <span className="sm:hidden">Upload</span>
           </button>
           <button
