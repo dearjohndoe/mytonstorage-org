@@ -37,6 +37,7 @@ export type InitStorageContract = {
   providers: string[]
   amount: number
   owner_address: string
+  span: number
 }
 
 export type UpdateStorageContract = {
@@ -44,6 +45,7 @@ export type UpdateStorageContract = {
   bag_size: number
   amount: number
   address: string
+  span: number
 }
 
 export type TopupBalance = {

@@ -7,11 +7,13 @@ interface NumberFieldProps {
   min?: number
   max?: number
   offValidator?: boolean
+  isFloating?: boolean
+  disabled?: boolean
   onChange: (value: number) => void
   initialValue: number
 }
 
-export function NumberField({ label, min, max, offValidator, onChange, initialValue }: NumberFieldProps) {
+export function NumberField({ label, min, max, offValidator, isFloating, onChange, initialValue, disabled }: NumberFieldProps) {
   const [input, setInput] = useState<string>(initialValue.toString())
 
   useEffect(() => {
@@ -24,19 +26,12 @@ export function NumberField({ label, min, max, offValidator, onChange, initialVa
       value = max
     }
 
-    setInput(value.toString())
-  }, [initialValue, min, max])
+    setInput(isFloating ? value.toFixed(2) : value.toString())
+  }, [initialValue, min, max, isFloating])
 
   const handleInputChange = (value: string) => {
-    if (offValidator) {
-      if (/^-?\d*[.,]?\d*$/.test(value) || value === "" || value === "-") {
-        setInput(value)
-      }
-      return
-    }
-
-    // Для обычного режима только целые числа
-    if (/^\d*[.,]?\d*$/.test(value) || value === "") {
+    const pattern = offValidator ? /^-?\d*[.,]?\d*$/ : /^\d*[.,]?\d*$/
+    if (pattern.test(value) || value === "" || (offValidator && value === "-")) {
       setInput(value)
     }
   }
@@ -47,7 +42,7 @@ export function NumberField({ label, min, max, offValidator, onChange, initialVa
     const numValue = parseFloat(normalizedInput)
 
     if (!isNaN(numValue)) {
-      let formatted = offValidator ? numValue : Math.floor(numValue)
+      let formatted = isFloating ? numValue : Math.floor(numValue)
 
       if (min !== undefined && formatted < min) {
         formatted = min
@@ -56,7 +51,7 @@ export function NumberField({ label, min, max, offValidator, onChange, initialVa
         formatted = max
       }
 
-      setInput(formatted.toString())
+      setInput(isFloating ? formatted.toFixed(2) : formatted.toString())
       onChange(formatted)
     }
   }
@@ -83,13 +78,15 @@ export function NumberField({ label, min, max, offValidator, onChange, initialVa
           name={randomName}
           id={randomName}
           value={input}
-          min={min}
-          max={max}
+          min={min?.toFixed(2)}
+          max={max?.toFixed(2)}
+          disabled={disabled}
           onChange={e => handleInputChange(e.target.value)}
           onBlur={handleInputFinish}
           onKeyDown={e => handleKeyDown(e)}
           className={
-            "border bg-gray-100 border-gray-100 rounded px-2 py-2 focus:ring-2 focus:ring-blue-200 outline-none transition-colors w-24 text-center text-gray-700"
+            `border bg-gray-100 border-gray-100 rounded px-3 py-2 focus:ring-2 focus:ring-blue-200 outline-none transition-colors w-24 text-center text-gray-700` +
+            (disabled ? " opacity-50 cursor-not-allowed" : " hover:bg-gray-200")
           }
           autoComplete="off"
         />

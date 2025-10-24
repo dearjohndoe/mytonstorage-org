@@ -6,8 +6,8 @@ import { ProviderInfo, StorageContractFull } from "@/types/blockchain";
 import React, { useEffect } from "react";
 import { ErrorComponent } from "./error";
 import { RenderField } from "./render-field";
-import { CircleX, Copy, Info, ListMinus, Loader2, PackageOpen, Pencil, Undo2 } from "lucide-react";
-import { copyToClipboard, printSpace, shortenString } from "@/lib/utils";
+import { CircleX, Copy, Info, ListMinus, Loader2, PackageOpen, Pencil, RefreshCcw, Undo2 } from "lucide-react";
+import { copyToClipboard, printSpace, secondsToDays, shortenString } from "@/lib/utils";
 import { fetchStorageContractFullInfo } from "@/lib/ton/storage-contracts";
 import { TextField } from "./input-text-field";
 import { getOffers, getUpdateTransaction } from "@/lib/api";
@@ -16,6 +16,8 @@ import { Transaction } from "@/lib/types";
 import { useTonConnectUI } from "@tonconnect/ui-react";
 import { safeDisconnect } from '@/lib/ton/safeDisconnect';
 import HintWithIcon from "./hint";
+import { DAY_SECONDS, FEE_UPDATE, WEEK_DAYS } from "@/lib/storage-constants";
+import { PeriodField } from "./input-period-field";
 
 export interface ContractDetailsProps {
     contractAddress: string;
@@ -38,9 +40,25 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
     const [error, setError] = React.useState<string | null>(null);
     const [warn, setWarn] = React.useState<string | null>(null);
     const [copiedKey, setCopiedKey] = React.useState<string | null>(null);
-    const [isEdit, setIsEdit] = React.useState(false);
     const [newPubkey, setNewPubkey] = React.useState<string | null>(null);
+
+    const [isEdit, setIsEdit] = React.useState(false);
     const [editProviders, setEditProviders] = React.useState<providerEdit[] | null>(null);
+    const [proofPeriodDays, setProofPeriodDays] = React.useState<number>(WEEK_DAYS);
+    const [needOffers, setNeedOffers] = React.useState<boolean>(false);
+    const [offersLoading, setOffersLoading] = React.useState<boolean>(false);
+
+    useEffect(() => {
+        if (editProviders) {
+            const needOffers = editProviders.some(p => {
+                return p.state !== "deleted" && (
+                    p.provider.maxSpan === 0 || 
+                    p.provider.maxSpan !== proofPeriodDays * DAY_SECONDS
+                );
+            });
+            setNeedOffers(needOffers);
+        }
+    }, [editProviders, proofPeriodDays]);
 
     useEffect(() => {
         let isCached = false;
@@ -131,7 +149,6 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
         } else if (proof.reason === null) {
             return <span className="text-gray-500">N/A</span>;
         }
-        
         return <span className="text-red-600">No</span>;
     }
 
@@ -155,10 +172,69 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
             state: "same",
             provider
         })) || null);
+
+        const p = info.providers.providers.find(p => p.maxSpan > 0);
+        setProofPeriodDays(p ? secondsToDays(p.maxSpan) : WEEK_DAYS);
     };
+
+    const getNewOffers = async () => {
+        if (isLoading || !localContractInfo) {
+            return;
+        }
+
+        setOffersLoading(true);
+        setError(null);
+
+        const providers = editProviders?.map(p => p.provider.cid) || [];
+
+        try {
+            const resp = await getOffers(providers, "", Number(localContractInfo!.info.fileSize), proofPeriodDays * DAY_SECONDS);
+            if (resp.status === 401) {
+                setError('Unauthorized. Logging out.');
+                safeDisconnect(tonConnectUI);
+                setOffersLoading(false);
+                return;
+            }
+            const offers = resp.data as Offers;
+            if (offers?.declines?.length > 0) {
+                setError("Provider declined the offer");
+            } else if (offers?.offers?.length > 0 && editProviders && editProviders.length > 0) {
+                const updated: providerEdit[] = offers.offers.map(o => {
+                    const existing = editProviders.find(ep => ep.provider.cid.toLowerCase() === o.provider.key.toLowerCase());
+                    if (!existing) {
+                        return null;
+                    }
+                    
+                    return {
+                        state: existing.state,
+                        provider: {
+                            ...existing.provider,
+                            ratePerMB: o.price_per_mb ?? 0,
+                            maxSpan: o.offer_span ?? 0,
+                        }
+                    } as providerEdit;
+                }).filter(p => p !== null) as providerEdit[];
+
+
+                setEditProviders(updated);
+            } else if (resp && resp.error) {
+                console.error("Failed to load providers:", resp.error);
+                setError(resp.error);
+            } else {
+                setError("Unknown error");
+            }
+        } finally {
+            setOffersLoading(false);
+        }
+    }
 
     const addProvider = async (pubkey: string | null) => {
         if (isLoadingContractInfo || !localContractInfo || !pubkey) {
+            return;
+        }
+
+        if (pubkey.length !== 64) {
+            setError("Invalid public key");
             return;
         }
 
@@ -168,46 +244,22 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
             return;
         }
 
-        setIsLoading(true);
         setError(null);
 
-        try {
-            const resp = await getOffers([pubkey], "", Number(localContractInfo!.info.fileSize));
-            if (resp.status === 401) {
-                setError('Unauthorized. Logging out.');
-                safeDisconnect(tonConnectUI);
-                setIsLoading(false);
-                return;
-            }
-            const offers = resp.data as Offers;
-            console.info("Offers", offers);
-            if (offers?.declines?.length > 0) {
-                setError("Provider declined the offer");
-            } else if (offers?.offers?.length > 0) {
-                const offer = offers.offers[0];
-                setEditProviders(prev => [
-                    ...(prev ?? []),
-                    {
-                        state: "new",
-                        provider: {
-                            cid: pubkey,
-                            ratePerMB: offer?.price_per_mb ?? 0,
-                            maxSpan: offer?.offer_span ?? 0,
-                            lastProof: 0,
-                            nextProofByte: "",
-                            nonce: "",
-                        },
-                    },
-                ]);
-            } else if (resp && resp.error) {
-                console.error("Failed to load providers:", resp.error);
-                setError(resp.error);
-            } else {
-                setError("Unknown error");
-            }
-        } finally {
-            setIsLoading(false);
-        }
+        setEditProviders(prev => [
+            ...(prev ?? []),
+            {
+                state: "new",
+                provider: {
+                    cid: pubkey,
+                    ratePerMB: 0,
+                    maxSpan: 0,
+                    lastProof: 0,
+                    nextProofByte: "",
+                    nonce: "",
+                },
+            },
+        ]);
     }
 
     const applyProvidersChanges = async () => {
@@ -218,14 +270,13 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
         setIsLoading(true);
         setError(null);
 
-        console.info("Applying providers changes:", editProviders);
-
         try {
             const resp = await getUpdateTransaction({
                 providers: editProviders.filter(p => p.state !== "deleted").map(p => p.provider.cid),
                 bag_size: Number(localContractInfo!.info.fileSize),
-                amount: 300_000_000,
+                amount: FEE_UPDATE,
                 address: contractAddress,
+                span: editProviders[0]?.provider.maxSpan | 0,
             });
             if (resp.status === 401) {
                 setError('Unauthorized. Logging out.');
@@ -244,11 +295,9 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
             const message = {
                 address: tx.address,
                 amount: tx.amount.toString(),
-                stateInit: tx.state_init,
                 payload: tx.body,
             };
 
-            console.log("Sending update transaction:", message);
             try {
                 const wResp = await tonConnectUI.sendTransaction({
                     validUntil: Math.floor(Date.now() / 1000) + 60,
@@ -281,7 +330,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                     <td>
                         <div className="flex items-center font-medium">
                             <p>
-                                {shortenString(provider.provider.cid, 8)}
+                                {shortenString(provider.provider.cid.toLowerCase(), 8)}
                             </p>
                             <button
                                 onClick={() => copyToClipboard(provider.provider.cid, setCopiedKey)}
@@ -302,7 +351,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                     </td>
                     <td>
                         <div className="flex items-center">
-                            {provider.provider.maxSpan}
+                            {secondsToDays(provider.provider.maxSpan)} days
                         </div>
                     </td>
                     <td>
@@ -340,7 +389,6 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                     <td>
                         <button
                             onClick={() => {
-                                console.info(provider)
                                 if (provider.state === "new") {
                                     setEditProviders(editProviders.filter(p => p.provider.cid !== provider.provider.cid));
                                     return;
@@ -387,7 +435,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                         <td>
                             <div className="flex items-center font-medium">
                                 <p>
-                                    {shortenString(provider.cid, 8)}
+                                    {shortenString(provider.cid.toLowerCase(), 8)}
                                 </p>
                                 <button
                                     onClick={() => copyToClipboard(provider.cid, setCopiedKey)}
@@ -508,24 +556,52 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                                         {/* <Cancel className="w-4 h-4 mr-1" /> */}
                                         <span>Cancel</span>
                                     </button>
+
+                                    {
+                                        needOffers ? (
+                                            <button
+                                                type="button"
+                                                className="flex items-center text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-md text-sm transition-all duration-200 group"
+                                                onClick={getNewOffers}
+                                                disabled={offersLoading || isLoading}
+                                            >
+                                                {offersLoading ? (
+                                                    <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                                ) : null}
+                                                <span>Get Offers</span>
+                                            </button>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                className="flex items-center text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-md text-sm transition-all duration-200 group"
+                                                onClick={applyProvidersChanges}
+                                                disabled={isLoading}
+                                            >
+                                                <span>Apply</span>
+                                            </button>
+                                        )
+                                    }
+                                </div>
+                            ) : (
+                                <div className="flex">
                                     <button
                                         type="button"
                                         className="flex items-center text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-md text-sm transition-all duration-200 group"
-                                        onClick={applyProvidersChanges}
+                                        onClick={() => { setLocalContractInfo(null); fetchContractInfo(); }}
                                     >
-                                        {/* <Pencil className="w-4 h-4 mr-1" /> */}
-                                        <span>Apply</span>
+                                        <RefreshCcw className="w-4 h-4 mr-1" />
+                                        <span>Reload list</span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        className="flex items-center text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-md text-sm transition-all duration-200 group"
+                                        onClick={() => { setIsEdit(true); }}
+                                    >
+                                        <Pencil className="w-4 h-4 mr-1" />
+                                        <span>Edit</span>
                                     </button>
                                 </div>
-                            ) : (
-                                <button
-                                    type="button"
-                                    className="flex items-center text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-md text-sm transition-all duration-200 group"
-                                    onClick={() => { setIsEdit(true); }}
-                                >
-                                    <Pencil className="w-4 h-4 mr-1" />
-                                    <span>Edit</span>
-                                </button>
                             )
                         }
                     </div>
@@ -608,27 +684,45 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                         </div>
                     )}
 
-                    <div className="flex justify-center items-end gap-4 mt-8">
-                        <TextField
-                            label="Add custom provider"
-                            onChange={(value) => { setNewPubkey(value) }}
-                            placeholder="Pubkey"
-                            disabled={!isEdit}
-                        />
-                        <button
-                            className={`btn text-md flex items-center border rounded px-4 py-2 mb-4 ${isEdit ? 'hover:bg-gray-100' : 'opacity-50 cursor-default'}`}
-                            onClick={() => { addProvider(newPubkey) }}
-                            disabled={!isEdit}
-                        >
-                            {
-                                isLoading ? <Loader2 className="h-4 w-4 mr-2" /> : <PackageOpen className="h-4 w-4 mr-2" />
-                            }
+                    {
+                        isEdit && (
+                            <div>
+                                {/* Add provider */}
+                                <div className="flex justify-center items-end gap-4 mt-8">
+                                    <TextField
+                                        label="Add custom provider"
+                                        onChange={(value) => { setNewPubkey(value) }}
+                                        placeholder="Pubkey"
+                                        disabled={!isEdit}
+                                    />
+                                    <button
+                                        className={`btn text-md flex items-center border rounded px-4 py-2 mb-4 ${isEdit ? 'hover:bg-gray-100' : 'opacity-50 cursor-default'}`}
+                                        onClick={() => { addProvider(newPubkey) }}
+                                        disabled={!isEdit}
+                                    >
+                                        {
+                                            isLoading ? <Loader2 className="h-4 w-4 mr-2" /> : <PackageOpen className="h-4 w-4 mr-2" />
+                                        }
+                                        Load info
+                                    </button>
+                                </div>
 
-                            Load info
-                        </button>
-                    </div>
+                                {/* Proof period */}
+                                <div className="mt-4 mb-2">
+                                    <PeriodField
+                                        label="Reset storage proof period"
+                                        suffix="days"
+                                        value={proofPeriodDays}
+                                        onChange={setProofPeriodDays}
+                                        disabled={isLoading || offersLoading}
+                                        isMobile={false}
+                                    />
+                                </div>
+                            </div>
+                        )
+                    }
                 </div>
-            </div>
+            </div >
 
             <br />
             {/* Storage info */}

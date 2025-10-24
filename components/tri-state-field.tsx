@@ -3,26 +3,27 @@ import React from "react"
 interface TriStateFieldProps {
   states: string[]
   colors: string[]
-  value: boolean
-  disabled: boolean
-  onChange: (value: boolean) => void
+  value: number // 0, 1, или 2 для трёх состояний
+  onChange: (value: number) => void
+  disabled?: boolean
 }
 
-export function ThreeStateField({ states, colors, value, disabled, onChange }: TriStateFieldProps) {
-  if (states.length != 3 || colors.length != 3) {
-    throw new Error("Invalid states array");
+export function ThreeStateField({ states, colors, value, onChange, disabled = false }: TriStateFieldProps) {
+  if (states.length !== 3 || colors.length !== 3) {
+    throw new Error("Invalid states array: must contain exactly 3 elements");
   }
 
-  const nextValue = !value
-  const display = disabled ? states[2] : value ? states[0] : states[1]
-  const color = disabled ? colors[2] : value ? colors[0] : colors[1]
+  const nextValue = (value + 1) % 3
+  const display = states[value]
+  const color = disabled ? "bg-gray-300" : colors[value]
 
   return (
     <div className="items-center gap-2 mt-2">
       <button
         type="button"
-        className={`px-3 py-1 rounded-full text-sm font-medium ${color} text-gray-700`}
-        onClick={() => onChange(nextValue)}
+        className={`px-3 py-1 rounded-full text-sm font-medium ${color} text-gray-700 transition-colors ${disabled ? 'cursor-not-allowed opacity-60' : 'hover:opacity-80'}`}
+        onClick={() => !disabled && onChange(nextValue)}
+        disabled={disabled}
       >
         {display}
       </button>

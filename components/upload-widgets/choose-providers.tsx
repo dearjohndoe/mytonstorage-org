@@ -3,9 +3,10 @@
 import { ListChecks, PackageOpen, RefreshCw } from "lucide-react";
 import React, { useEffect } from "react"
 import { NumberField } from "../input-number-field";
+import { PeriodField } from "../input-period-field";
 import { getProviders } from "@/lib/thirdparty";
 import { Provider, Providers } from "@/types/mytonstorage";
-import { shuffleProviders } from "@/lib/utils";
+import { filterAndSortProviders } from "@/lib/utils";
 import { TextField } from "../input-text-field";
 import { useAppStore } from "@/store/useAppStore";
 import { getDeployTransaction, getOffers } from "@/lib/api";
@@ -13,14 +14,12 @@ import { InitStorageContract, ProviderInfo, Transaction } from "@/lib/types";
 import { Offers, ProviderDecline } from "@/types/files";
 import { useTonAddress, useTonConnectUI } from '@tonconnect/ui-react';
 import { safeDisconnect } from '@/lib/ton/safeDisconnect';
-import { ThreeStateField } from "../tri-state-field";
-import { TwoStateField } from "../two-state-field";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { ProvidersListMobile } from "./providers-list-mobile";
 import { ProvidersListDesktop } from "./providers-list-desktop";
-
-const defaultInitBalance = 500000000; // 0.5 TON
-const feeMin = 50000000; // 0.05 TON
+import { FiltersSection, locationStates, sortingStates } from "../filters";
+import { StoragePeriodBalance } from "./storage-period-balance";
+import { DAY_SECONDS, WEEK_DAYS } from "@/lib/storage-constants";
 
 export default function ChooseProviders() {
   const { upload, updateWidgetData } = useAppStore();
@@ -37,108 +36,70 @@ export default function ChooseProviders() {
   const [selectedProvidersCount, setSelectedProvidersCount] = React.useState(3);
   const [newProviderPubkey, setNewProviderPubkey] = React.useState("");
   const [copiedKey, setCopiedKey] = React.useState<string | null>(null);
-  const [initialBalance, setInitialBalance] = React.useState<number>(defaultInitBalance);
-  const [minInitialBalance, setMinInitialBalance] = React.useState<number>(defaultInitBalance);
+  const [initialBalance, setInitialBalance] = React.useState<number>(0);
   const [hasDeclines, setHasDeclines] = React.useState<boolean>(false);
   const [canContinue, setCanContinue] = React.useState<boolean>(false);
 
+  const [locationFilter, setLocationFilter] = React.useState<keyof typeof locationStates>("differentCountries");
+  const [sortingFilter, setSortingFilter] = React.useState<keyof typeof sortingStates>("noSorting");
+
   const [allProviders, setAllProviders] = React.useState<Provider[]>([]);
-  const [locationFilter, setLocationFilter] = React.useState<boolean>(true);
-  const [sortingFilter, setSortingFilter] = React.useState<boolean>(true);
-  const [randomFilter, setRandomFilter] = React.useState<boolean>(true);
+
+  const [advanced, setAdvanced] = React.useState(false);
+
+  const [proofPeriodDays, setProofPeriodDays] = React.useState<number>(WEEK_DAYS);   // one for all providers
 
   useEffect(() => {
     loadProviders();
   }, [widgetData.bagInfo]);
 
   useEffect(() => {
+    setProofPeriodDays(WEEK_DAYS);
+  }, [advanced]);
+
+  useEffect(() => {
     if (allProviders.length > 0) {
       applyFilters();
     }
-  }, [allProviders, locationFilter, sortingFilter, randomFilter, selectedProvidersCount]);
+  }, [allProviders, locationFilter, sortingFilter, selectedProvidersCount]);
 
-  const handleLocationFilterChange = (value: boolean) => {
-    setLocationFilter(value);
-    setRandomFilter(false);
+  useEffect(() => {
+    if (!isLoading) {
+      loadProviders();
+    }
+  }, [locationFilter, sortingFilter, selectedProvidersCount]);
+
+  useEffect(() => {
+    if (allProviders.length > 0) {
+      const proofPeriodSec = proofPeriodDays * DAY_SECONDS;
+      const hasProvidersToFilter = providers.find(p => p.provider.min_span >= proofPeriodSec || p.provider.max_span <= proofPeriodSec);
+      if (hasProvidersToFilter) {
+        applyFilters();
+      }
+    }
+  }, [proofPeriodDays]);
+
+  const handleLocationFilterChange = (newLocation: keyof typeof locationStates) => {
+    setLocationFilter(newLocation);
   };
 
-  const handleSortingFilterChange = (value: boolean) => {
-    setSortingFilter(value);
-    setRandomFilter(false);
+  const handleSortingFilterChange = (newSorting: keyof typeof sortingStates) => {
+    setSortingFilter(newSorting);
   };
 
   const applyFilters = () => {
-    const filteredProviders = filterAndSortProviders(allProviders, selectedProvidersCount);
+    const filteredProviders = filterAndSortProviders(
+      allProviders,
+      selectedProvidersCount,
+      proofPeriodDays,
+      locationFilter,
+      sortingFilter
+    );
     setProviders(filteredProviders.map(provider => ({
       provider,
       offer: null,
       decline: null
     } as ProviderInfo)));
-  };
-
-  useEffect(() => {
-    updateMinPrice();
-  }, [providers]);
-
-  const filterAndSortProviders = (providersToFilter: Provider[], count: number): Provider[] => {
-    let filteredProviders = [...providersToFilter];
-
-    if (randomFilter === false) {
-      // Filtering by location/city
-      if (locationFilter === true) {
-        const countriesMap = new Map<string, Provider[]>();
-        filteredProviders.forEach(provider => {
-          const country = provider.location?.country || 'Unknown';
-          if (!countriesMap.has(country)) {
-            countriesMap.set(country, []);
-          }
-          countriesMap.get(country)!.push(provider);
-        });
-
-        filteredProviders = [];
-        for (const countryProviders of countriesMap.values()) {
-          const bestProvider = countryProviders.sort((a, b) => {
-            if (sortingFilter === true) {
-              return (b.rating || 0) - (a.rating || 0);
-            }
-
-            return (b.price || 0) - (a.price || 0);
-          })[0];
-          filteredProviders.push(bestProvider);
-        }
-      } else if (locationFilter === false) {
-        const citiesMap = new Map<string, Provider[]>();
-        filteredProviders.forEach(provider => {
-          const city = provider.location?.city || provider.location?.country || 'Unknown';
-          if (!citiesMap.has(city)) {
-            citiesMap.set(city, []);
-          }
-          citiesMap.get(city)!.push(provider);
-        });
-
-        filteredProviders = [];
-        for (const cityProviders of citiesMap.values()) {
-          const bestProvider = cityProviders.sort((a, b) => {
-            if (sortingFilter === true) {
-              return (b.rating || 0) - (a.rating || 0);
-            }
-
-            return (b.price || 0) - (a.price || 0);
-          })[0];
-          filteredProviders.push(bestProvider);
-        }
-      }
-
-      // Sorting by rating/price
-      if (sortingFilter === true) {
-        filteredProviders.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-      } else {
-        filteredProviders.sort((a, b) => (a.price || 0) - (b.price || 0));
-      }
-    }
-
-    // If random
-    return shuffleProviders(filteredProviders, count);
   };
 
   useEffect(() => {
@@ -162,20 +123,6 @@ export default function ChooseProviders() {
     setProviders((prev) => prev.filter((p) => p.provider.pubkey !== pubkey));
     setWarn(null);
   };
-
-  const updateMinPrice = () => {
-    const providersPrice = providers.reduceRight((prev, curr) => {
-      var v = curr.offer?.price_per_proof || 0
-      if (v !== 0) {
-        v += feeMin
-      }
-      return prev + v;
-    }, 0);
-
-    const minBalance = Math.max(providersPrice, defaultInitBalance)
-    setInitialBalance(Math.max(minBalance, initialBalance));
-    setMinInitialBalance(minBalance)
-  }
 
   const addProvider = async (pubkey: string) => {
     if (isLoading) {
@@ -217,6 +164,7 @@ export default function ChooseProviders() {
     }
 
     setIsLoading(false);
+    setNewProviderPubkey("");
   }
 
   const loadOffers = async () => {
@@ -239,7 +187,7 @@ export default function ChooseProviders() {
 
     setOffersLoading(true);
 
-    const resp = await getOffers(providers.map(p => p.provider.pubkey), widgetData!.bagInfo!.bag_id, 0);
+    const resp = await getOffers(providers.map(p => p.provider.pubkey), widgetData!.bagInfo!.bag_id, 0, proofPeriodDays * DAY_SECONDS);
     if (resp.status === 401) {
       setError('Unauthorized. Logging out.');
       safeDisconnect(tonConnectUI);
@@ -303,6 +251,7 @@ export default function ChooseProviders() {
         }),
         amount: initialBalance,
         owner_address: userAddress,
+        span: proofPeriodDays * DAY_SECONDS,
       } as InitStorageContract;
       const resp = await getDeployTransaction(req);
       if (resp.status === 401) {
@@ -332,12 +281,6 @@ export default function ChooseProviders() {
     }
   }
 
-  useEffect(() => {
-    if (!isLoading) {
-      loadProviders();
-    }
-  }, [locationFilter, sortingFilter, randomFilter, selectedProvidersCount]);
-
   const loadProviders = async () => {
     if (isLoading) {
       return;
@@ -357,7 +300,11 @@ export default function ChooseProviders() {
     const prv = resp.data as Providers;
     if (prv) {
       console.info("Loaded providers:", prv);
-      setAllProviders(prv.providers);
+      if (prv.providers.length === allProviders.length) {
+        applyFilters();
+      } else {
+        setAllProviders(prv.providers);
+      }
     } else if (resp && resp.error) {
       console.error("Failed to load providers:", resp.error);
       setError(resp.error);
@@ -397,11 +344,11 @@ export default function ChooseProviders() {
             initialValue={selectedProvidersCount}
             min={1}
             max={256}
+            isFloating={false}
             onChange={setSelectedProvidersCount}
           />
           <button
-            className={`btn flex items-center border rounded px-4 py-2 hover:bg-gray-100 ${
-              isMobile ? 'mt-2 justify-center' : 'mb-4'
+            className={`btn flex items-center border rounded px-4 py-2 hover:bg-gray-100 ${isMobile ? 'mt-2 justify-center' : 'mb-4'
               }`}
             onClick={loadProviders}
             disabled={isLoading}
@@ -412,37 +359,68 @@ export default function ChooseProviders() {
         </div>
 
         {/* Filters */}
-        <div className={isMobile ? 'mt-6' : ''}>
-          <p className="text-center text-gray-700 justify-self-start mt-4">
-            Filters:
-          </p>
-          <div className={`flex ${isMobile ? 'gap-4' : ' gap-16'} flex-wrap items-center justify-center items-end`}>
-            <ThreeStateField
-              states={["From different Countries", "From different Cities", "Any Location"]}
-              colors={["bg-blue-300", "bg-blue-300", "bg-gray-200"]}
-              value={locationFilter}
-              disabled={randomFilter}
-              onChange={handleLocationFilterChange}
-            />
-            <ThreeStateField
-              states={["Sort by Rating", "Sort by Price", "No Sorting"]}
-              colors={["bg-blue-300", "bg-blue-300", "bg-gray-200"]}
-              value={sortingFilter}
-              disabled={randomFilter}
-              onChange={handleSortingFilterChange}
-            />
-            <TwoStateField
-              states={["Random", "Deterministic"]}
-              colors={["bg-yellow-300", "bg-gray-200"]}
-              value={randomFilter}
-              onChange={setRandomFilter}
-            />
-          </div>
-        </div>
+        <FiltersSection
+          locationFilter={locationFilter}
+          sortingFilter={sortingFilter}
+          onLocationFilterChange={handleLocationFilterChange}
+          onSortingFilterChange={handleSortingFilterChange}
+          isMobile={isMobile}
+        />
 
-        <div className="mt-6">
+        <div className="mt-6 relative">
           {!isLoading && providers.length > 0 && (
             <>
+              <div className="flex justify-end -mb-0 relative z-10">
+                <button
+                  onClick={() => {
+                    setProofPeriodDays(WEEK_DAYS);
+                    setAdvanced(!advanced);
+                  }}
+                  disabled={isLoading || offersLoading || canContinue}
+                  className="absolute -top-6 right-0 text-sm text-gray-600 hover:text-gray-800 disabled:cursor-not-allowed"
+                >
+                  {advanced ? "[ hide advanced options ]" : "[ show advanced options ]"}
+                </button>
+              </div>
+
+              {
+                advanced && (
+                  <div className="rounded-lg border bg-gray-50 border-gray-50">
+                    {/* Proof period selector */}
+                    <div className="mt-4 mb-2">
+                      <PeriodField
+                        label="Storage proof each"
+                        suffix="days"
+                        value={proofPeriodDays}
+                        onChange={setProofPeriodDays}
+                        disabled={isLoading || offersLoading}
+                        isMobile={isMobile ?? false}
+                      />
+                    </div>
+
+                    <div className={`flex ${isMobile ? 'flex-col' : 'justify-center items-end'} gap-4 mt-2`}>
+                      <TextField
+                        label="Add custom provider"
+                        onChange={(value) => setNewProviderPubkey(value)}
+                        placeholder="Pubkey"
+                      />
+                      {
+                        newProviderPubkey && newProviderPubkey.length === 64 &&
+                        <button
+                          className={`btn text-md flex items-center border rounded px-4 py-2 hover:bg-gray-100 ${isMobile ? 'mt-2 justify-center' : 'mb-4'
+                            }`}
+                          onClick={() => addProvider(newProviderPubkey)}
+                          disabled={isLoading || !newProviderPubkey}
+                        >
+                          <PackageOpen className="h-4 w-4 mr-2" />
+                          Load info
+                        </button>
+                      }
+                    </div>
+                  </div>
+                )
+              }
+
               {isMobile ? (
                 <ProvidersListMobile
                   providers={providers}
@@ -454,6 +432,7 @@ export default function ChooseProviders() {
                 <ProvidersListDesktop
                   providers={providers}
                   copiedKey={copiedKey}
+                  advanced={advanced}
                   setCopiedKey={setCopiedKey}
                   removeProvider={removeProvider}
                 />
@@ -467,71 +446,36 @@ export default function ChooseProviders() {
               </div>
             </>
           )}
-
-          <div className={`flex ${isMobile ? 'flex-col' : 'justify-center items-end'} gap-4 mt-8`}>
-            <TextField
-              label="Add custom provider"
-              onChange={(value) => setNewProviderPubkey(value)}
-              placeholder="Pubkey"
-            />
-            {
-              newProviderPubkey && newProviderPubkey.length === 64 &&
-              <button
-                className={`btn text-md flex items-center border rounded px-4 py-2 hover:bg-gray-100 ${
-                  isMobile ? 'mt-2 justify-center' : 'mb-4'
-                  }`}
-                onClick={() => addProvider(newProviderPubkey)}
-                disabled={isLoading || !newProviderPubkey}
-              >
-                <PackageOpen className="h-4 w-4 mr-2" />
-                Load info
-              </button>
-            }
-          </div>
         </div>
 
-        {/* Storage period */}
-        {/* <div className="m-10">
-          <div className="flex justify-center items-end gap-4 mt-4">
-            <NumberField
-              label="Set storage period in days"
-              initialValue={storageDays}
-              min={secondsToDays(minRange || oneDayInSeconds)}
-              max={3650}
-              onChange={handleDaysChange}
-            />
-            <DateField
-              label="or pick a date"
-              onChange={handleDateChange}
-              minDate={computeMinDate()}
-              value={computeDateFromDays(storageDays)}
-            />
-          </div>
-        </div> */}
-
-        {/* Price info */}
-        <div className={`${isMobile ? 'm-4' : 'm-10'}`}>
-          <div className={`flex justify-center items-end gap-4 mt-4`}>
-            <NumberField
-              label="Init balance"
-              initialValue={initialBalance / 1_000_000_000}
-              min={minInitialBalance / 1_000_000_000}
-              max={100}
-              offValidator={true}
-              onChange={(val) => {
-                setInitialBalance(Math.ceil(val * 1_000_000_000));
-              }}
-            />
-          </div>
-          <div className={`flex justify-center text-sm text-gray-500 ${isMobile ? 'mt-2' : ''}`}>
-            <span>The minimum for 7 days is {minInitialBalance / 1_000_000_000} TON</span>
-          </div>
-        </div>
+        {/* Storage period and balance */}
+        <StoragePeriodBalance
+          proofPeriodDays={proofPeriodDays}
+          providers={providers}
+          initialStorageDays={WEEK_DAYS * 4}
+          disabled={isLoading || offersLoading}
+          isMobile={isMobile ?? false}
+          onBalanceChange={(balance) => {
+            setInitialBalance(balance);
+          }}
+        />
 
         {/* Go next step */}
-        <div className="flex flex-col gap-4">
-          <div className={`flex ${isMobile ? 'justify-center' : 'justify-end'} mt-8`}>
-            {!canContinue && (
+        {canContinue ? (
+          <div className="flex flex-col gap-4">
+            <div className={`flex ${isMobile ? 'justify-center' : 'justify-end'} mt-8`}>
+              <button
+                className="btn px-4 py-2 rounded bg-blue-500 text-white"
+                onClick={getDeployTx}
+                disabled={hasDeclines || isLoading}
+              >
+                Confirm and continue
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4 mt-6 h-16">
+            <div className={`flex ${isMobile ? 'justify-center' : 'justify-end'} mt-8`}>
               <button
                 className="btn flex items-center border rounded px-4 py-2 hover:bg-gray-100"
                 onClick={loadOffers}
@@ -540,19 +484,9 @@ export default function ChooseProviders() {
                 <RefreshCw className={`h-4 w-4 mr-2 ${offersLoading ? 'animate-spin' : ''}`} />
                 Load offers
               </button>
-            )}
-
-            {canContinue && (
-              <button
-                className="btn px-4 py-2 rounded bg-blue-500 text-white"
-                onClick={getDeployTx}
-                disabled={hasDeclines || isLoading}
-              >
-                Confirm and continue
-              </button>
-            )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )

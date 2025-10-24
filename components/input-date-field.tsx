@@ -1,9 +1,11 @@
 "use client"
 
+import { DAY_SECONDS } from "@/lib/storage-constants"
 import React, { useState, useRef, useEffect } from "react"
 
 interface DateFieldProps {
   label: string
+  disabled?: boolean
   onChange: (days: number) => void
   minDate?: string
   value?: string
@@ -11,7 +13,7 @@ interface DateFieldProps {
 
 const defaultValue = ""
 
-export function DateField({ label, onChange, minDate, value }: DateFieldProps) {
+export function DateField({ label, disabled, onChange, minDate, value }: DateFieldProps) {
   const [input, setInput] = useState(value || minDate || defaultValue)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -28,7 +30,7 @@ export function DateField({ label, onChange, minDate, value }: DateFieldProps) {
     if (!isNaN(date.getTime())) {
       const today = new Date()
       const timeDiff = date.getTime() - today.getTime()
-      const days = Math.ceil(timeDiff / (1000 * 3600 * 24))
+      const days = Math.ceil(timeDiff / (1000 * DAY_SECONDS))
       onChange(days)
     } else {
       onChange(0)
@@ -45,6 +47,8 @@ export function DateField({ label, onChange, minDate, value }: DateFieldProps) {
   const randomName = "date-" + Math.random().toString(36).substring(2, 15)
 
   const handleDivClick = () => {
+    if (disabled) return
+    
     if (inputRef.current) {
       inputRef.current.focus()
       inputRef.current.showPicker?.()
@@ -63,6 +67,7 @@ export function DateField({ label, onChange, minDate, value }: DateFieldProps) {
           id={randomName}
           value={input}
           min={minDate}
+          disabled={disabled}
           onChange={e => handleInputChange(e.target.value)}
           onKeyDown={e => handleKeyDown(e)}
           className="sr-only"
@@ -71,7 +76,7 @@ export function DateField({ label, onChange, minDate, value }: DateFieldProps) {
         />
         <div 
           onClick={handleDivClick}
-          className="border bg-gray-100 border-gray-100 rounded px-2 py-2 text-gray-700 min-w-32 text-center cursor-pointer hover:bg-gray-200 transition-colors">
+          className={`border bg-gray-100 border-gray-100 rounded px-2 py-2 text-gray-700 min-w-32 text-center cursor-pointer ${disabled ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-200"} transition-colors`}>
           {input ? (() => {
             const d = new Date(input)
             return !isNaN(d.getTime())

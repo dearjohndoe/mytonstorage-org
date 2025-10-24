@@ -156,15 +156,16 @@ export async function getWithdrawTransaction(contractAddress: string): Promise<A
   }
 }
 
-export async function getOffers(providers: string[], bagID?: string, bagSize?: number, ): Promise<ApiResponse> {
+export async function getOffers(providers: string[], bagID: string, bagSize: number, span: number): Promise<ApiResponse> {
   var error: string | null = null;
   var status: number | null = null;
   var data: Offers | null = null;
 
   try {
     const response = await axios.post(`${host}/api/v1/providers/offers`, {
-      bag_id: bagID || "",
-      bag_size: bagSize || 0,
+      bag_id: bagID,
+      bag_size: bagSize,
+      span: span,
       providers
     }, {
       withCredentials: true,
