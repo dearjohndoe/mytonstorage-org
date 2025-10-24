@@ -251,6 +251,7 @@ export default function ChooseProviders() {
         }),
         amount: initialBalance,
         owner_address: userAddress,
+        span: proofPeriodDays * DAY_SECONDS,
       } as InitStorageContract;
       const resp = await getDeployTransaction(req);
       if (resp.status === 401) {

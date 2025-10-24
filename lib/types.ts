@@ -37,6 +37,7 @@ export type InitStorageContract = {
   providers: string[]
   amount: number
   owner_address: string
+  span: number
 }
 
 export type UpdateStorageContract = {
