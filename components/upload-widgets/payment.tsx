@@ -80,6 +80,7 @@ export default function Payment() {
         const response = await setBagStorageContract(bagid, storageContractAddress);
         if (response.status === 401) {
             setError('Unauthorized. Logging out.');
+            console.error('setBagStorageContract unauthorized. Logging out.');
             safeDisconnect(tonConnectUI);
             setLoading(false);
             return;

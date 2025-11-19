@@ -35,6 +35,7 @@ export function UnpaidFilesList() {
         const resp = await getUnpaid();
         if (resp.status === 401) {
             setError('Unauthorized. Logging out.');
+            console.error('getUnpaid unauthorized. Logging out.');
             safeDisconnect(tonConnectUI);
             setIsLoading(false);
             return;
@@ -58,6 +59,7 @@ export function UnpaidFilesList() {
             const result = await removeFile(bagid);
             if (result.status === 401) {
                 setError('Unauthorized. Logging out.');
+                console.error('removeFile unauthorized. Logging out.');
                 safeDisconnect(tonConnectUI);
                 setIsLoading(false);
                 return;

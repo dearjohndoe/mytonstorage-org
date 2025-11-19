@@ -29,7 +29,7 @@ export default function NewBagInfo({ canCancel }: NewBagInfoProps) {
         setIsLoading(true);
         const resp = await getUnpaid();
         if (resp.status === 401) {
-          console.error('Unauthorized. Logging out.');
+          console.error('getUnpaid unauthorized. Logging out.');
           safeDisconnect(tonConnectUI);
           setIsLoading(false);
           return;
@@ -57,7 +57,7 @@ export default function NewBagInfo({ canCancel }: NewBagInfoProps) {
 
     const resp = await removeFile(widgetData.newBagID as string);
     if (resp.status === 401) {
-      console.error('Unauthorized. Logging out.');
+      console.error('removeFile unauthorized. Logging out.');
       safeDisconnect(tonConnectUI);
       setIsLoading(false);
       return;

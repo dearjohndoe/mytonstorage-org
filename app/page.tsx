@@ -39,18 +39,18 @@ function HomeContent() {
             w.account.walletStateInit
           );
           if (result.status === 401) {
-            console.error('Unauthorized. Logging out.');
+            console.error('login unauthorized. Logging out.');
             await safeDisconnect(tonConnectUI);
             return;
           }
           if (result.data === true) {
             console.log("Login successful");
           } else {
-            console.error("Login failed");
+            console.error("Login failed. Logging out.");
             await safeDisconnect(tonConnectUI);
           }
         } catch (e) {
-          console.error("Failed to login: " + e);
+          console.error("Failed to login: \"" + e + "\". Logging out.");
           await safeDisconnect(tonConnectUI);
         }
       }
@@ -63,7 +63,7 @@ function HomeContent() {
     (async () => {
       const resp = await proofPayload();
       if (resp.status === 401) {
-        console.error('Unauthorized. Logging out.');
+        console.error('proofPayload unauthorized. Logging out.');
         await safeDisconnect(tonConnectUI);
         return;
       }
