@@ -52,7 +52,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
         if (editProviders) {
             const needOffers = editProviders.some(p => {
                 return p.state !== "deleted" && (
-                    p.provider.maxSpan === 0 || 
+                    p.provider.maxSpan === 0 ||
                     p.provider.maxSpan !== proofPeriodDays * DAY_SECONDS
                 );
             });
@@ -191,6 +191,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
             const resp = await getOffers(providers, "", Number(localContractInfo!.info.fileSize), proofPeriodDays * DAY_SECONDS);
             if (resp.status === 401) {
                 setError('Unauthorized. Logging out.');
+                console.error('getOffers unauthorized. Logging out.');
                 safeDisconnect(tonConnectUI);
                 setOffersLoading(false);
                 return;
@@ -204,7 +205,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                     if (!existing) {
                         return null;
                     }
-                    
+
                     return {
                         state: existing.state,
                         provider: {
@@ -280,6 +281,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
             });
             if (resp.status === 401) {
                 setError('Unauthorized. Logging out.');
+                console.error('getUpdateTransaction unauthorized. Logging out.');
                 safeDisconnect(tonConnectUI);
                 setIsLoading(false);
                 setIsEdit(false);

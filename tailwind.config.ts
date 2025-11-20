@@ -66,10 +66,10 @@ const config: Config = {
         },
       },
       borderRadius: {
-  // Use CSS variable with fallback so classes like rounded-md work even if --radius not yet defined.
-  lg: "var(--radius, 0.5rem)",
-  md: "calc(var(--radius, 0.5rem) - 2px)",
-  sm: "calc(var(--radius, 0.5rem) - 4px)",
+        // Use CSS variable with fallback so classes like rounded-md work even if --radius not yet defined.
+        lg: "var(--radius, 0.5rem)",
+        md: "calc(var(--radius, 0.5rem) - 2px)",
+        sm: "calc(var(--radius, 0.5rem) - 4px)",
       },
       keyframes: {
         "accordion-down": {

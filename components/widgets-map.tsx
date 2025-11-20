@@ -60,7 +60,7 @@ export default function WidgetsMap() {
                 {/* Step Label */}
                 <div
                   className={`
-                    mt-3 text-sm font-medium transition-colors duration-200 text-center
+                    mt-3 text-sm font-medium duration-200 text-center
                     ${
                       currentWidget === step.id
                         ? "text-blue-600"

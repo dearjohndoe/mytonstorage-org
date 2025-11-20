@@ -37,6 +37,8 @@ export function ProvidersListDesktop({
   setCopiedKey,
   removeProvider
 }: ProvidersListDesktopProps) {
+  const hasDeclined = providers.some(p => p.decline)
+
   return (
     <div className="overflow-x-auto relative">
       <table className="ton-table overscroll-x-auto">
@@ -64,10 +66,17 @@ export function ProvidersListDesktop({
               </div>
             </th>
             {
-              advanced && (
+              (advanced) && (
                 <th>
                   <div className="flex items-center">Proofs range</div>
-                </th>
+                </th> 
+              )
+            }
+            {
+              hasDeclined && (
+                <th>
+                  <div className="flex items-center">{"Reason"}</div>
+                </th> 
               )
             }
             {
@@ -125,14 +134,26 @@ export function ProvidersListDesktop({
                   advanced && (
                     <td>
                       <div className="flex items-center">
-                        {p.decline ? (
-                          <span className=" text-red-500">{p.decline}</span>
-                        ) : (p.offer ? (
+                        {p.offer ? (
                           <span className=''>{secondsToDays(p.offer.offer_span)} days</span>
                         ) : (
                           <span className=' text-gray-500'>{dateRange(p.provider.min_span, p.provider.max_span)}</span>
-                        )
                         )}
+                      </div>
+                    </td>
+                  )
+                }
+                {
+                  hasDeclined && (
+                    <td>
+                      <div className="flex items-center">
+                        {
+                          p.decline ? (
+                            <span className="text-red-500">{p.decline}</span>
+                          ) : (
+                            <span className="text-green-600">Accepted</span>
+                          )
+                        }
                       </div>
                     </td>
                   )

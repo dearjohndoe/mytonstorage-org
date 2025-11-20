@@ -149,6 +149,7 @@ export default function StorageUpload() {
     const resp = await addFile(file, { description } as FileMetadata, setProgressCallback)
     if (resp.status === 401) {
       setError('Unauthorized. Logging out.');
+      console.error('addFile unauthorized. Logging out.');
       safeDisconnect(tonConnectUI);
       return;
     }
@@ -174,6 +175,7 @@ export default function StorageUpload() {
     const resp = await addFolder(files, { description } as FileMetadata, setProgressCallback)
     if (resp.status === 401) {
       setError('Unauthorized. Logging out.');
+      console.error('addFolder unauthorized. Logging out.');
       safeDisconnect(tonConnectUI);
       return;
     }

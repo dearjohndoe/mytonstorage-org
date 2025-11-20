@@ -190,6 +190,7 @@ export default function ChooseProviders() {
     const resp = await getOffers(providers.map(p => p.provider.pubkey), widgetData!.bagInfo!.bag_id, 0, proofPeriodDays * DAY_SECONDS);
     if (resp.status === 401) {
       setError('Unauthorized. Logging out.');
+      console.error('getOffers unauthorized. Logging out.');
       safeDisconnect(tonConnectUI);
       setOffersLoading(false);
       return;
@@ -256,6 +257,7 @@ export default function ChooseProviders() {
       const resp = await getDeployTransaction(req);
       if (resp.status === 401) {
         setError('Unauthorized. Logging out.');
+        console.error('getDeployTransaction unauthorized. Logging out.');
         safeDisconnect(tonConnectUI);
         setIsLoading(false);
         return;

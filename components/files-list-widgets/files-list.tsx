@@ -90,6 +90,7 @@ export function FilesList() {
     const resp = await getTopupBalanceTransaction({ address: storageContractAddress, amount });
     if (resp.status === 401) {
       setError('Unauthorized. Logging out.');
+      console.error('getTopupBalanceTransaction unauthorized. Logging out.');
       safeDisconnect(tonConnectUI);
       setLoadingTopupAddress(null);
       return;
@@ -136,6 +137,7 @@ export function FilesList() {
     const resp = await getWithdrawTransaction(storageContractAddress);
     if (resp.status === 401) {
       setError('Unauthorized. Logging out.');
+      console.error('getWithdrawTransaction unauthorized. Logging out.');
       safeDisconnect(tonConnectUI);
       setLoadingWithdrawalAddress(null);
       return;
