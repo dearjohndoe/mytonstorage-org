@@ -36,7 +36,7 @@ interface StoragePeriodBalanceProps {
     initialStorageDays: number;
     disabled: boolean;
     isMobile: boolean;
-    onBalanceChange?: (balance: number) => void;
+    onBalanceChange: (balance: number) => void;
     onStorageDaysChange?: (days: number) => void;
 }
 
@@ -55,6 +55,10 @@ export const StoragePeriodBalance: React.FC<StoragePeriodBalanceProps> = ({
     const [initialBalance, setInitialBalance] = useState<number>(DEFAULT_INIT_BALANCE);
     const [minInitialBalance, setMinInitialBalance] = useState<number>(DEFAULT_INIT_BALANCE);
 
+    useEffect(() => {
+        onBalanceChange(initialBalance);
+    }, [initialBalance]);
+
     const calculatePriceBasedOnDaysAndOffers = (selectedDays: number) => {
         const allProvidersPricePerProof = providers.reduce((prev, curr) => {
             let v = curr.offer?.price_per_proof || 0;
@@ -70,10 +74,6 @@ export const StoragePeriodBalance: React.FC<StoragePeriodBalanceProps> = ({
 
         setInitialBalance(totalPrice);
         setMinInitialBalance(minBalance);
-
-        if (onBalanceChange) {
-            onBalanceChange(totalPrice);
-        }
     };
 
     const calculateDaysBasedOnPrice = (newInitBalance: number) => {
