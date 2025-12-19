@@ -1,0 +1,260 @@
+{
+    "siteTitle": "My TON Storage",
+    "connectWallet": "Подключите кошелек, чтобы продолжить.",
+    "footer": {
+        "supportChatEN": "Чат поддержки EN",
+        "supportChatRU": "Чат поддержки RU",
+        "githubBackend": "GitHub (backend)",
+        "githubFrontend": "GitHub (frontend)",
+        "backend": "Backend",
+        "frontend": "Frontend",
+        "gateway": "Gateway"
+    },
+    "time": {
+        "day": "дн.",
+        "hour": "ч.",
+        "min": "мин.",
+        "sec": "сек."
+    },
+    "filtersStates": {
+        "title": "Фильтры",
+        "fromDifferentCountries": "Из разных стран",
+        "fromDifferentCities": "Из разных городов",
+        "anyLocation": "Любое местоположение",
+        "sortByRating": "Сортировать по рейтингу",
+        "sortByPrice": "Сортировать по цене",
+        "noSorting": "Без сортировки"
+    },
+    "input": {
+        "custom": "Свой вариант...",
+        "days": "Дней",
+        "longProofWarningLine1": "Длинные периоды проверки снижают комиссии в блокчейне, но увеличивают риск: провайдеры могут перестать хранить",
+        "longProofWarningLine2": "файлы между редкими проверками. Для большей безопасности данных используйте более короткие периоды (≤{{days}} дней)."
+    },
+    "table": {
+        "publicKey": "Публичный ключ",
+        "location": "Местоположение",
+        "rating": "Рейтинг",
+        "proofsRange": "Диапазон пруфов",
+        "reason": "Причина",
+        "accepted": "Принято",
+        "pricePerProof": "Цена за пруф",
+        "provider": "Провайдер",
+        "maxSpan": "Макс. период",
+        "waitingForResponse": "Ожидание ответа...",
+        "noReasonProvided": "Причина не указана",
+        "offerConfirmed": "Оффер подтверждён",
+        "declined": "Отклонено"
+    },
+    "status": {
+        "priceHint": "за 200 ГБ за 30 дней",
+        "ok": "Ok",
+        "na": "N/A",
+        "no": "Нет",
+        "fileExpired": "Файл истёк",
+        "zeroSec": "0 сек"
+    },
+    "unknown": "Неизвестно",
+    "errors": {
+        "failedToLoadProviders": "Ошибка загрузки провайдеров. Попробуйте ещё раз.",
+        "storageTimeExpired": "Срок хранения для файла истёк. Пожалуйста, начните заново.",
+        "unknownErrorOccurred": "Произошла неизвестная ошибка.",
+        "failedToSendTransaction": "Не удалось отправить транзакцию. Пожалуйста, попробуйте ещё раз.",
+        "tryResendAddressError": "Попробуйте отправить адрес снова. Ошибка: {{error}}",
+        "unknownErrorTryResend": "Произошла неизвестная ошибка. Попробуйте отправить адрес снова.",
+        "unauthorizedLoggingOut": "Неавторизовано. Выход...",
+        "failedToSendTransactionShort": "Не удалось отправить транзакцию",
+        "notFound": "Не найдено",
+        "resourceNotFound": "Запрошенный ресурс не найден"
+    },
+    "payment": {
+        "title": "Оплата",
+        "providersStartUploading": "Провайдеры начнут загружать файлы после подтверждения оплаты.",
+        "processing": "Обработка платежа...",
+        "backToProviders": "Назад к провайдерам",
+        "resendAddress": "Отправить адрес снова",
+        "sendTransaction": "Отправить транзакцию"
+    },
+    "storage": {
+        "setPeriodLabel": "Установите период хранения в днях",
+        "orPickDateLabel": "или выберите дату",
+        "orSetInitBalanceLabel": "или установите начальный баланс",
+        "periodMustBeMultiple": "Период хранения должен быть кратным периоду пруфов ({{days}} дней)",
+        "absoluteMinimum": "Абсолютный минимум: {{min}} TON"
+    },
+    "chooseProviders": {
+        "title": "Настроить контракт",
+        "providerAlreadyAdded": "Провайдер уже добавлен.",
+        "noProvidersFound": "Провайдеры с указанным pubkey не найдены.",
+        "reloadProviders": "Перезагрузить провайдеров",
+        "showAdvanced": "[ показать дополнительные параметры ]",
+        "hideAdvanced": "[ скрыть дополнительные параметры ]",
+        "chooseProvidersCount": "Выбрать кол-во провайдеров",
+        "storageProofEach": "Доказывать хранение каждые",
+        "addCustomProvider": "Добавить кастомного провайдера",
+        "placeholderPubkey": "Pubkey",
+        "loadInfo": "Загрузить информацию",
+        "providersCountInfo": "Провайдеров: {{count}}",
+        "confirmContinue": "Подтвердить и продолжить",
+        "loadOffers": "Загрузить офферы",
+        "someProvidersDeclinedWarn": "Некоторые провайдеры отказались или имеют ошибки. Можете удалить их из списка, попробовать снова или перезагрузить список провайдеров.",
+        "failedToGetDeployTransaction": "Не удалось получить транзакцию деплоя. Пожалуйста, попробуйте позже."
+    },
+    "newBag": {
+        "title": "Информация о файле",
+        "cancelStorage": "Отменить хранение",
+        "loading": "Загрузка информации о файле, пожалуйста, подождите...",
+        "noBagInfo": "Информация о файле недоступна.",
+        "freeStorage": "Бесплатное хранение:",
+        "bagID": "BagID",
+        "description": "Описание",
+        "filesCount": "Кол-во файлов",
+        "bagSize": "Размер файла"
+    },
+    "topup": {
+        "title": "Пополнить баланс",
+        "amountLabel": "Сумма (TON)",
+        "minimumAmount": "Минимальная сумма: {{min}} TON",
+        "cancel": "Отмена",
+        "topupAction": "Пополнить на {{amount}} TON"
+    },
+    "contract": {
+        "providersHeading": "Провайдеры",
+        "reloadList": "Перезагрузить список",
+        "edit": "Редактировать",
+        "cancel": "Отмена",
+        "getOffers": "Получить офферы",
+        "apply": "Применить",
+        "noProvidersFound": "Провайдеры не найдены.",
+        "loadingContractInfo": "Загрузка информации о контракте...",
+        "contractNotAvailable": "Информация о контракте недоступна",
+        "noProofsFromProvidersYet": "Пруфов от провайдеров пока нет",
+        "someProvidersNotSubmittedProofs": "Некоторые провайдеры ещё не отправили пруфы",
+        "invalidPubKey": "Неверный публичный ключ",
+        "providerAlreadyAdded": "Провайдер уже добавлен",
+        "withdrawFunds": "Вывести средства"
+    },
+    "contractUI": {
+        "contractLabel": "Контракт",
+        "providersChecks": "Проверки провайдеров",
+        "contractDetails": "Детали контракта"
+    },
+    "providersUI": {
+        "provider": "Провайдер",
+        "location": "Местоположение",
+        "rating": "Рейтинг",
+        "maxSpan": "Макс. спан",
+        "pricePerProof": "Цена за пруф",
+        "declined": "Отклонено",
+        "offerConfirmed": "Оффер подтвержден",
+        "waitingForResponse": "Ожидание ответа...",
+        "noReasonProvided": "Причина не указана"
+    },
+    "unpaid": {
+        "title": "Неоплаченные файлы",
+        "bagID": "BagID",
+        "description": "Описание",
+        "size": "Размер",
+        "freeStorage": "Бесплатное хранение",
+        "actions": "Действия",
+        "removeUnpaidFileTitle": "Удалить неоплаченный файл"
+    },
+    "contractErrors": {
+        "providerDeclined": "Провайдер отклонил оффер"
+    },
+    "contractSettings": {
+        "resetProofPeriod": "Сбросить частоту проверки хранения"
+    },
+    "upload": {
+        "noFilesDropped": "Файл(ы) не были перенесены.",
+        "noValidFilesOrFolders": "Нет допустимых файлов или папок.",
+        "noFilesFoundInDropped": "Файл(ы) не найдены в перенесённых элементах.",
+        "failedToReadDropped": "Не удалось прочитать перенесённые файлы.",
+        "fileTooLarge": "Файл слишком большой. Для файлов больше 4 ГБ используйте TON Torrent",
+        "noFilesFound": "Файл(ы) не найдены.",
+        "processingFiles": "Обработка файлов, пожалуйста, подождите...",
+        "noFilesSelected": "Файл(ы) не выбраны",
+        "dragDropHint": "Перетащите файлы сюда или используйте кнопки ниже",
+        "addFiles": "Добавить файл(ы)",
+        "selectFolder": "Выбрать папку",
+        "maxFileSize": "Максимальный размер файла: {{size}}",
+        "details": "Дополнительно",
+        "addDescription": "Описание:",
+        "uploadButton": "Загрузить"
+    },
+    "widgets": {
+        "uploadFiles": "Загрузка файлов",
+        "chooseProviders": "Выбор провайдеров",
+        "payment": "Оплата",
+        "complete": "Завершение",
+        "contractDeployed": "Контракт развернут",
+        "whatsNext": "Что дальше?",
+        "filesStored": "Ваши файлы теперь хранятся в TON Storage",
+        "providersDownloading": "Провайдерам нужно время, чтобы скачать и распределить ваши файлы",
+        "monitorStatus": "Вы можете отслеживать статус хранения на вкладке «Мои файлы» выше",
+        "viewContract": "Вы также можете просмотреть развернутый контракт на TON Scan"
+    },
+    "filesList": {
+        "selectedFiles": "Выбранные файлы",
+        "totalFiles": "Всего файлов:",
+        "file": "Файл",
+        "size": "Размер",
+        "removeFileTitle": "Удалить файл"
+    },
+    "contractsTable": {
+        "contractAddress": "Адрес контракта",
+        "description": "Описание",
+        "size": "Размер",
+        "status": "Статус",
+        "statusHint": "подтвержденное хранение файла / всего проверенных провайдеров (обновляется ежечасно через mytonprovider.org)",
+        "bagId": "BagID",
+        "updatedAt": "Обновлено",
+        "actions": "Действия",
+        "contractDetails": "Детали контракта",
+        "topupBalance": "Пополнить баланс",
+        "withdrawFunds": "Вывести средства"
+    },
+    "layout": {
+        "bagsUpload": "Загрузить файл",
+        "upload": "Загрузить",
+        "myStoredBags": "Мои файлы",
+        "myBags": "Мои файлы"
+    },
+    "bagsList": {
+        "noPeers": "Нет пиров",
+        "contractClosed": "Закрыт",
+        "storageContractInfo": "Информация о контракте:",
+        "storageContracts": "Контракты",
+        "hideClosedContracts": "Скрыть закрытые контракты",
+        "checking": "Проверка…",
+        "reloadPageToRefresh": "Перезагрузите страницу для обновления",
+        "listUpdated": "Список обновлён",
+        "noStorageContractsFound": "Контракты хранения не найдены",
+        "lookingForMore": "Ищем...",
+        "loadMore": "Загрузить ещё"
+    },
+    "contractDetails": {
+        "publicKey": "Публичный ключ",
+        "ratePerMB": "Цена за МБ",
+        "maxSpan": "Макс. период",
+        "lastProof": "Последний пруф",
+        "nextProofTime": "Время следующего пруфа",
+        "check": "Проверка",
+        "nextProofByte": "Следующий байт пруфа",
+        "nonce": "Nonce",
+        "bagID": "BagID",
+        "balance": "Баланс",
+        "fileSize": "Размер файла",
+        "chunkSize": "Размер чанка",
+        "owner": "Владелец",
+        "merkleHash": "Меркель хеш",
+        "storage": "Хранилище",
+        "loadInfo": "Загрузить информацию",
+        "computed": "вычислено",
+        "storageCheckHint": "проверка хранения через mytonprovider.org",
+        "withdrawFunds": "Вывести средства",
+        "days": "дней"
+    },
+    "returnHome": "Вернуться на главную",
+    "uploadToStart": "Загрузите ваш первый файл, чтобы начать"
+}

@@ -5,6 +5,7 @@ import { printSpace } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
 import { FileText, Loader, Trash } from "lucide-react";
 import React, { useEffect } from "react"
+import { useTranslation } from "react-i18next";
 import { RenderField } from "./render-field";
 import { CountdownTimer } from "./countdown-timer";
 import { UnpaidBags } from "@/types/files";
@@ -17,6 +18,7 @@ interface NewBagInfoProps {
 }
 
 export default function NewBagInfo({ canCancel }: NewBagInfoProps) {
+  const { t } = useTranslation();
   const apiBase = (typeof process !== 'undefined' && process.env.PUBLIC_API_BASE) || "https://mytonstorage.org";
   const [isLoading, setIsLoading] = React.useState(false);
   const [tonConnectUI] = useTonConnectUI();
@@ -83,7 +85,7 @@ export default function NewBagInfo({ canCancel }: NewBagInfoProps) {
       <div className="flex items-center justify-between gap-2 mb-4">
         <div className="flex items-center">
           <FileText className="w-5 h-5 text-blue-600" />
-          <h2 className="text-lg pl-2 font-semibold text-gray-900">Bag info</h2>
+          <h2 className="text-lg pl-2 font-semibold text-gray-900">{t('newBag.title')}</h2>
         </div>
         {
           canCancel && (
@@ -93,7 +95,7 @@ export default function NewBagInfo({ canCancel }: NewBagInfoProps) {
                 onClick={cancelStorage}
                 className="pl-2 text-red-500 hover:text-red-700"
               >
-                Cancel storage
+                {t('newBag.cancelStorage')}
               </button>
             </div>
           )
@@ -103,12 +105,12 @@ export default function NewBagInfo({ canCancel }: NewBagInfoProps) {
       {isLoading && (
         <div className="flex flex-col items-center">
           <Loader className="animate-spin h-8 w-8 text-blue-500 mb-4" />
-          <p className="text-sm text-gray-500">Loading bag info, please wait...</p>
+          <p className="text-sm text-gray-500">{t('newBag.loading')}</p>
         </div>
       )}
 
       {!isLoading && !widgetData.bagInfo && (
-        <p className="text-sm text-gray-500 text-center">No bag info available.</p>
+        <p className="text-sm text-gray-500 text-center">{t('newBag.noBagInfo')}</p>
       )}
 
       {!isLoading && widgetData.bagInfo && (
@@ -117,25 +119,25 @@ export default function NewBagInfo({ canCancel }: NewBagInfoProps) {
             <div className="lg:col-span-2 space-y-3">
               <div>
                 <RenderField
-                  label="BagID"
+                  label={t('newBag.bagID')}
                   value={widgetData.bagInfo.bag_id.toUpperCase()}
                   url={`${apiBase}/api/v1/gateway/${widgetData.bagInfo.bag_id.toUpperCase()}`}
                   copy={widgetData.bagInfo.bag_id.toUpperCase()} />
               </div>
 
               <div>
-                <RenderField label="Description" value={widgetData.bagInfo.description || '—'} />
+                <RenderField label={t('newBag.description')} value={widgetData.bagInfo.description || '—'} />
               </div>
             </div>
 
             <div className="space-y-3">
 
               <div>
-                <RenderField label="Files Count" value={String(widgetData.bagInfo.files_count)} />
+                <RenderField label={t('newBag.filesCount')} value={String(widgetData.bagInfo.files_count)} />
               </div>
 
               <div>
-                <RenderField label="Bag size" value={printSpace(widgetData.bagInfo.bag_size)} />
+                <RenderField label={t('newBag.bagSize')} value={printSpace(widgetData.bagInfo.bag_size)} />
               </div>
 
             </div>
@@ -148,7 +150,7 @@ export default function NewBagInfo({ canCancel }: NewBagInfoProps) {
           <div>
             <div className="flex mt-4 justify-end">
               <div className="flex items-center w-64">
-                <span className="text-sm font-medium text-gray-700">Free storage:</span>
+                <span className="text-sm font-medium text-gray-700">{t('newBag.freeStorage')}</span>
                 <div className="mx-2">
                   <CountdownTimer
                     expirationTime={widgetData!.bagInfo!.created_at + (widgetData!.freeStorage || 0)}

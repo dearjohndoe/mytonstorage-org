@@ -1,8 +1,7 @@
 "use client"
 
-import { useIsMobile } from "@/hooks/useIsMobile"
 import { useAppStore } from "@/store/useAppStore"
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTonWallet, useTonConnectUI } from "@tonconnect/ui-react";
 import { login, proofPayload } from "@/lib/api"
 import { safeDisconnect } from "@/lib/ton/safeDisconnect"
@@ -13,8 +12,10 @@ import Payment from "@/components/upload-widgets/payment";
 import StorageInfo from "@/components/upload-widgets/storage-info";
 import ChooseProviders from "@/components/upload-widgets/choose-providers";
 import { FilesList } from "@/components/files-list-widgets/files-list";
+import { useTranslation } from "react-i18next";
 
 function HomeContent() {
+  const { t } = useTranslation();
   const [tonConnectUI] = useTonConnectUI();
   const wallet = useTonWallet()
   const { currentPage, setCurrentPage, upload, files, _hasHydrated } = useAppStore()
@@ -121,7 +122,7 @@ function HomeContent() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <p className="mt-1 text-gray-600">Connect wallet to continue.</p>
+          <p className="mt-1 text-gray-600">{t('connectWallet')}</p>
         </div>
       </div>
     )
@@ -182,8 +183,8 @@ function HomeContent() {
               }`}
             onClick={() => setCurrentPage(1)}
           >
-            <span className="hidden sm:inline">Bags upload</span>
-            <span className="sm:hidden">Upload</span>
+            <span className="hidden sm:inline">{t('layout.bagsUpload')}</span>
+            <span className="sm:hidden">{t('layout.upload')}</span>
           </button>
           <button
             className={`px-3 py-2 rounded-lg text-sm sm:text-base font-bold transition-colors ${currentPage === 2
@@ -192,8 +193,8 @@ function HomeContent() {
               }`}
             onClick={() => setCurrentPage(2)}
           >
-            <span className="hidden sm:inline">My stored Bags</span>
-            <span className="sm:hidden">My Bags</span>
+            <span className="hidden sm:inline">{t('layout.myStoredBags')}</span>
+            <span className="sm:hidden">{t('layout.myBags')}</span>
             <span className="text-gray-500 font-normal ml-1">({files.list.length})</span>
           </button>
         </div>
@@ -216,7 +217,6 @@ function HomeContent() {
 }
 
 export default function Home() {
-  const isMobile = useIsMobile()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {

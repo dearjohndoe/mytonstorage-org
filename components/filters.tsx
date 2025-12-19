@@ -1,6 +1,7 @@
 "use client"
 
 import React from "react"
+import { useTranslation } from "react-i18next";
 import { ThreeStateField } from "./tri-state-field";
 
 export const sortingStates = {
@@ -30,6 +31,7 @@ export function FiltersSection({
     onSortingFilterChange,
     isMobile,
 }: FiltersSectionProps) {
+    const { t } = useTranslation();
     const locationKeys: (keyof typeof locationStates)[] = ["differentCountries", "differentCities", "all"];
     const sortingKeys: (keyof typeof sortingStates)[] = ["sortByRating", "sortByPrice", "noSorting"];
 
@@ -47,17 +49,17 @@ export function FiltersSection({
     return (
         <div className={isMobile ? 'mt-6' : ''}>
             <p className="text-center text-gray-700 justify-self-start mt-4">
-                Filters:
+                {t('filtersStates.title')}:
             </p>
             <div className={`flex ${isMobile ? 'gap-4' : ' gap-16'} flex-wrap items-center justify-center items-end`}>
                 <ThreeStateField
-                    states={["From different Countries", "From different Cities", "Any Location"]}
+                    states={[t('filtersStates.fromDifferentCountries'), t('filtersStates.fromDifferentCities'), t('filtersStates.anyLocation')]}
                     colors={["bg-blue-300", "bg-blue-300", "bg-gray-200"]}
                     value={locationIndex}
                     onChange={handleLocationChange}
                 />
                 <ThreeStateField
-                    states={["Sort by Rating", "Sort by Price", "No Sorting"]}
+                    states={[t('filtersStates.sortByRating'), t('filtersStates.sortByPrice'), t('filtersStates.noSorting')]}
                     colors={["bg-blue-300", "bg-blue-300", "bg-gray-200"]}
                     value={sortingIndex}
                     onChange={handleSortingChange}

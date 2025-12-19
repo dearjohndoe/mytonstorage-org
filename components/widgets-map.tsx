@@ -1,29 +1,32 @@
 "use client"
 
 import { useAppStore } from "@/store/useAppStore"
+import { useTranslation } from 'react-i18next'
 
 export default function WidgetsMap() {
   const { upload } = useAppStore()
   const currentWidget = upload.currentWidget
+  const { t } = useTranslation()
 
   const steps = [
-    { id: 1, label: "Upload Files" },
-    { id: 2, label: "Choose Providers" },
-    { id: 3, label: "Payment" },
-    { id: 4, label: "Complete" }
+    { id: 1, label: t('widgets.uploadFiles') },
+    { id: 2, label: t('widgets.chooseProviders') },
+    { id: 3, label: t('widgets.payment') },
+    { id: 4, label: t('widgets.complete') }
   ]
 
   return (
-    <div className={`flex flex-col items-center`}>
-      <div className="w-full max-w-2xl">
-        {/* Background line */}
-        <div className="relative mb-4">
-          <div className="absolute top-4 left-7 right-5 h-0.5 bg-gray-200" />
+    <div className="flex flex-col items-center w-full">
+      <div className="w-full max-w-2xl px-4">
+        {/* Steps container */}
+        <div className="relative">
+          {/* Background line */}
+          <div className="absolute top-4 h-0.5 bg-gray-200" 
+               style={{ left: 'calc(12.5% + 1rem)', right: 'calc(12.5% + 1rem)' }} />
           
-          {/* Steps container */}
-          <div className="flex justify-between">
+          <div className="flex justify-between items-start">
             {steps.map((step) => (
-              <div key={step.id} className="flex flex-col items-center">
+              <div key={step.id} className="flex flex-col items-center flex-1">
                 {/* Step Dot */}
                 <div
                   className={`
@@ -60,7 +63,7 @@ export default function WidgetsMap() {
                 {/* Step Label */}
                 <div
                   className={`
-                    mt-3 text-sm font-medium duration-200 text-center
+                    mt-3 text-sm font-medium text-center px-2 leading-tight
                     ${
                       currentWidget === step.id
                         ? "text-blue-600"

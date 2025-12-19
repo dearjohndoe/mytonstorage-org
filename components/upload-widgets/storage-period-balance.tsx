@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { NumberField } from "../input-number-field";
 import { DateField } from "../input-date-field";
 import { ProviderInfo } from "@/lib/types";
@@ -49,6 +50,7 @@ export const StoragePeriodBalance: React.FC<StoragePeriodBalanceProps> = ({
     onBalanceChange,
     onStorageDaysChange,
 }) => {
+    const { t } = useTranslation();
     const [storageDays, setStorageDays] = useState<number>(initialStorageDays);
     const [storageDate, setStorageDate] = useState<string>(() => getInputDateFromToday(initialStorageDays));
     const [storageDaysVersion, setStorageDaysVersion] = useState(0);
@@ -141,7 +143,7 @@ export const StoragePeriodBalance: React.FC<StoragePeriodBalanceProps> = ({
                 <div className="flex justify-center items-end gap-4 mt-4">
                     <NumberField
                         key={storageDaysVersion}
-                        label="Set storage period in days"
+                        label={t('storage.setPeriodLabel')}
                         initialValue={storageDays}
                         min={proofPeriodDays}
                         max={MAX_STORAGE_DAYS}
@@ -151,7 +153,7 @@ export const StoragePeriodBalance: React.FC<StoragePeriodBalanceProps> = ({
                     />
                     <DateField
                         key={`storage-date-${storageDaysVersion}`}
-                        label="or pick a date"
+                        label={t('storage.orPickDateLabel')}
                         disabled={isLoading}
                         onChange={handleDateChange}
                         minDate={computeMinDate()}
@@ -159,7 +161,7 @@ export const StoragePeriodBalance: React.FC<StoragePeriodBalanceProps> = ({
                     />
                 </div>
                 <div className={`flex justify-center text-sm text-gray-500 text-center ${isMobile ? 'mt-2' : ''}`}>
-                    <span>Storage period must be a multiple of the proof period ({proofPeriodDays} days)</span>
+                    <span>{t('storage.periodMustBeMultiple', { days: proofPeriodDays })}</span>
                 </div>
             </div>
 
@@ -167,7 +169,7 @@ export const StoragePeriodBalance: React.FC<StoragePeriodBalanceProps> = ({
             <div className={`${isMobile ? 'm-4' : 'm-10'}`}>
                 <div className={`flex justify-center items-end gap-4`}>
                     <NumberField
-                        label="or set init balance"
+                        label={t('storage.orSetInitBalanceLabel')}
                         initialValue={initialBalance / 1_000_000_000}
                         min={minInitialBalance / 1_000_000_000}
                         max={100}
@@ -178,7 +180,7 @@ export const StoragePeriodBalance: React.FC<StoragePeriodBalanceProps> = ({
                     />
                 </div>
                 <div className={`flex justify-center text-sm text-gray-500 ${isMobile ? 'mt-2' : ''}`}>
-                    <span>The absolute minimum is {(minInitialBalance / 1_000_000_000).toFixed(3)} TON</span>
+                    <span>{t('storage.absoluteMinimum', { min: (minInitialBalance / 1_000_000_000).toFixed(3) })}</span>
                 </div>
             </div>
         </>

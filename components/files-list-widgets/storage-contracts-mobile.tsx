@@ -1,6 +1,7 @@
 "use client"
 
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { UploadFile } from '@/store/useAppStore'
 import { CircleX, Copy, Info, Wallet, RefreshCw } from 'lucide-react'
 import { copyToClipboard, printSpace, shortenString } from '@/lib/utils'
@@ -32,6 +33,7 @@ export function StorageContractsMobile({
     buildContractChecksBlock,
     apiBase
 }: StorageContractsMobileProps) {
+    const { t } = useTranslation()
     if (hideClosed) {
         files = files.filter(f => f.status !== 'closed');
     }
@@ -46,7 +48,7 @@ export function StorageContractsMobile({
                     {/* Header: Contract Address and Metadata */}
                     <div className="flex justify-between items-start mb-4">
                         <div className="flex-1 min-w-0">
-                            <div className="text-xs font-medium text-gray-500 mb-1">Contract</div>
+                            <div className="text-xs font-medium text-gray-500 mb-1">{t('contractUI.contractLabel')}</div>
                             <div className="flex items-center space-x-2">
                                 <a
                                     href={`https://tonscan.org/address/${f.contractAddress}`}
@@ -88,7 +90,7 @@ export function StorageContractsMobile({
 
                     {/* Description */}
                     <div className="mb-4">
-                        <div className="text-xs font-medium text-gray-500 mb-1">Description</div>
+                        <div className="text-xs font-medium text-gray-500 mb-1">{t('newBag.description')}</div>
                         <p className="text-gray-700 line-clamp-2" title={f.info?.description || ''}>
                             {
                                 f.info ? (
@@ -103,7 +105,7 @@ export function StorageContractsMobile({
                     <div className="grid grid-cols-2 gap-4 mb-4">
                         {/* BagID */}
                         <div>
-                            <div className="font-medium text-xs text-gray-500 mb-2">Bag ID</div>
+                            <div className="font-medium text-xs text-gray-500 mb-2">{t('contractsTable.bagId')}</div>
                             {f.info?.bag_id ? (
                                 <div className="flex items-center space-x-1">
                                     <a
@@ -132,7 +134,7 @@ export function StorageContractsMobile({
 
                         {/* Providers checks */}
                         <div className='justify-self-end'>
-                            <div className="text-right text-xs font-medium text-gray-500 mb-2">Providers checks</div>
+                            <div className="text-right text-xs font-medium text-gray-500 mb-2">{t('contractUI.providersChecks')}</div>
                             {buildContractChecksBlock(f.contractChecks || [], f.status)}
                         </div>
                     </div>
@@ -142,7 +144,7 @@ export function StorageContractsMobile({
                         <button
                             onClick={() => onSelectContract(f.contractAddress)}
                             className="flex items-center justify-center w-9 h-9 rounded-lg text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
-                            title="Contract details"
+                            title={t('contractUI.contractDetails')}
                         >
                             <Info className="h-4 w-4" />
                         </button>
@@ -150,7 +152,7 @@ export function StorageContractsMobile({
                         <button
                             onClick={() => onTopupBalance(f.contractAddress)}
                             className="flex items-center justify-center w-9 h-9 rounded-lg text-gray-600 hover:text-green-600 hover:bg-green-50 transition-all duration-200"
-                            title="Topup balance"
+                            title={t('topup.title')}
                         >
                             <Wallet className="h-4 w-4" />
                         </button>
@@ -158,7 +160,7 @@ export function StorageContractsMobile({
                         <button
                             onClick={() => onCancelStorage(f.contractAddress)}
                             className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-red-50 transition-all duration-200"
-                            title="Withdraw funds"
+                            title={t('contract.withdrawFunds')}
                             disabled={loadingWithdrawalAddress !== null || isLoading}
                         >
                             {loadingWithdrawalAddress === f.contractAddress ? (

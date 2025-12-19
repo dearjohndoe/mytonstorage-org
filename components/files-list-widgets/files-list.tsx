@@ -17,8 +17,10 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import { StorageContractsMobile } from './storage-contracts-mobile';
 import { StorageContractsDesktop } from './storage-contracts-desktop';
 import { useStorageContracts } from '@/hooks/useStorageContracts';
+import { useTranslation } from "react-i18next";
 
 export function FilesList() {
+  const { t } = useTranslation();
   const apiBase = (typeof process !== 'undefined' && process.env.PUBLIC_API_BASE) || "https://mytonstorage.org";
   const [tonConnectUI] = useTonConnectUI();
   const wallet = useTonWallet();
@@ -89,7 +91,7 @@ export function FilesList() {
 
     const resp = await getTopupBalanceTransaction({ address: storageContractAddress, amount });
     if (resp.status === 401) {
-      setError('Unauthorized. Logging out.');
+      setError(t('errors.unauthorizedLoggingOut'));
       console.error('getTopupBalanceTransaction unauthorized. Logging out.');
       safeDisconnect(tonConnectUI);
       setLoadingTopupAddress(null);
@@ -121,7 +123,7 @@ export function FilesList() {
       console.log("Topup transaction response:", wResp);
     } catch (error) {
       console.error("Failed to send topup transaction:", error);
-      setError("Failed to send transaction");
+      setError(t('errors.failedToSendTransactionShort'));
     }
   }
 
@@ -136,7 +138,7 @@ export function FilesList() {
 
     const resp = await getWithdrawTransaction(storageContractAddress);
     if (resp.status === 401) {
-      setError('Unauthorized. Logging out.');
+      setError(t('errors.unauthorizedLoggingOut'));
       console.error('getWithdrawTransaction unauthorized. Logging out.');
       safeDisconnect(tonConnectUI);
       setLoadingWithdrawalAddress(null);
@@ -178,7 +180,7 @@ export function FilesList() {
     if (status === 'closed') {
       return (
         <div className="flex rounded-lg border border-red-200 bg-red-50 w-14 h-6 items-center justify-center text-xs font-semibold text-gray-600">
-          Closed
+          {t('bagsList.contractClosed')}
         </div>
       );
     }
@@ -206,7 +208,7 @@ export function FilesList() {
     return (
       <div>
         {total === 0 ? (
-          <span className="ml-2 text-xs text-gray-400 italic">No peers</span>
+          <span className="ml-2 text-xs text-gray-400 italic">{t('bagsList.noPeers')}</span>
         ) : (
           <div className="flex items-center">
             <div className={`flex rounded-lg ${validColor} w-7 h-6 items-center justify-center text-xs font-semibold ${textColor}`}>
@@ -240,7 +242,7 @@ export function FilesList() {
               <div>
                 <div className="text-gray-700 mb-2">
                   <div className={`flex items-center ${isMobile ? 'flex-col items-start space-y-2' : ''}`}>
-                    <span className="text-gray-900 font-semibold">Storage contract info:</span>
+                    <span className="text-gray-900 font-semibold">{t('bagsList.storageContractInfo')}</span>
                     <div className={`flex items-center ${isMobile ? '' : 'ml-2'}`}>
                       <a
                         href={`https://tonscan.org/address/${selectedContract}`}
@@ -302,7 +304,7 @@ export function FilesList() {
         <div className="flex items-center">
           <ReceiptText className={`text-blue-600 ${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
           <h2 className={`pl-2 font-semibold text-gray-900 ${isMobile ? 'text-base' : 'text-lg'}`}>
-            Storage contracts
+            {t('bagsList.storageContracts')}
           </h2>
         </div>
         <div>
@@ -315,7 +317,7 @@ export function FilesList() {
                   className="form-checkbox h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                 />
                 <span className="text-sm text-gray-600">
-                  Hide closed contracts
+                  {t('bagsList.hideClosedContracts')}
                 </span>
               </label>
               <button
@@ -324,10 +326,10 @@ export function FilesList() {
                 className="px-3 py-1 cursor-default rounded-full text-gray-600 bg-gray-100"
               >
                 {isCheckingNewer
-                  ? 'Checking…'
+                  ? t('bagsList.checking')
                   : lastUpdate && lastUpdate < Date.now() - 1000 * 60 * 10
-                  ? 'Reload page to refresh'
-                  : 'List updated'}
+                  ? t('bagsList.reloadPageToRefresh')
+                  : t('bagsList.listUpdated')}
               </button>
             </div>
         </div>
@@ -343,10 +345,10 @@ export function FilesList() {
               <ReceiptText className="w-12 h-12 mx-auto" />
             </div>
             <p className={`font-medium ${isMobile ? 'text-sm' : 'text-base'}`}>
-              No storage contracts found
+              {t('bagsList.noStorageContractsFound')}
             </p>
             <p className={`text-gray-400 ${isMobile ? 'text-xs mt-1' : 'text-sm mt-2'}`}>
-              Upload your first file to get started
+              {t('uploadToStart')}
             </p>
           </div>
         )}
@@ -394,9 +396,9 @@ export function FilesList() {
 
                   <div className="flex">
                     {hookLoading ? (
-                      'Looking for more...'
+                      t('bagsList.lookingForMore')
                     ) : (
-                      'Load More'
+                      t('bagsList.loadMore')
                     )}
                   </div>
                 </button>

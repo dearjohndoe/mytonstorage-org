@@ -1,6 +1,7 @@
 "use client"
 
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { File, Folder, X } from 'lucide-react'
 import { printSpace } from '@/lib/utils'
 
@@ -11,6 +12,7 @@ interface FilesUploadListProps {
 }
 
 export function FilesUploadList({ files, onRemoveFile, className = "" }: FilesUploadListProps) {
+    const { t } = useTranslation();
     if (files.length === 0) {
         return null
     }
@@ -63,9 +65,9 @@ export function FilesUploadList({ files, onRemoveFile, className = "" }: FilesUp
     return (
         <div className={`border-2 border-dashed border-gray-300 rounded-lg p-4 ${className}`}>
             <div className="mb-4">
-                <h3 className="text-lg font-medium mb-2">Selected Files</h3>
+                <h3 className="text-lg font-medium mb-2">{t('filesList.selectedFiles')}</h3>
                 <div className="text-sm text-gray-600">
-                    Total files: <span className="font-semibold">{files.length}</span>
+                    {t('filesList.totalFiles')} <span className="font-semibold">{files.length}</span>
                     {" "}({<span className="font-semibold">{printSpace(totalSize)}</span>})
                 </div>
             </div>
@@ -77,12 +79,12 @@ export function FilesUploadList({ files, onRemoveFile, className = "" }: FilesUp
                             <th>
                                 <div className="flex items-center">
                                     {isFolder ? <Folder className="h-4 w-4 mr-2 text-blue-500" /> : <File className="h-4 w-4 mr-2 text-gray-500" />}
-                                    File
+                                    {t('filesList.file')}
                                 </div>
                             </th>
                             <th>
                                 <div className="flex items-center">
-                                    Size
+                                    {t('filesList.size')}
                                 </div>
                             </th>
                             <th className="w-10">
@@ -110,7 +112,7 @@ export function FilesUploadList({ files, onRemoveFile, className = "" }: FilesUp
                                         <button
                                             onClick={() => onRemoveFile(index)}
                                             className="p-1 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors duration-200"
-                                            title="Remove file"
+                                            title={t('filesList.removeFileTitle')}
                                         >
                                             <X className="h-4 w-4" />
                                         </button>

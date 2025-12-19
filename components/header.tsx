@@ -4,6 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { TonConnectButton } from "@tonconnect/ui-react"
 import { useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { useIsMobile } from "@/hooks/useIsMobile"
 
 export default function Header() {
@@ -13,6 +14,8 @@ export default function Header() {
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  const { t } = useTranslation();
 
   return (
     <header className="pt-4">
@@ -27,7 +30,7 @@ export default function Header() {
               height={isMobile ? 22 : 26} 
             />
           </span>
-          <span className={`font-bold ml-2 ${isMobile ? 'text-lg' : 'text-xl'}`}>My TON Storage</span>
+          <span className={`font-bold ml-2 ${isMobile ? 'text-lg' : 'text-xl'}`}>{t('siteTitle')}</span>
         </Link>
         {mounted && (
           <div className={isMobile ? 'scale-90 origin-right' : ''}>

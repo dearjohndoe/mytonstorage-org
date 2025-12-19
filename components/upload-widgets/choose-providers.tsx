@@ -2,6 +2,7 @@
 
 import { ListChecks, PackageOpen, RefreshCw } from "lucide-react";
 import React, { useEffect } from "react"
+import { useTranslation } from "react-i18next";
 import { NumberField } from "../input-number-field";
 import { PeriodField } from "../input-period-field";
 import { getProviders } from "@/lib/thirdparty";
@@ -22,6 +23,7 @@ import { StoragePeriodBalance } from "./storage-period-balance";
 import { DAY_SECONDS, WEEK_DAYS } from "@/lib/storage-constants";
 
 export default function ChooseProviders() {
+  const { t } = useTranslation();
   const { upload, updateWidgetData } = useAppStore();
   const widgetData = upload.widgetData;
   const userAddress = useTonAddress(true);
@@ -116,7 +118,7 @@ export default function ChooseProviders() {
   const removeProvider = (pubkey: string) => {
     if (widgetData!.bagInfo!.created_at + widgetData!.freeStorage! < Math.floor(Date.now() / 1000)) {
       console.log("Bag storage time expired");
-      setError("Storage time expired. Please start over.");
+      setError(t('errors.storageTimeExpired'));
       return;
     }
 
@@ -135,12 +137,12 @@ export default function ChooseProviders() {
 
     if (widgetData!.bagInfo!.created_at + widgetData!.freeStorage! < Math.floor(Date.now() / 1000)) {
       console.log("Bag storage time expired");
-      setError("Storage time expired. Please start over.");
+      setError(t('errors.storageTimeExpired'));
       return;
     }
 
     if (providers.find(p => p.provider.pubkey === pubkey)) {
-      setWarn("Provider already added.");
+      setWarn(t('chooseProviders.providerAlreadyAdded'));
       setIsLoading(false);
       return;
     }
@@ -152,7 +154,7 @@ export default function ChooseProviders() {
     if (prs) {
       newProviders = prs.providers;
       if (newProviders.length === 0) {
-        setWarn("No providers found with the given pubkey.");
+        setWarn(t('chooseProviders.noProvidersFound'));
         setIsLoading(false);
         return;
       }
@@ -177,7 +179,7 @@ export default function ChooseProviders() {
 
     if (widgetData!.bagInfo!.created_at + widgetData!.freeStorage! < Math.floor(Date.now() / 1000)) {
       console.log("Bag storage time expired");
-      setError("Storage time expired. Please start over.");
+      setError(t('errors.storageTimeExpired'));
       return;
     }
 
@@ -189,7 +191,7 @@ export default function ChooseProviders() {
 
     const resp = await getOffers(providers.map(p => p.provider.pubkey), widgetData!.bagInfo!.bag_id, 0, proofPeriodDays * DAY_SECONDS);
     if (resp.status === 401) {
-      setError('Unauthorized. Logging out.');
+      setError(t('errors.unauthorizedLoggingOut'));
       console.error('getOffers unauthorized. Logging out.');
       safeDisconnect(tonConnectUI);
       setOffersLoading(false);
@@ -211,7 +213,7 @@ export default function ChooseProviders() {
         });
 
         if (data.declines && data.declines.length > 0) {
-          setWarn("Some providers declined or has errors. You can remove them from list, try again or reload providers list.");
+          setWarn(t('chooseProviders.someProvidersDeclinedWarn'));
         }
 
         setProviders(updatedProviders);
@@ -234,7 +236,7 @@ export default function ChooseProviders() {
 
     if (widgetData!.bagInfo!.created_at + widgetData!.freeStorage! < Math.floor(Date.now() / 1000)) {
       console.log("Bag storage time expired");
-      setError("Storage time expired. Please start over.");
+      setError(t('errors.storageTimeExpired'));
       return;
     }
 
@@ -256,7 +258,7 @@ export default function ChooseProviders() {
       } as InitStorageContract;
       const resp = await getDeployTransaction(req);
       if (resp.status === 401) {
-        setError('Unauthorized. Logging out.');
+        setError(t('errors.unauthorizedLoggingOut'));
         console.error('getDeployTransaction unauthorized. Logging out.');
         safeDisconnect(tonConnectUI);
         setIsLoading(false);
@@ -277,7 +279,7 @@ export default function ChooseProviders() {
       }
     } catch (error) {
       console.error("Failed to get deploy transaction:", error);
-      setError("Failed to get deploy transaction. Please try again later.");
+      setError(t('chooseProviders.failedToGetDeployTransaction'));
     } finally {
       setIsLoading(false);
     }
@@ -290,7 +292,7 @@ export default function ChooseProviders() {
 
     if (widgetData!.bagInfo!.created_at + widgetData!.freeStorage! < Math.floor(Date.now() / 1000)) {
       console.log("Bag storage time expired");
-      setError("Storage time expired. Please start over.");
+      setError(t('errors.storageTimeExpired'));
       return;
     }
 
@@ -322,7 +324,7 @@ export default function ChooseProviders() {
         <div className="flex items-center justify-between gap-2 mb-4">
           <div className="flex items-center">
             <ListChecks className="w-5 h-5 text-blue-600" />
-            <h2 className="text-lg pl-2 font-semibold text-gray-900">Configure contract</h2>
+            <h2 className="text-lg pl-2 font-semibold text-gray-900">{t('chooseProviders.title')}</h2>
           </div>
         </div>
 
@@ -342,7 +344,7 @@ export default function ChooseProviders() {
 
         <div className={`flex ${isMobile ? 'flex-col' : 'justify-center items-end'} gap-4 mt-4`}>
           <NumberField
-            label="Choose providers count"
+            label={t('chooseProviders.chooseProvidersCount')}
             initialValue={selectedProvidersCount}
             min={1}
             max={256}
@@ -356,7 +358,7 @@ export default function ChooseProviders() {
             disabled={isLoading}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            Reload providers
+            {t('chooseProviders.reloadProviders')}
           </button>
         </div>
 
@@ -381,7 +383,7 @@ export default function ChooseProviders() {
                   disabled={isLoading || offersLoading || canContinue}
                   className="absolute -top-6 right-0 text-sm text-gray-600 hover:text-gray-800 disabled:cursor-not-allowed"
                 >
-                  {advanced ? "[ hide advanced options ]" : "[ show advanced options ]"}
+                  {advanced ? t('chooseProviders.hideAdvanced') : t('chooseProviders.showAdvanced')}
                 </button>
               </div>
 
@@ -391,8 +393,8 @@ export default function ChooseProviders() {
                     {/* Proof period selector */}
                     <div className="mt-4 mb-2">
                       <PeriodField
-                        label="Storage proof each"
-                        suffix="days"
+                        label={t('chooseProviders.storageProofEach')}
+                        suffix={t('time.day')}
                         value={proofPeriodDays}
                         onChange={setProofPeriodDays}
                         disabled={isLoading || offersLoading}
@@ -402,9 +404,9 @@ export default function ChooseProviders() {
 
                     <div className={`flex ${isMobile ? 'flex-col' : 'justify-center items-end'} gap-4 mt-2`}>
                       <TextField
-                        label="Add custom provider"
+                        label={t('chooseProviders.addCustomProvider')}
                         onChange={(value) => setNewProviderPubkey(value)}
-                        placeholder="Pubkey"
+                        placeholder={t('chooseProviders.placeholderPubkey')}
                       />
                       {
                         newProviderPubkey && newProviderPubkey.length === 64 &&
@@ -415,7 +417,7 @@ export default function ChooseProviders() {
                           disabled={isLoading || !newProviderPubkey}
                         >
                           <PackageOpen className="h-4 w-4 mr-2" />
-                          Load info
+                          {t('chooseProviders.loadInfo')}
                         </button>
                       }
                     </div>
@@ -442,8 +444,8 @@ export default function ChooseProviders() {
 
               {/* Selected providers count */}
               <div className={`${isMobile ? 'px-1' : 'm-4'}`}>
-                <p className={`text-sm text-gray-600 ${isMobile ? 'text-center mt-4' : 'text-right'}`}>
-                  Providers count: {providers.length}
+                  <p className={`text-sm text-gray-600 ${isMobile ? 'text-center mt-4' : 'text-right'}`}>
+                  {t('chooseProviders.providersCountInfo', { count: providers.length })}
                 </p>
               </div>
             </>
@@ -466,12 +468,12 @@ export default function ChooseProviders() {
         {canContinue ? (
           <div className="flex flex-col gap-4">
             <div className={`flex ${isMobile ? 'justify-center' : 'justify-end'} mt-8`}>
-              <button
+                <button
                 className="btn px-4 py-2 rounded bg-blue-500 text-white"
                 onClick={getDeployTx}
                 disabled={hasDeclines || isLoading}
               >
-                Confirm and continue
+                {t('chooseProviders.confirmContinue')}
               </button>
             </div>
           </div>
@@ -484,7 +486,7 @@ export default function ChooseProviders() {
                 disabled={offersLoading || hasDeclines || isLoading}
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${offersLoading ? 'animate-spin' : ''}`} />
-                Load offers
+                {t('chooseProviders.loadOffers')}
               </button>
             </div>
           </div>
