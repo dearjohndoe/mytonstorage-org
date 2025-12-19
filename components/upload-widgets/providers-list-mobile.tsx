@@ -1,9 +1,9 @@
 "use client"
 
-import React from 'react'
 import { ProviderInfo } from '@/lib/types'
 import { Copy, Star, X } from 'lucide-react'
 import { copyToClipboard, shortenString } from '@/lib/utils'
+import { useTranslation } from "react-i18next";
 
 interface ProvidersListMobileProps {
   providers: ProviderInfo[]
@@ -18,6 +18,7 @@ export function ProvidersListMobile({
   setCopiedKey,
   removeProvider
 }: ProvidersListMobileProps) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-3">
       {providers.map((providerInfo, index) => {
@@ -35,7 +36,7 @@ export function ProvidersListMobile({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center space-x-2 mb-1">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Provider</span>
+                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('table.provider')}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="font-mono text-sm font-medium text-gray-900">
@@ -62,7 +63,7 @@ export function ProvidersListMobile({
 
             {/* Location */}
             <div className="mb-3">
-              <div className="text-xs font-medium text-gray-500 mb-1">Location</div>
+              <div className="text-xs font-medium text-gray-500 mb-1">{t('table.location')}</div>
               <p className="text-sm text-gray-700">
                 {provider.location ?
                   `${provider.location.city || '--'}, ${provider.location.country || '--'}` :
@@ -75,7 +76,7 @@ export function ProvidersListMobile({
             <div className="grid grid-cols-3 gap-3 mb-3">
               {/* Rating */}
               <div>
-                <div className="text-xs font-medium text-gray-500 mb-1">Rating</div>
+                <div className="text-xs font-medium text-gray-500 mb-1">{t('table.rating')}</div>
                 <div className="flex items-center space-x-1">
                   <Star className="h-3 w-3 text-yellow-400 fill-current" />
                   <span className="text-sm font-medium text-gray-900">
@@ -86,7 +87,7 @@ export function ProvidersListMobile({
 
               {/* Max Span */}
               <div>
-                <div className="text-xs font-medium text-gray-500 mb-1">Max Span</div>
+                <div className="text-xs font-medium text-gray-500 mb-1">{t('table.maxSpan')}</div>
                 <span className="text-sm text-gray-700">
                   {provider.max_span ? `${Math.floor(provider.max_span / 86400)}d` : '--'}
                 </span>
@@ -95,7 +96,7 @@ export function ProvidersListMobile({
               {/* Price */}
               <div>
                 <div className="flex items-center text-xs font-medium text-gray-500 mb-1">
-                  Price per proof
+                  {t('table.pricePerProof')}
                 </div>
                 <span className="text-sm text-gray-700">
                   {offer?.price_per_mb ? `${(offer.price_per_proof / 1000000000).toFixed(3)} TON` : '--'}
@@ -106,20 +107,20 @@ export function ProvidersListMobile({
             {/* Status */}
             {decline && (
               <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
-                <div className="text-xs font-medium text-red-700 mb-1">Declined</div>
-                <p className="text-xs text-red-600">{decline || 'No reason provided'}</p>
+                <div className="text-xs font-medium text-red-700 mb-1">{t('table.declined')}</div>
+                <p className="text-xs text-red-600">{decline || t('table.noReasonProvided')}</p>
               </div>
             )}
 
             {offer && !decline && (
               <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
-                <div className="text-xs font-medium text-green-700">Offer Confirmed</div>
+                <div className="text-xs font-medium text-green-700">{t('table.offerConfirmed')}</div>
               </div>
             )}
 
             {!offer && !decline && (
               <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <div className="text-xs font-medium text-yellow-700">Waiting for response...</div>
+                <div className="text-xs font-medium text-yellow-700">{t('table.waitingForResponse')}</div>
               </div>
             )}
           </div>

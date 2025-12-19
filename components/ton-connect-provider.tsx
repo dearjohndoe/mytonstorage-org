@@ -1,10 +1,30 @@
 "use client"
 
 import { ReactNode, useEffect, useState } from "react"
-import { TonConnectUIProvider, THEME } from "@tonconnect/ui-react"
+import { TonConnectUIProvider, THEME, useTonConnectUI, Locales } from "@tonconnect/ui-react"
+import { i18nInstance } from "./i18n-provider"
 
 interface TonConnectProviderProps {
   children: ReactNode
+}
+
+function TonConnectLanguageSync({ children }: { children: ReactNode }) {
+  const [, setOptions] = useTonConnectUI();
+
+  useEffect(() => {
+    setOptions({ language: i18nInstance.language as Locales });
+
+    const handleLanguageChanged = (lng: string) => {
+      setOptions({ language: lng as Locales });
+    };
+
+    i18nInstance.on('languageChanged', handleLanguageChanged);
+    return () => {
+      i18nInstance.off('languageChanged', handleLanguageChanged);
+    };
+  }, [setOptions]);
+
+  return <>{children}</>;
 }
 
 export function TonConnectProvider({ children }: TonConnectProviderProps) {
@@ -23,7 +43,9 @@ export function TonConnectProvider({ children }: TonConnectProviderProps) {
       uiPreferences={{ theme: THEME.LIGHT }}
       manifestUrl={(typeof process !== 'undefined' && process.env.PUBLIC_TONCONNECT_MANIFEST_URL) || "https://mytonstorage.org/tonconnect-manifest.json"}
     >
-      {children}
+      <TonConnectLanguageSync>
+        {children}
+      </TonConnectLanguageSync>
     </TonConnectUIProvider>
   )
 }

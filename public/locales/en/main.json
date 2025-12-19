@@ -1,0 +1,248 @@
+{
+    "siteTitle": "My TON Storage",
+    "connectWallet": "Connect wallet to continue.",
+    "footer": {
+        "supportChat": "Support chat",
+        "githubBackend": "GitHub (backend)",
+        "githubFrontend": "GitHub (frontend)",
+        "backend": "Backend",
+        "frontend": "Frontend",
+        "gateway": "Gateway"
+    },
+    "time": {
+        "day": "d",
+        "hour": "hr",
+        "min": "min",
+        "sec": "sec"
+    },
+    "filtersStates": {
+        "title": "Filters",
+        "fromDifferentCountries": "From different Countries",
+        "fromDifferentCities": "From different Cities",
+        "anyLocation": "Any Location",
+        "sortByRating": "Sort by Rating",
+        "sortByPrice": "Sort by Price",
+        "noSorting": "No Sorting"
+    },
+    "input": {
+        "custom": "Custom...",
+        "days": "Days",
+        "longProofWarningLine1": "Long proof periods reduce blockchain fees but increase risk: providers may stop storing",
+        "longProofWarningLine2": "files between infrequent checks. For better data safety, use shorter periods (≤{{days}} days)."
+    },
+    "table": {
+        "publicKey": "Public Key",
+        "location": "Location",
+        "rating": "Rating",
+        "price": "Price",
+        "proofsRange": "Proofs range",
+        "reason": "Reason",
+        "accepted": "Accepted",
+        "pricePerProof": "Price per proof",
+        "provider": "Provider",
+        "maxSpan": "Max Span",
+        "waitingForResponse": "Waiting for response...",
+        "noReasonProvided": "No reason provided",
+        "offerConfirmed": "Offer Confirmed",
+        "declined": "Declined"
+    },
+    "status": {
+        "priceHint": "per 200 GB per 30 days",
+        "ok": "Ok",
+        "na": "N/A",
+        "no": "No",
+        "fileExpired": "File expired",
+        "zeroSec": "0 sec"
+    },
+    "unknown": "Unknown",
+    "errors": {
+        "storageTimeExpired": "Storage time expired. Please start over.",
+        "unknownErrorOccurred": "Unknown error occurred.",
+        "failedToSendTransaction": "Failed to send transaction. Please try again.",
+        "tryResendAddressError": "Try resend address. Got error: {{error}}",
+        "unknownErrorTryResend": "Unknown error occurred. Try resend address.",
+        "unauthorizedLoggingOut": "Unauthorized. Logging out.",
+        "failedToSendTransactionShort": "Failed to send transaction",
+        "notFound": "Not Found",
+        "resourceNotFound": "Could not find requested resource"
+    },
+    "payment": {
+        "title": "Payment",
+        "providersStartUploading": "Providers will start uploading files once payment is confirmed.",
+        "processing": "Processing payment...",
+        "backToProviders": "Back to providers",
+        "resendAddress": "Resend address",
+        "sendTransaction": "Send transaction"
+    },
+    "storage": {
+        "setPeriodLabel": "Set storage period in days",
+        "orPickDateLabel": "or pick a date",
+        "orSetInitBalanceLabel": "or set init balance",
+        "periodMustBeMultiple": "Storage period must be a multiple of the proof period ({{days}} days)",
+        "absoluteMinimum": "The absolute minimum is {{min}} TON"
+    },
+    "chooseProviders": {
+        "addCustomProvider": "Add custom provider",
+        "providerAlreadyAdded": "Provider already added.",
+        "noProvidersFound": "No providers found with the given pubkey.",
+        "someProvidersDeclinedWarn": "Some providers declined or has errors. You can remove them from list, try again or reload providers list.",
+        "failedToGetDeployTransaction": "Failed to get deploy transaction. Please try again later.",
+        "title": "Configure contract",
+        "chooseProvidersCount": "Choose providers count",
+        "reloadProviders": "Reload providers",
+        "hideAdvanced": "[ hide advanced options ]",
+        "storageProofEach": "Storage proof each",
+        "placeholderPubkey": "Pubkey",
+        "loadInfo": "Load info",
+        "providersCountInfo": "Providers count: {{count}}",
+        "confirmContinue": "Confirm and continue",
+        "loadOffers": "Load offers",
+        "showAdvanced": "[ show advanced options ]"
+    },
+    "newBag": {
+        "title": "Bag info",
+        "cancelStorage": "Cancel storage",
+        "loading": "Loading bag info, please wait...",
+        "noBagInfo": "No bag info available.",
+        "freeStorage": "Free storage:",
+        "bagID": "BagID",
+        "description": "Description",
+        "filesCount": "Files Count",
+        "bagSize": "Bag size"
+    },
+    "topup": {
+        "title": "Topup Balance",
+        "amountLabel": "Amount (TON)",
+        "minimumAmount": "Minimum amount: {{min}} TON",
+        "cancel": "Cancel",
+        "topupAction": "Topup {{amount}} TON"
+    },
+    "contract": {
+        "noProofsFromProvidersYet": "No proofs from providers yet",
+        "someProvidersNotSubmittedProofs": "Some providers have not submitted proofs yet",
+        "invalidPubKey": "Invalid public key",
+        "providerAlreadyAdded": "Provider already added",
+        "loadingContractInfo": "Loading contract information...",
+        "contractNotAvailable": "Contract information is not available",
+        "providersHeading": "Providers",
+        "cancel": "Cancel",
+        "getOffers": "Get Offers",
+        "apply": "Apply",
+        "reloadList": "Reload list",
+        "edit": "Edit",
+        "noProvidersFound": "No providers found.",
+        "withdrawFunds": "Withdraw funds"
+    },
+    "contractUI": {
+        "contractLabel": "Contract",
+        "providersChecks": "Providers checks",
+        "contractDetails": "Contract details"
+    },
+    "unpaid": {
+        "title": "Unpaid files",
+        "bagID": "BagID",
+        "description": "Description",
+        "size": "Size",
+        "freeStorage": "Free storage",
+        "actions": "Actions",
+        "removeUnpaidFileTitle": "Remove unpaid file"
+    },
+    "contractErrors": {
+        "providerDeclined": "Provider declined the offer"
+    },
+    "contractSettings": {
+        "resetProofPeriod": "Reset storage proof period"
+    },
+    "widgets": {
+        "uploadFiles": "Upload Files",
+        "chooseProviders": "Choose Providers",
+        "payment": "Payment",
+        "complete": "Complete",
+        "contractDeployed": "Contract deployed",
+        "whatsNext": "What's next?",
+        "filesStored": "Your files are now being stored on TON Storage",
+        "providersDownloading": "Providers need some time to download and distribute your files",
+        "monitorStatus": "You can monitor the storage status in the My Storage Bags tab above",
+        "viewContract": "You can also view deployed contract on TON Scan"
+    },
+    "upload": {
+        "noFilesDropped": "No files dropped.",
+        "noValidFilesOrFolders": "No valid files or folders dropped.",
+        "noFilesFoundInDropped": "No files found in dropped items.",
+        "failedToReadDropped": "Failed to read dropped files.",
+        "fileTooLarge": "File is too large. For files larger than 4GB use TON Torrent",
+        "noFilesFound": "No files found.",
+        "processingFiles": "Processing files, please wait...",
+        "noFilesSelected": "No Files Selected",
+        "dragDropHint": "Drag and drop files here or use the buttons below",
+        "addFiles": "Add File(s)",
+        "selectFolder": "Select Folder",
+        "maxFileSize": "Max file size: {{size}}",
+        "details": "Details",
+        "addDescription": "Add description:",
+        "uploadButton": "Upload"
+    },
+    "filesList": {
+        "selectedFiles": "Selected Files",
+        "totalFiles": "Total files:",
+        "file": "File",
+        "size": "Size",
+        "removeFileTitle": "Remove file"
+    },
+    "contractsTable": {
+        "contractAddress": "Contract Address",
+        "description": "Description",
+        "size": "Size",
+        "status": "Status",
+        "statusHint": "confirmed file storage / total checked providers (updated hourly by mytonprovider.org)",
+        "bagId": "BagID",
+        "updatedAt": "Updated At",
+        "actions": "Actions",
+        "contractDetails": "Contract details",
+        "topupBalance": "Topup balance",
+        "withdrawFunds": "Withdraw funds"
+    },
+    "layout": {
+        "bagsUpload": "Bags upload",
+        "upload": "Upload",
+        "myStoredBags": "My stored Bags",
+        "myBags": "My Bags"
+    },
+    "bagsList": {
+        "noPeers": "No peers",
+        "contractClosed": "Closed",
+        "storageContractInfo": "Storage contract info:",
+        "storageContracts": "Storage contracts",
+        "hideClosedContracts": "Hide closed contracts",
+        "checking": "Checking…",
+        "reloadPageToRefresh": "Reload page to refresh",
+        "listUpdated": "List updated",
+        "noStorageContractsFound": "No storage contracts found",
+        "lookingForMore": "Looking for more...",
+        "loadMore": "Load More"
+    },
+    "contractDetails": {
+        "publicKey": "Public Key",
+        "ratePerMB": "Rate per MB",
+        "maxSpan": "Max Span",
+        "lastProof": "Last Proof",
+        "nextProofTime": "Next Proof Time",
+        "check": "Check",
+        "nextProofByte": "Next Proof Byte",
+        "nonce": "Nonce",
+        "bagID": "Bag ID",
+        "balance": "Balance",
+        "fileSize": "File size",
+        "chunkSize": "Chunk size",
+        "owner": "Owner",
+        "merkleHash": "Merkle Hash",
+        "storage": "Storage",
+        "loadInfo": "Load info",
+        "computed": "computed",
+        "storageCheckHint": "storage check by mytonprovider.org",
+        "withdrawFunds": "Withdraw funds",
+        "days": "days"
+    },
+    "returnHome": "Return Home",
+    "uploadToStart": "Upload your first file to get started"
+}

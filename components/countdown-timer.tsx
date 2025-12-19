@@ -1,7 +1,7 @@
 "use client"
 
-import React from 'react';
 import { Clock, AlertTriangle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useCountdown } from '@/hooks/useCountdown';
 import { DAY_SECONDS } from '@/lib/storage-constants';
 
@@ -11,27 +11,28 @@ interface CountdownTimerProps {
 }
 
 export function CountdownTimer({ expirationTime, className = '' }: CountdownTimerProps) {
+  const { t } = useTranslation();
   const timeLeft = useCountdown(expirationTime);
 
   if (timeLeft.isExpired) {
     return (
       <div className={`flex items-center gap-2 text-red-600 ${className}`}>
         <AlertTriangle className="w-4 h-4" />
-        <span className="text-sm font-medium">File expired</span>
+        <span className="text-sm font-medium">{t('status.fileExpired')}</span>
       </div>
     );
   }
 
   const formatTimeUnit = (value: number, unit: string, forceShow = false) => {
     if (value === 0 && !forceShow) return null;
-    return `${value} ${unit}${value !== 1 ? 's' : ''}`;
+    return `${value} ${unit}`;
   };
 
   const timeUnits = [
-    formatTimeUnit(timeLeft.days, 'day'),
-    formatTimeUnit(timeLeft.hours, 'hour'),
-    formatTimeUnit(timeLeft.minutes, 'min'),
-    formatTimeUnit(timeLeft.seconds, 'sec', true), // Всегда показываем секунды
+    formatTimeUnit(timeLeft.days, t('time.day')),
+    formatTimeUnit(timeLeft.hours, t('time.hour')),
+    formatTimeUnit(timeLeft.minutes, t('time.min')),
+    formatTimeUnit(timeLeft.seconds, t('time.sec'), true), // Всегда показываем секунды
   ].filter(Boolean);
 
   const displayTime = timeUnits.slice(0, 2).join(', ');
@@ -54,7 +55,7 @@ export function CountdownTimer({ expirationTime, className = '' }: CountdownTime
     <div className={`flex items-center gap-2 ${textColor} ${className}`}>
       <Clock className="w-4 h-4" />
       <span className="text-sm font-medium">
-        {displayTime || '0 sec'}
+        {displayTime || t('status.zeroSec')}
       </span>
     </div>
   );

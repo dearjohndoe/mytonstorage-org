@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { useEffect, useState } from "react"
+import { useTranslation } from "react-i18next";
 import { Upload, FolderUp, Loader } from "lucide-react"
 import { addFile, addFolder } from "@/lib/api"
 import { AddedBag, FileMetadata } from "@/types/files"
@@ -25,6 +26,7 @@ declare module "react" {
 const maxFileSize = 4 * 1024 * 1024 * 1024;
 
 export default function StorageUpload() {
+  const { t } = useTranslation();
   const [isDragging, setIsDragging] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -52,14 +54,14 @@ export default function StorageUpload() {
     const items = Array.from(e.dataTransfer.items)
 
     if (items.length === 0) {
-      setError("No files dropped.")
+      setError(t('upload.noFilesDropped'))
       return
     }
 
     const entries = items.map(item => item.webkitGetAsEntry()).filter(entry => entry !== null)
 
     if (entries.length === 0) {
-      setError("No valid files or folders dropped.")
+      setError(t('upload.noValidFilesOrFolders'))
       return
     }
 
@@ -67,7 +69,7 @@ export default function StorageUpload() {
       const allFiles = await readAllFiles(entries)
 
       if (allFiles.length === 0) {
-        setError("No files found in dropped items.")
+        setError(t('upload.noFilesFoundInDropped'))
         return
       }
 
@@ -82,7 +84,7 @@ export default function StorageUpload() {
       setFiles(allFiles)
     } catch (error) {
       console.error("Error reading dropped files:", error)
-      setError("Failed to read dropped files.")
+      setError(t('upload.failedToReadDropped'))
     }
   }
 
@@ -90,7 +92,7 @@ export default function StorageUpload() {
     if (size > maxFileSize) {
       return (
         <span>
-          File is too large. For files larger than 4GB use&nbsp;
+          {t('upload.fileTooLarge')} &nbsp;
           <a
             href="https://github.com/xssnick/TON-Torrent"
             target="_blank"
@@ -148,7 +150,7 @@ export default function StorageUpload() {
 
     const resp = await addFile(file, { description } as FileMetadata, setProgressCallback)
     if (resp.status === 401) {
-      setError('Unauthorized. Logging out.');
+      setError(t('errors.unauthorizedLoggingOut'));
       console.error('addFile unauthorized. Logging out.');
       safeDisconnect(tonConnectUI);
       return;
@@ -174,7 +176,7 @@ export default function StorageUpload() {
 
     const resp = await addFolder(files, { description } as FileMetadata, setProgressCallback)
     if (resp.status === 401) {
-      setError('Unauthorized. Logging out.');
+      setError(t('errors.unauthorizedLoggingOut'));
       console.error('addFolder unauthorized. Logging out.');
       safeDisconnect(tonConnectUI);
       return;
@@ -195,7 +197,7 @@ export default function StorageUpload() {
 
     const newFiles = Array.from(e.target.files || []);
     if (newFiles.length === 0) {
-      setError("No files found.");
+      setError(t('upload.noFilesFound'));
       return;
     }
 
@@ -256,7 +258,7 @@ export default function StorageUpload() {
             {isLoading ? (
               <div className="flex flex-col items-center">
                 <Loader className="animate-spin h-8 w-8 text-blue-500 mb-4" />
-                <p className="text-sm text-gray-500">Processing files, please wait...</p>
+                <p className="text-sm text-gray-500">{t('upload.processingFiles')}</p>
               </div>
             ) : (
               <>
@@ -270,10 +272,10 @@ export default function StorageUpload() {
                   </div>
                 ) : (
                   <div className="text-center">
-                    <h3 className="text-lg font-medium mb-2">No Files Selected</h3>
+                    <h3 className="text-lg font-medium mb-2">{t('upload.noFilesSelected')}</h3>
                     {
                       !isMobile &&
-                      <p className="text-sm text-gray-500">Drag and drop files here or use the buttons below</p>
+                      <p className="text-sm text-gray-500">{t('upload.dragDropHint')}</p>
                     }
                   </div>
                 )}
@@ -285,7 +287,7 @@ export default function StorageUpload() {
                       onClick={() => document.getElementById("fileInput")?.click()}
                     >
                       <Upload className="h-4 w-4" />
-                      Add File(s)
+                      {t('upload.addFiles')}
                       <input
                         type="file"
                         id="fileInput"
@@ -299,7 +301,7 @@ export default function StorageUpload() {
                       onClick={() => document.getElementById("folderInput")?.click()}
                     >
                       <FolderUp className="h-4 w-4" />
-                      Select Folder
+                      {t('upload.selectFolder')}
                       <input
                         type="file"
                         id="folderInput"
@@ -311,7 +313,7 @@ export default function StorageUpload() {
                   </div>
                   {
                     !files || files.length === 0 && (
-                      <p className="text-center text-xs text-gray-400">Max file size: {printSpace(maxFileSize)}</p>
+                      <p className="text-center text-xs text-gray-400">{t('upload.maxFileSize', { size: printSpace(maxFileSize) })}</p>
                     )
                   }
                 </div>
@@ -339,15 +341,15 @@ export default function StorageUpload() {
 
         {/* Configure file details */}
         <div className={`${isMobile ? 'w-full mb-4' : 'w-1/3 mt-2 ml-4'} p-4 flex flex-col border border-gray-200 rounded-lg bg-gray-50`}>
-          <h3 className="text-lg font-medium mb-4">Details</h3>
+          <h3 className="text-lg font-medium mb-4">{t('upload.details')}</h3>
           <div className="flex-1 flex flex-col">
-            <TextField label="Add description:" name="description" />
+            <TextField label={t('upload.addDescription')} name="description" />
             <div className={`flex ${isMobile ? 'justify-center' : 'justify-end'} mt-auto pt-4`}>
               <button
                 className="btn bg-blue-500 text-white px-4 py-2 rounded"
                 onClick={sendFiles}
                 disabled={isLoading || files.length === 0}
-              >Upload</button>
+              >{t('upload.uploadButton')}</button>
             </div>
           </div>
         </div>

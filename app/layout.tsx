@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
+import { I18nProvider } from "@/components/i18n-provider"
 import { TonConnectProvider } from "@/components/ton-connect-provider"
 
 const inter = Inter({ subsets: ["latin", "cyrillic"] })
@@ -24,9 +25,11 @@ export default function RootLayout({
       <body className={inter.className}>
         <div className="flex flex-col min-h-screen">
           <TonConnectProvider>
-            <Header />
-            <main className="flex-grow w-full px-2 py-4 sm:py-6">{children}</main>
-            <Footer />
+            <I18nProvider>
+              <Header />
+              <main className="flex-grow w-full px-2 py-4 sm:py-6">{children}</main>
+              <Footer />
+            </I18nProvider>
           </TonConnectProvider>
         </div>
       </body>

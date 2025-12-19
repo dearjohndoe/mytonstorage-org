@@ -1,0 +1,6 @@
+const fs=require('fs');
+const en=JSON.parse(fs.readFileSync('public/locales/en/main.json','utf8'));
+const ru=JSON.parse(fs.readFileSync('public/locales/ru/main.json','utf8'));
+function flatten(obj,prefix=''){const out={};for(const k of Object.keys(obj)){const full=prefix?prefix+'.'+k:k; if(obj[k]&&typeof obj[k]==='object'&&!Array.isArray(obj[k])){Object.assign(out,flatten(obj[k],full));}else{out[full]=true;}}return out}
+function filterObj(base,ref){const out=Array.isArray(base)?[]:{};for(const k of Object.keys(base)){if(ref && typeof ref === 'object' && ref.hasOwnProperty(k)){if(base[k] && typeof base[k] === 'object' && !Array.isArray(base[k])){out[k]=filterObj(base[k],ref[k]);}else{out[k]=base[k];}}}return out}
+try{const enf=flatten(en); const ruf=flatten(ru); const extras=[]; for(const key of Object.keys(ruf)) if(!enf[key]) extras.push(key); const filtered=filterObj(ru,en); fs.writeFileSync('public/locales/ru/main.filtered.json',JSON.stringify(filtered,null,2),'utf8'); console.log('EXTRAS COUNT:',extras.length); extras.forEach(k=>console.log(k)); console.log('\nFiltered RU file written to public/locales/ru/main.filtered.json');}catch(e){console.error('ERROR',e); process.exit(1);} 

@@ -5,14 +5,16 @@ import { UserBag } from "@/types/files";
 import { Ban, X, Copy } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { ErrorComponent } from "../error";
+import { useTranslation } from "react-i18next";
 import React from "react";
 import { useAppStore } from "@/store/useAppStore";
 import { useTonConnectUI } from '@tonconnect/ui-react';
 import { safeDisconnect } from '@/lib/ton/safeDisconnect';
 import { CountdownTimer } from "../countdown-timer";
-import { copyToClipboard, shortenString, printSpace } from "@/lib/utils";
+import { copyToClipboard, printSpace, shortenString } from "@/lib/utils";
 
 export function UnpaidFilesList() {
+    const { t } = useTranslation();
     const { updateWidgetData } = useAppStore()
     const [tonConnectUI] = useTonConnectUI();
     const [error, setError] = useState<string | null>(null);
@@ -34,7 +36,7 @@ export function UnpaidFilesList() {
 
         const resp = await getUnpaid();
         if (resp.status === 401) {
-            setError('Unauthorized. Logging out.');
+            setError(t('errors.unauthorizedLoggingOut'));
             console.error('getUnpaid unauthorized. Logging out.');
             safeDisconnect(tonConnectUI);
             setIsLoading(false);
@@ -58,7 +60,7 @@ export function UnpaidFilesList() {
         try {
             const result = await removeFile(bagid);
             if (result.status === 401) {
-                setError('Unauthorized. Logging out.');
+                setError(t('errors.unauthorizedLoggingOut'));
                 console.error('removeFile unauthorized. Logging out.');
                 safeDisconnect(tonConnectUI);
                 setIsLoading(false);
@@ -99,7 +101,7 @@ export function UnpaidFilesList() {
             <div className="flex items-center justify-between gap-2 mb-4">
                 <div className="flex items-center">
                     <Ban className="w-5 h-5 text-blue-600" />
-                    <h2 className="text-lg pl-2 font-semibold text-gray-900">Unpaid files</h2>
+                    <h2 className="text-lg pl-2 font-semibold text-gray-900">{t('unpaid.title')}</h2>
                 </div>
             </div>
 
@@ -111,18 +113,18 @@ export function UnpaidFilesList() {
                         <thead>
                             <tr>
                                 <th>
-                                    <div className="flex items-center ml-2">BagID</div>
+                                    <div className="flex items-center ml-2">{t('unpaid.bagID')}</div>
                                 </th>
                                 <th>
-                                    <div className="flex items-center">Description</div>
+                                    <div className="flex items-center">{t('unpaid.description')}</div>
                                 </th>
                                 <th>
-                                    <div className="flex items-center">Size</div>
+                                    <div className="flex items-center">{t('unpaid.size')}</div>
                                 </th>
                                 <th>
-                                    <div className="flex items-center">Free storage</div>
+                                    <div className="flex items-center">{t('unpaid.freeStorage')}</div>
                                 </th>
-                                <th className="w-8">Actions</th>
+                                <th className="w-8">{t('unpaid.actions')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -130,7 +132,7 @@ export function UnpaidFilesList() {
                                 <React.Fragment key={f.bag_id}>
                                     <tr className={`group ${index % 2 ? "" : "bg-gray-50"} transition-colors duration-200`}>
                                         <td>
-                                            <div className="flex font-mono items-center ml-2">
+                                            <div className="flex items-center">
                                                 <a
                                                     href={`${apiBase}/api/v1/gateway/${f.bag_id.toUpperCase()}`}
                                                     target="_blank"
@@ -166,7 +168,7 @@ export function UnpaidFilesList() {
                                             <button
                                                 onClick={() => cancelStorage(f.bag_id)}
                                                 className="flex p-1 rounded-full hover:bg-gray-100"
-                                                title='Remove unpaid file'
+                                                title={t('unpaid.removeUnpaidFileTitle')}
                                             >
                                                 <X className="h-5 w-5 text-red-500" />
                                             </button>

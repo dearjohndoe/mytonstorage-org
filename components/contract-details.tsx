@@ -4,6 +4,7 @@
 import { UploadFile, useAppStore } from "@/store/useAppStore";
 import { ProviderInfo, StorageContractFull } from "@/types/blockchain";
 import React, { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { ErrorComponent } from "./error";
 import { RenderField } from "./render-field";
 import { CircleX, Copy, Info, ListMinus, Loader2, PackageOpen, Pencil, RefreshCcw, Undo2 } from "lucide-react";
@@ -31,6 +32,7 @@ type providerEdit = {
 const contractUpdateTimeout = 1000 * 60 * 60;
 
 export function ContractDetails({ contractAddress }: ContractDetailsProps) {
+    const { t } = useTranslation();
     const apiBase = (typeof process !== 'undefined' && process.env.PUBLIC_API_BASE) || "https://mytonstorage.org";
     const [tonConnectUI] = useTonConnectUI();
     const { files, setFiles } = useAppStore();
@@ -100,9 +102,9 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
 
         if (localContractInfo.providers.providers.length > 0) {
             if (proofs === 0) {
-                setWarn("No proofs from providers yet");
+                setWarn(t('contract.noProofsFromProvidersYet'));
             } else if (proofs < localContractInfo.providers.providers.length) {
-                setWarn("Some providers have not submitted proofs yet");
+                setWarn(t('contract.someProvidersNotSubmittedProofs'));
             }
         } else {
             setWarn(null);
@@ -139,17 +141,17 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
 
     const computeStorageProofStatus = (bagID: string, providerCID: string, files: UploadFile[]) => {
         const file = files.find(f => f.info?.bag_id.toLowerCase() === bagID.toLowerCase());
-        if (!file) return <span className="text-gray-500">N/A</span>;
+        if (!file) return <span className="text-gray-500">{t('status.na')}</span>;
 
         const proof = (file.contractChecks || []).find(c => c.provider_pubkey.toLowerCase() === providerCID.toLowerCase());
-        if (!proof) return <span className="text-gray-500">N/A</span>;
+        if (!proof) return <span className="text-gray-500">{t('status.na')}</span>;
 
         if (proof.reason === 0) {
-            return <span>Ok</span>;
+            return <span>{t('status.ok')}</span>;
         } else if (proof.reason === null) {
             return <span className="text-gray-500">N/A</span>;
         }
-        return <span className="text-red-600">No</span>;
+            return <span className="text-red-600">{t('status.no')}</span>;
     }
 
     const fetchContractInfo = async () => {
@@ -190,7 +192,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
         try {
             const resp = await getOffers(providers, "", Number(localContractInfo!.info.fileSize), proofPeriodDays * DAY_SECONDS);
             if (resp.status === 401) {
-                setError('Unauthorized. Logging out.');
+                setError(t('errors.unauthorizedLoggingOut'));
                 console.error('getOffers unauthorized. Logging out.');
                 safeDisconnect(tonConnectUI);
                 setOffersLoading(false);
@@ -198,7 +200,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
             }
             const offers = resp.data as Offers;
             if (offers?.declines?.length > 0) {
-                setError("Provider declined the offer");
+                setError(t('contractErrors.providerDeclined'));
             } else if (offers?.offers?.length > 0 && editProviders && editProviders.length > 0) {
                 const updated: providerEdit[] = offers.offers.map(o => {
                     const existing = editProviders.find(ep => ep.provider.cid.toLowerCase() === o.provider.key.toLowerCase());
@@ -222,7 +224,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                 console.error("Failed to load providers:", resp.error);
                 setError(resp.error);
             } else {
-                setError("Unknown error");
+                setError(t('errors.unknownErrorOccurred'));
             }
         } finally {
             setOffersLoading(false);
@@ -235,13 +237,13 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
         }
 
         if (pubkey.length !== 64) {
-            setError("Invalid public key");
+            setError(t('contract.invalidPubKey'));
             return;
         }
 
         const existingProvider = editProviders?.find(provider => provider.provider.cid === pubkey);
         if (existingProvider) {
-            setError("Provider already added");
+            setError(t('contract.providerAlreadyAdded'));
             return;
         }
 
@@ -280,7 +282,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                 span: editProviders[0]?.provider.maxSpan | 0,
             });
             if (resp.status === 401) {
-                setError('Unauthorized. Logging out.');
+                setError(t('errors.unauthorizedLoggingOut'));
                 console.error('getUpdateTransaction unauthorized. Logging out.');
                 safeDisconnect(tonConnectUI);
                 setIsLoading(false);
@@ -309,7 +311,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                 console.log("Topup transaction response:", wResp);
             } catch (error) {
                 console.error("Failed to send topup transaction:", error);
-                setError("Failed to send transaction");
+                setError(t('errors.failedToSendTransaction'));
             }
         } finally {
             setIsLoading(false);
@@ -353,7 +355,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                     </td>
                     <td>
                         <div className="flex items-center">
-                            {secondsToDays(provider.provider.maxSpan)} days
+                            {secondsToDays(provider.provider.maxSpan)} {t('contractDetails.days')}
                         </div>
                     </td>
                     <td>
@@ -501,9 +503,9 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                         </td>
                         <td>
                             <button
-                                onClick={() => { alert('Withdraw funds'); }}
+                                onClick={() => { alert(t('contractDetails.withdrawFunds')); }}
                                 className="p-1 rounded-full"
-                                title='Withdraw funds'
+                                title={t('contractDetails.withdrawFunds')}
                                 disabled={true}
                             >
                                 <CircleX className="h-5 w-5 text-gray-400" />
@@ -519,7 +521,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
     if (isLoadingContractInfo) {
         return (
             <div className="flex justify-center">
-                <div className="p-4 text-gray-500">Loading contract information...</div>
+                <div className="p-4 text-gray-500">{t('contract.loadingContractInfo')}</div>
             </div>
         );
     }
@@ -527,7 +529,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
     if (!localContractInfo) {
         return (
             <div className="p-4">
-                <span>Contract information is not available</span>
+                <span>{t('contract.contractNotAvailable')}</span>
             </div>
         );
     }
@@ -541,8 +543,8 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
             {/* Providers list */}
             <div>
                 <div className="flex justify-between items-center mb-2">
-                    <div className="flex items-center text-gray-500 font-bold">
-                        <ListMinus className="w-4 h-4 mr-2" />Providers
+                        <div className="flex items-center text-gray-500 font-bold">
+                        <ListMinus className="w-4 h-4 mr-2" />{t('contract.providersHeading')}
                     </div>
                     <div>
                         {
@@ -556,7 +558,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                                         }}
                                     >
                                         {/* <Cancel className="w-4 h-4 mr-1" /> */}
-                                        <span>Cancel</span>
+                                        <span>{t('contract.cancel')}</span>
                                     </button>
 
                                     {
@@ -570,7 +572,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                                                 {offersLoading ? (
                                                     <Loader2 className="w-4 h-4 mr-1 animate-spin" />
                                                 ) : null}
-                                                <span>Get Offers</span>
+                                                <span>{t('contract.getOffers')}</span>
                                             </button>
                                         ) : (
                                             <button
@@ -579,7 +581,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                                                 onClick={applyProvidersChanges}
                                                 disabled={isLoading}
                                             >
-                                                <span>Apply</span>
+                                                <span>{t('contract.apply')}</span>
                                             </button>
                                         )
                                     }
@@ -592,7 +594,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                                         onClick={() => { setLocalContractInfo(null); fetchContractInfo(); }}
                                     >
                                         <RefreshCcw className="w-4 h-4 mr-1" />
-                                        <span>Reload list</span>
+                                        <span>{t('contract.reloadList')}</span>
                                     </button>
 
                                     <button
@@ -601,7 +603,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                                         onClick={() => { setIsEdit(true); }}
                                     >
                                         <Pencil className="w-4 h-4 mr-1" />
-                                        <span>Edit</span>
+                                        <span>{t('contract.edit')}</span>
                                     </button>
                                 </div>
                             )
@@ -618,7 +620,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                 <div>
                     {localContractInfo.providers.providers.length === 0 ? (
                         <div className="text-gray-500 text-center py-4">
-                            No providers found.
+                            {t('contract.noProvidersFound')}
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
@@ -627,30 +629,30 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                                     <tr>
                                         <th>
                                             <div className="flex items-center">
-                                                Public Key
+                                                {t('contractDetails.publicKey')}
                                             </div>
                                         </th>
                                         <th>
                                             <div className="flex items-center">
-                                                Rate per MB
+                                                {t('contractDetails.ratePerMB')}
                                             </div>
                                         </th>
                                         <th>
                                             <div className="flex items-center">
-                                                Max Span
+                                                {t('contractDetails.maxSpan')}
                                             </div>
                                         </th>
                                         <th>
                                             <div className="flex items-center">
-                                                Last Proof
+                                                {t('contractDetails.lastProof')}
                                             </div>
                                         </th>
                                         {
                                             !isEdit && (
                                                 <th>
                                                     <div className="flex items-center">
-                                                        Next Proof Time
-                                                        <HintWithIcon text="computed" maxWidth={9} />
+                                                        {t('contractDetails.nextProofTime')}
+                                                        <HintWithIcon text={t('contractDetails.computed')} maxWidth={9} />
                                                     </div>
                                                 </th>
                                             )
@@ -659,20 +661,20 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                                             !isEdit && (
                                                 <th>
                                                     <div className="flex items-center">
-                                                        Check
-                                                        <HintWithIcon text="storage check by mytonprovider.org" maxWidth={17} />
+                                                        {t('contractDetails.check')}
+                                                        <HintWithIcon text={t('contractDetails.storageCheckHint')} maxWidth={17} />
                                                     </div>
                                                 </th>
                                             )
                                         }
                                         <th>
                                             <div className="flex items-center">
-                                                Next Proof Byte
+                                                {t('contractDetails.nextProofByte')}
                                             </div>
                                         </th>
                                         <th>
                                             <div className="flex items-center">
-                                                Nonce
+                                                {t('contractDetails.nonce')}
                                             </div>
                                         </th>
                                         <th>
@@ -692,7 +694,7 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                                 {/* Add provider */}
                                 <div className="flex justify-center items-end gap-4 mt-8">
                                     <TextField
-                                        label="Add custom provider"
+                                        label={t('chooseProviders.addCustomProvider')}
                                         onChange={(value) => { setNewPubkey(value) }}
                                         placeholder="Pubkey"
                                         disabled={!isEdit}
@@ -705,14 +707,14 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                                         {
                                             isLoading ? <Loader2 className="h-4 w-4 mr-2" /> : <PackageOpen className="h-4 w-4 mr-2" />
                                         }
-                                        Load info
+                                        {t('contractDetails.loadInfo')}
                                     </button>
                                 </div>
 
                                 {/* Proof period */}
                                 <div className="mt-4 mb-2">
                                     <PeriodField
-                                        label="Reset storage proof period"
+                                        label={t('contractSettings.resetProofPeriod')}
                                         suffix="days"
                                         value={proofPeriodDays}
                                         onChange={setProofPeriodDays}
@@ -730,39 +732,39 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
             {/* Storage info */}
             <div>
                 <div className="flex items-center mb-2 text-gray-500 font-bold">
-                    <Info className="w-4 h-4 mr-2" />Storage
+                    <Info className="w-4 h-4 mr-2" />{t('contractDetails.storage')}
                 </div>
                 <RenderField
-                    label="Bag ID"
+                    label={t('contractDetails.bagID')}
                     value={localContractInfo.info.bagID}
                     url={`${apiBase}/api/v1/gateway/${localContractInfo.info.bagID}`}
                     copy={localContractInfo.info.bagID}
                 />
 
                 <RenderField
-                    label="Balance"
+                    label={t('contractDetails.balance')}
                     value={`${(Number(localContractInfo.providers.balance) / 1_000_000_000).toFixed(4)} TON`}
                 />
 
                 <RenderField
-                    label="File size"
+                    label={t('contractDetails.fileSize')}
                     value={printSpace(Number(localContractInfo.info.fileSize), true)}
                 />
 
                 <RenderField
-                    label="Chunk size"
+                    label={t('contractDetails.chunkSize')}
                     value={printSpace(localContractInfo.info.chunkSize, true)}
                 />
 
                 <RenderField
-                    label="Owner"
+                    label={t('contractDetails.owner')}
                     value={localContractInfo.info.owner}
                     url={`https://tonscan.org/address/${localContractInfo.info.owner}`}
                     copy={localContractInfo.info.owner}
                 />
 
                 <RenderField
-                    label="Merkle Hash"
+                    label={t('contractDetails.merkleHash')}
                     value={localContractInfo.info.merkleHash}
                     copy={localContractInfo.info.merkleHash}
                 />

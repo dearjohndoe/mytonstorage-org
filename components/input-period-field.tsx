@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
+import { useTranslation } from 'react-i18next'
 
 interface PeriodFieldProps {
     label: string
@@ -30,6 +31,7 @@ export function PeriodField({
     disabled = false,
     isMobile = false
 }: PeriodFieldProps) {
+    const { t } = useTranslation();
     const [isCustom, setIsCustom] = useState(() => {
         return !presetPeriods.some(preset => preset.value === value)
     })
@@ -102,7 +104,7 @@ export function PeriodField({
                                     {preset.label}
                                 </option>
                             ))}
-                            <option value="custom">Custom...</option>
+                            <option value="custom">{t('input.custom')}</option>
                         </select>
                         {isCustom && (
                             <input
@@ -113,7 +115,7 @@ export function PeriodField({
                                 onChange={(e) => handleCustomInputChange(e.target.value)}
                                 onBlur={handleCustomInputBlur}
                                 onKeyDown={handleKeyDown}
-                                placeholder="Days"
+                                placeholder={t('input.days')}
                                 disabled={disabled}
                                 className={
                                     `border bg-gray-100 border-gray-100 rounded px-3 py-2 focus:ring-2 focus:ring-blue-200 outline-none transition-colors w-24 text-center text-gray-700` +
@@ -129,10 +131,10 @@ export function PeriodField({
                     {
                         value > warnProofDays && (
                             <div className="align-middle flex flex-col items-center gap-1">
-                                <span className="flex text-center">⚠️</span>
+                                    <span className="flex text-center">⚠️</span>
                                 <span className="text-yellow-600 font-medium text-center gap-1">
-                                    <pre>Long proof periods reduce blockchain fees but increase risk: providers may stop storing </pre>
-                                    <pre>files between infrequent checks. For better data safety, use shorter periods (≤{warnProofDays} days).</pre>
+                                    <pre>{t('input.longProofWarningLine1')}</pre>
+                                    <pre>{t('input.longProofWarningLine2', { days: warnProofDays })}</pre>
                                 </span>
                             </div>
                         )

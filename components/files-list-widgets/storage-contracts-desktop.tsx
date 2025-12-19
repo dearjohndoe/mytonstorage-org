@@ -5,6 +5,7 @@ import { UploadFile } from '@/store/useAppStore'
 import { CircleX, Copy, Info, Wallet, RefreshCw } from 'lucide-react'
 import { copyToClipboard, printSpace, shortenString } from '@/lib/utils'
 import HintWithIcon from '../hint'
+import { useTranslation } from "react-i18next";
 
 interface StorageContractsDesktopProps {
   files: UploadFile[]
@@ -33,6 +34,7 @@ export function StorageContractsDesktop({
   buildContractChecksBlock,
   apiBase
 }: StorageContractsDesktopProps) {
+  const { t } = useTranslation();
   if (hideClosed) {
     files = files.filter(f => f.status !== 'closed');
   }
@@ -44,37 +46,37 @@ export function StorageContractsDesktop({
           <tr>
             <th>
               <div className="flex items-center ml-2">
-                Contract Address
+                {t('contractsTable.contractAddress')}
               </div>
             </th>
             <th>
               <div className="flex items-center">
-                Description
+                {t('contractsTable.description')}
               </div>
             </th>
             <th>
               <div className="flex items-center">
-                Size
+                {t('contractsTable.size')}
               </div>
             </th>
             <th>
               <div className="flex items-center">
-                Status
-                <HintWithIcon text="confirmed file storage / total checked providers (updated hourly by mytonprovider.org)" maxWidth={45} />
+                {t('contractsTable.status')}
+                <HintWithIcon text={t('contractsTable.statusHint')} maxWidth={45} />
               </div>
             </th>
             <th>
               <div className="flex items-center">
-                BagID
+                {t('contractsTable.bagId')}
               </div>
             </th>
             <th>
               <div className="flex items-center">
-                Updated At
+                {t('contractsTable.updatedAt')}
               </div>
             </th>
             <th className="w-8">
-              Actions
+              {t('contractsTable.actions')}
             </th>
           </tr>
         </thead>
@@ -161,7 +163,7 @@ export function StorageContractsDesktop({
                     <button
                       onClick={() => onSelectContract(f.contractAddress)}
                       className="p-1 mx-3 rounded-full text-gray-500 hover:text-gray-300"
-                      title='Contract details'
+                      title={t('contractsTable.contractDetails')}
                     >
                       <Info className="h-5 w-5" />
                     </button>
@@ -172,7 +174,7 @@ export function StorageContractsDesktop({
                           <button
                             onClick={() => onTopupBalance(f.contractAddress)}
                             className="p-1 rounded-full text-gray-800 hover:text-gray-500"
-                            title='Topup balance'
+                            title={t('contractsTable.topupBalance')}
                           >
                             <Wallet className="h-5 w-5" />
                           </button>
@@ -180,7 +182,7 @@ export function StorageContractsDesktop({
                           <button
                             onClick={() => onCancelStorage(f.contractAddress)}
                             className="p-1 rounded-full"
-                            title='Withdraw funds'
+                            title={t('contractsTable.withdrawFunds')}
                             disabled={loadingWithdrawalAddress !== null || isLoading}
                           >
                             {

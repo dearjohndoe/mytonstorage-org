@@ -5,10 +5,12 @@ import { useTonConnectUI } from "@tonconnect/ui-react";
 import { safeDisconnect } from '@/lib/ton/safeDisconnect';
 import { ChevronLeft, ReceiptText } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ErrorComponent } from "../error";
 import { setBagStorageContract } from "@/lib/api";
 
 export default function Payment() {
+    const { t } = useTranslation();
     const [tonConnectUI] = useTonConnectUI();
     const { upload, updateWidgetData } = useAppStore();
     const [error, setError] = useState<string | null>(null);
@@ -25,7 +27,7 @@ export default function Payment() {
 
         if (widgetData!.bagInfo!.created_at + widgetData!.freeStorage! < Math.floor(Date.now() / 1000)) {
             console.log("Bag storage time expired");
-            setError("Storage time expired. Please start over.");
+            setError(t('errors.storageTimeExpired'));
             return;
         }
 
@@ -40,7 +42,7 @@ export default function Payment() {
         try {
             if (!widgetData.newBagID) {
                 console.error("No new bag ID available");
-                setError("Unknown error occurred.");
+                setError(t('errors.unknownErrorOccurred'));
                 setLoading(false);
                 return;
             }
@@ -67,7 +69,7 @@ export default function Payment() {
 
         } catch (error) {
             console.error("Error sending transaction:", error);
-            setError("Failed to send transaction. Please try again.");
+            setError(t('errors.failedToSendTransaction'));
         }
 
         setLoading(false);
@@ -79,14 +81,14 @@ export default function Payment() {
 
         const response = await setBagStorageContract(bagid, storageContractAddress);
         if (response.status === 401) {
-            setError('Unauthorized. Logging out.');
+            setError(t('errors.unauthorizedLoggingOut'));
             console.error('setBagStorageContract unauthorized. Logging out.');
             safeDisconnect(tonConnectUI);
             setLoading(false);
             return;
         }
         if (response.error) {
-            setError("Try resend address. Got error: " + response.error);
+            setError(t('errors.tryResendAddressError', { error: response.error }));
             console.error("Failed to set bag storage contract:", response.error);
         } else if (response.data) {
             console.log("Successfully set bag storage contract");
@@ -94,7 +96,7 @@ export default function Payment() {
                 paymentStatus: "success"
             });
         } else {
-            setError("Unknown error occurred. Try resend address.");
+            setError(t('errors.unknownErrorTryResend'));
         }
 
         setLoading(false);
@@ -113,16 +115,16 @@ export default function Payment() {
             <div className="flex items-center justify-between gap-2 mb-4">
                 <div className="flex items-center">
                     <ReceiptText className="w-5 h-5 text-blue-600" />
-                    <h2 className="text-lg pl-2 font-semibold text-gray-900">Payment</h2>
+                    <h2 className="text-lg pl-2 font-semibold text-gray-900">{t('payment.title')}</h2>
                 </div>
             </div>
 
-            <p className="text-gray-600 my-4">Providers will start uploading files once payment is confirmed.</p>
+            <p className="text-gray-600 my-4">{t('payment.providersStartUploading')}</p>
 
             <ErrorComponent error={error} />
             <br />
 
-            {loading && <p className="mb-6 text-center">Processing payment...</p>}
+            {loading && <p className="mb-6 text-center">{t('payment.processing')}</p>}
 
             <div className="flex">
                 <button
@@ -130,7 +132,7 @@ export default function Payment() {
                     onClick={goBack}
                 >
                     <ChevronLeft className="h-4 w-4 mr-2" />
-                    Back to providers
+                    {t('payment.backToProviders')}
                 </button>
 
                 {
@@ -140,7 +142,7 @@ export default function Payment() {
                                 sendStorageContract(widgetData.newBagID!, address)
                             }}
                         >
-                            Resend address
+                            {t('payment.resendAddress')}
                         </button>
                     ) : (
                         <button
@@ -148,7 +150,7 @@ export default function Payment() {
                             onClick={sendTransaction}
                             disabled={loading}
                         >
-                            Send transaction
+                            {t('payment.sendTransaction')}
                         </button>
                     )
                 }

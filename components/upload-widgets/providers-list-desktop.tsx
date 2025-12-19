@@ -1,6 +1,7 @@
 "use client"
 
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { ProviderInfo } from '@/lib/types'
 import { Copy, Star, X } from 'lucide-react'
 import { copyToClipboard, secondsToDays, shortenString } from '@/lib/utils'
@@ -37,6 +38,7 @@ export function ProvidersListDesktop({
   setCopiedKey,
   removeProvider
 }: ProvidersListDesktopProps) {
+  const { t } = useTranslation();
   const hasDeclined = providers.some(p => p.decline)
 
   return (
@@ -44,38 +46,38 @@ export function ProvidersListDesktop({
       <table className="ton-table overscroll-x-auto">
         <thead>
           <tr>
-            <th>
+                <th>
               <div className="flex items-center">
-                Public Key
+                {t('table.publicKey')}
               </div>
             </th>
-            <th>
+                <th>
               <div className="flex items-center">
-                Location
+                {t('table.location')}
               </div>
             </th>
-            <th>
+                <th>
               <div className="flex items-center">
-                Rating
+                {t('table.rating')}
               </div>
             </th>
-            <th>
+                <th>
               <div className="flex items-center">
-                Price
-                <HintWithIcon text="per 200 GB per 30 days" maxWidth={18} />
+                {t('table.price')}
+                <HintWithIcon text={t('status.priceHint')} maxWidth={18} />
               </div>
             </th>
-            {
+                {
               (advanced) && (
                 <th>
-                  <div className="flex items-center">Proofs range</div>
+                  <div className="flex items-center">{t('table.proofsRange')}</div>
                 </th> 
               )
             }
             {
               hasDeclined && (
                 <th>
-                  <div className="flex items-center">{"Reason"}</div>
+                  <div className="flex items-center">{t('table.reason')}</div>
                 </th> 
               )
             }
@@ -83,7 +85,7 @@ export function ProvidersListDesktop({
               advanced && (
                 <th>
                   <div className="flex items-center">
-                    Price per proof
+                    {t('table.pricePerProof')}
                   </div>
                 </th>
               )
@@ -116,7 +118,7 @@ export function ProvidersListDesktop({
                       <span className="">{p.provider.location.country}{p.provider.location.city ? `, ${p.provider.location.city}` : ""}</span>
                     </div>
                   ) : (
-                    <span className=" text-gray-500">Unknown</span>
+                    <span className=" text-gray-500">{t('unknown')}</span>
                   )}
                 </td>
                 <td>
@@ -147,13 +149,13 @@ export function ProvidersListDesktop({
                   hasDeclined && (
                     <td>
                       <div className="flex items-center">
-                        {
-                          p.decline ? (
-                            <span className="text-red-500">{p.decline}</span>
-                          ) : (
-                            <span className="text-green-600">Accepted</span>
-                          )
-                        }
+                                {
+                                  p.decline ? (
+                                    <span className="text-red-500">{p.decline}</span>
+                                  ) : (
+                                    <span className="text-green-600">{t('table.accepted')}</span>
+                                  )
+                                }
                       </div>
                     </td>
                   )
