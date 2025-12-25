@@ -24,7 +24,7 @@ export interface Blockchain {
 
 export interface UploadWidgetData {
   // Widget 1: File upload
-  selectedFiles: FileInfo[]
+  selectedFiles: File[]
   newBagID?: string
   newBagInfo?: AddedBag
   bagInfo?: UserBag
@@ -50,7 +50,7 @@ export interface AppState {
 
   // Данные для страницы загрузки
   upload: {
-    currentWidget: 1 | 2 | 3 | 4
+    currentWidget: 1 | 2 | 3 | 4 | 5 | 6
     widgetData: UploadWidgetData
   }
 
@@ -72,7 +72,7 @@ export interface AppActions {
   setCurrentPage: (page: 1 | 2) => void
 
   // Управление виджетами загрузки
-  setCurrentWidget: (widget: 1 | 2 | 3 | 4) => void
+  setCurrentWidget: (widget: 1 | 2 | 3 | 4 | 5 | 6) => void
 
   // Управление данными виджетов
   updateWidgetData: (data: Partial<UploadWidgetData>) => void

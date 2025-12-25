@@ -13,6 +13,8 @@ import StorageInfo from "@/components/upload-widgets/storage-info";
 import ChooseProviders from "@/components/upload-widgets/choose-providers";
 import { FilesList } from "@/components/files-list-widgets/files-list";
 import { useTranslation } from "react-i18next";
+import Details from "@/components/upload-widgets/details";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 function HomeContent() {
   const { t } = useTranslation();
@@ -21,6 +23,7 @@ function HomeContent() {
   const { currentPage, setCurrentPage, upload, files, _hasHydrated } = useAppStore()
   const [fallbackTimer, setFallbackTimer] = useState(false)
   const widgetData = upload.widgetData
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     tonConnectUI.onStatusChange(async (w: any) => {
@@ -96,15 +99,19 @@ function HomeContent() {
     if (widgetData.selectedFiles && widgetData.newBagID && widgetData.newBagID.length === 64) {
       if (widgetData.selectedProviders && widgetData.selectedProviders.length > 0 && widgetData.transaction) {
         if (widgetData.storageContractAddress && widgetData.paymentStatus === 'success') {
-          useAppStore.getState().setCurrentWidget(4)
+          useAppStore.getState().setCurrentWidget(5)
         } else {
-          useAppStore.getState().setCurrentWidget(3)
+          useAppStore.getState().setCurrentWidget(4)
         }
       } else {
-        useAppStore.getState().setCurrentWidget(2)
+        useAppStore.getState().setCurrentWidget(3)
       }
     } else {
-      useAppStore.getState().setCurrentWidget(1)
+      if (widgetData.selectedFiles && widgetData.selectedFiles.length > 0) {
+        useAppStore.getState().setCurrentWidget(2)
+      } else {
+        useAppStore.getState().setCurrentWidget(1)
+      }
     }
   }, [widgetData])
 
@@ -132,13 +139,15 @@ function HomeContent() {
     switch (upload.currentWidget) {
       case 1:
         return (
-          <div>
-            <StorageUpload />
-          </div>
+          <StorageUpload />
         )
       case 2:
         return (
-          <div>
+            <Details />
+        )
+      case 2:
+        return (
+          <div className="w-full">
             <NewBagInfo
               canCancel={true}
             />
@@ -147,7 +156,7 @@ function HomeContent() {
         )
       case 3:
         return (
-          <div>
+          <div className="w-full">
             <NewBagInfo
               canCancel={true}
             />
@@ -156,7 +165,7 @@ function HomeContent() {
         )
       case 4:
         return (
-          <div>
+          <div className="w-full">
             <NewBagInfo
               canCancel={false}
             />
@@ -165,9 +174,7 @@ function HomeContent() {
         )
       default:
         return (
-          <div>
-            <StorageUpload />
-          </div>
+          <StorageUpload />
         )
     }
   }
@@ -200,7 +207,7 @@ function HomeContent() {
         </div>
 
         {currentPage === 1 && (
-          <div>
+          <div className={`flex flex-col items-center ${isMobile ? '' : 'w-4/5 mx-auto'}`}>
             <WidgetsMap />
             {renderUploadWidget()}
           </div>
@@ -225,11 +232,7 @@ export default function Home() {
 
   if (!mounted) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <p className="mt-1 text-gray-600">Loading...</p>
-        </div>
-      </div>
+      <></>
     )
   }
 
