@@ -12,7 +12,7 @@ export default function WidgetsMap() {
     { id: 1, label: t('widgets.uploadFiles') },
     { id: 2, label: t('widgets.details') },
     { id: 3, label: t('widgets.chooseProviders') },
-    { id: 4, label: t('widgets.payment') },
+    { id: 4, label: t('widgets.choosePeriod') },
     { id: 5, label: t('widgets.complete') }
   ]
 

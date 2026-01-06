@@ -38,7 +38,7 @@ function getInitialLanguage(): string {
   return SUPPORTED_LANGS.includes(browserLang) ? browserLang : 'en';
 }
 
-export const i18nInstance = createI18nInstance(typeof window !== 'undefined' ? getInitialLanguage() : 'en');
+export const i18nInstance = createI18nInstance('en');
 
 if (typeof window !== 'undefined') {
   i18nInstance.on('languageChanged', (lng) => {
@@ -49,5 +49,12 @@ if (typeof window !== 'undefined') {
 }
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    const lang = getInitialLanguage();
+    if (lang !== i18nInstance.language) {
+      i18nInstance.changeLanguage(lang);
+    }
+  }, []);
+
   return <I18nextProvider i18n={i18nInstance}>{children}</I18nextProvider>;
 }

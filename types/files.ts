@@ -12,10 +12,6 @@ export type UserBag = {
     bag_size: number;
 }
 
-export type AddedBag = {
-    bag_id: string;
-};
-
 export type UnpaidBags = {
     free_storage: number;
     bags: UserBag[];

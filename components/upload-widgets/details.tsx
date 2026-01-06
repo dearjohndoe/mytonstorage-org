@@ -1,9 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { FileInfo } from "@/types/files"
 import { addFile, addFolder } from "@/lib/api"
-import { AddedBag, FileMetadata } from "@/types/files"
+import { FileMetadata, UnpaidBags } from "@/types/files"
 import { useAppStore } from '@/store/useAppStore'
 import { useTonConnectUI } from '@tonconnect/ui-react';
 import { safeDisconnect } from '@/lib/ton/safeDisconnect';
@@ -47,11 +46,20 @@ export default function Details() {
             safeDisconnect(tonConnectUI);
             return;
         }
-        const addedBag = resp.data as AddedBag
-        if (addedBag) {
+        const addedBag = resp.data as UnpaidBags
+        if (addedBag && addedBag.bags.length > 0) {
             updateWidgetData({
                 selectedFiles: [file],
-                newBagID: addedBag.bag_id,
+                newBagID: addedBag.bags[0].bag_id,
+                bagInfo: {
+                    bag_id: addedBag.bags[0].bag_id,
+                    user_address: addedBag.bags[0].user_address,
+                    created_at: Math.floor(Date.now() / 1000),
+                    description: addedBag.bags[0].description,
+                    files_count: addedBag.bags[0].files_count,
+                    bag_size: addedBag.bags[0].bag_size,
+                },
+                freeStorage: addedBag.free_storage,
             })
         } else if (resp.error) {
             setError(resp.error)
@@ -66,11 +74,21 @@ export default function Details() {
             safeDisconnect(tonConnectUI);
             return;
         }
-        const addedBag = resp.data as AddedBag
-        if (addedBag) {
+
+        const addedBag = resp.data as UnpaidBags
+        if (addedBag && addedBag.bags.length > 0) {
             updateWidgetData({
                 selectedFiles: files,
-                newBagID: addedBag.bag_id,
+                newBagID: addedBag.bags[0].bag_id,
+                bagInfo: {
+                    bag_id: addedBag.bags[0].bag_id,
+                    user_address: addedBag.bags[0].user_address,
+                    created_at: Math.floor(Date.now() / 1000),
+                    description: addedBag.bags[0].description,
+                    files_count: addedBag.bags[0].files_count,
+                    bag_size: addedBag.bags[0].bag_size,
+                },
+                freeStorage: addedBag.free_storage,
             })
         } else if (resp.error) {
             setError(resp.error)
@@ -105,51 +123,52 @@ export default function Details() {
         <>
             <ErrorComponent error={error} />
 
-            {isLoading ? (
-                <div className={`w-full p-4 relative overflow-hidden flex flex-col border border-gray-200 rounded-lg bg-gray-50`}>
-                    <div className="flex flex-col items-center ">
-                        <Loader className="animate-spin h-8 w-8 text-blue-500 mb-4" />
-                        <p className="text-sm text-gray-500 mb-8">{t('upload.processingFiles')}</p>
-                        <div className="absolute bottom-0 left-0 w-full select-none pointer-events-none">
-                            <div className="text-center text-gray-700">
-                                <p>{progress}%</p>
-                            </div>
-                            <div className="h-2 w-full bg-gray-200/60 backdrop-blur-sm">
-                                <div
-                                    className="h-full bg-blue-500 transition-[width] duration-300 ease-out"
-                                    style={{ width: `${progress}%` }}
-                                />
+            {
+                isLoading ? (
+                    <div className={`w-full p-4 relative overflow-hidden flex flex-col border border-gray-200 rounded-lg bg-gray-50`}>
+                        <div className="flex flex-col items-center ">
+                            <Loader className="animate-spin h-8 w-8 text-blue-500 mb-4" />
+                            <p className="text-sm text-gray-500 mb-8">{t('upload.processingFiles')}</p>
+                            <div className="absolute bottom-0 left-0 w-full select-none pointer-events-none">
+                                <div className="text-center text-gray-700">
+                                    <p>{progress}%</p>
+                                </div>
+                                <div className="h-2 w-full bg-gray-200/60 backdrop-blur-sm">
+                                    <div
+                                        className="h-full bg-blue-500 transition-[width] duration-300 ease-out"
+                                        style={{ width: `${progress}%` }}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            ) : (
-                <div className="w-full">
-                    <div className={"mb-4"}>
-                        <button
-                            className="btn bg-blue-500 text-white px-4 py-2 rounded"
-                            onClick={prevStep}
-                        >{t('upload.back')}</button>
-                    </div>
-
-                    <div className={"flex items-center justify-center w-full"}>
+                ) : (
+                    <div className="w-full">
                         {/* Configure file details */}
                         <div className={`w-full p-4 flex flex-col border border-gray-200 rounded-lg bg-gray-50`}>
                             <h3 className="text-lg font-medium mb-4">{t('upload.details')}</h3>
                             <div className="flex-1 flex flex-col">
                                 <TextField label={t('upload.addDescription')} name="description" />
-                                <div className={`flex ${isMobile ? 'justify-center' : 'justify-end'} mt-auto pt-4`}>
+                                <div className={`flex mt-8 ${isMobile ? 'justify-center w-full' : 'justify-end'}`}>
                                     <button
-                                        className="btn bg-blue-500 text-white px-4 py-2 rounded"
+                                        className="btn px-4 py-2 text-md text-gray-700 flex items-center border rounded mx-4 hover:bg-gray-100"
+                                        onClick={prevStep}
+                                    >
+                                        {t('upload.back')}
+                                    </button>
+
+                                    <button
+                                        className="btn px-4 py-2 rounded bg-blue-500 text-white mx-4 disabled:cursor-not-allowed"
                                         onClick={sendFiles}
                                         disabled={isLoading}
-                                    >{t('upload.uploadButton')}</button>
+                                    >
+                                        {t('upload.uploadButton')}
+                                    </button>
                                 </div>
                             </div>
                         </div>
-                    </div >
-                </div>
-            )
+                    </div>
+                )
             }
         </>
     )

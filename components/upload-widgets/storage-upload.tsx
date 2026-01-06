@@ -110,6 +110,13 @@ export default function StorageUpload() {
       return;
     }
 
+    const totalSize = newFiles.reduce((acc, file) => acc + file.size, 0);
+    const validationError = validateSize(totalSize);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
     for (const file of newFiles) {
       const validationError = validateSize(file.size);
       if (validationError) {
@@ -118,6 +125,60 @@ export default function StorageUpload() {
       }
     }
 
+    setFiles(newFiles)
+    if (manageFilesFirst) {
+      console.info("Managing files first, not proceeding to next step yet.");
+      return;
+    }
+
+    console.info("Proceeding to next step with files:", newFiles);
+    nextStep(newFiles);
+  }
+
+  const handleFiles = (newFiles: File[]) => {
+    const allFilesUnique = (() => {
+      const seen = new Map<string, File>();
+      const genKey = (f: File) => `${(f as any).webkitRelativePath || f.name}-${f.size}-${f.lastModified}`;
+      for (const f of files) {
+        seen.set(genKey(f), f);
+      }
+
+      for (const f of newFiles) {
+        const key = genKey(f);
+        if (!seen.has(key)) seen.set(key, f);
+      }
+      
+      return Array.from(seen.values());
+    })();
+
+    const totalSize = allFilesUnique.reduce((acc, file) => acc + file.size, 0);
+    const validationError = validateSize(totalSize);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    for (const file of allFilesUnique) {
+      const validationError = validateSize(file.size);
+      if (validationError) {
+        setError(validationError);
+        return;
+      }
+    }
+
+    setFiles(allFilesUnique);
+
+    if (manageFilesFirst) {
+      console.info("Managing files first, not proceeding to next step yet.");
+      return;
+    }
+
+    console.info("Proceeding to next step with files:", allFilesUnique);
+    nextStep(allFilesUnique);
+  }
+
+  const removeFile = (index: number) => {
+    const newFiles = files.filter((_, i) => i !== index)
     setFiles(newFiles)
   }
 
@@ -129,7 +190,7 @@ export default function StorageUpload() {
       buttonStyle = "btn text-md flex items-center gap-2 border rounded px-4 py-2 m-4 hover:bg-gray-100"
       fileButtonTitle = t('upload.addFiles')
     }
-    
+
     return (
       <div className={`flex justify-center ${isMobile ? 'flex-col gap-2' : ''}`}>
 
@@ -165,54 +226,11 @@ export default function StorageUpload() {
     )
   }
 
-  const handleFiles = (newFiles: File[]) => {
-    for (const file of newFiles) {
-      const validationError = validateSize(file.size);
-      if (validationError) {
-        setError(validationError);
-        return;
-      }
-    }
-
-
-    const allFilesUnique = (() => {
-      const seen = new Map<string, File>();
-      const genKey = (f: File) => `${(f as any).webkitRelativePath || f.name}-${f.size}-${f.lastModified}`;
-      for (const f of files) seen.set(genKey(f), f);
-      for (const f of newFiles) {
-        const key = genKey(f);
-        if (!seen.has(key)) seen.set(key, f);
-      }
-      return Array.from(seen.values());
-    })();
-    const totalSize = allFilesUnique.reduce((acc, file) => acc + file.size, 0);
-    const validationError = validateSize(totalSize);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-
-    setFiles(allFilesUnique);
-
-    if (manageFilesFirst) {
-      console.info("Managing files first, not proceeding to next step yet.");
-      return;
-    }
-
-    console.info("Proceeding to next step with files:", allFilesUnique);
-    nextStep(allFilesUnique);
-  }
-
-  const removeFile = (index: number) => {
-    const newFiles = files.filter((_, i) => i !== index)
-    setFiles(newFiles)
-  }
-
   return (
     <div className="w-full">
-      {/* Drop area */}
       <ErrorComponent error={error} />
 
+      {/* Drop area */}
       <div
         className={`w-full border-2 border-dashed rounded-lg ${isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300"}`}
         onDragOver={handleDragOver}
@@ -266,19 +284,19 @@ export default function StorageUpload() {
 
               {
                 !isMobile && files.length > 0 && manageFilesFirst && (
-                  <div className="flex justify-end gap-2 mt-4">
+                  <div className={`flex ${isMobile ? 'justify-center' : 'justify-end'} mt-auto pt-4`}>
                     <button
-                      className="btn text-md flex items-center gap-2 border rounded px-4 py-2 h-10 hover:bg-gray-100"
+                      className="btn px-4 py-2 text-md text-gray-700 flex items-center border rounded mx-4 hover:bg-gray-100"
                       onClick={() => setFiles([])}
                     >
                       {t('upload.resetFiles')}
                     </button>
-                    
+
                     <button
-                      className="btn text-md text-white flex items-center gap-2 rounded px-4 py-2 h-10 bg-blue-500 hover:bg-blue-400"
+                      className="btn px-4 py-2 rounded bg-blue-500 text-white mx-4 disabled:cursor-not-allowed"
                       onClick={() => nextStep(files)}
                     >
-                      {t('upload.proceedToDetails')}
+                      {t('upload.continue')}
                     </button>
                   </div>
                 )

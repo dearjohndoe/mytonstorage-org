@@ -1,17 +1,18 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState } from "react"
 
 interface TextFieldProps {
   label: string
   onChange: (value: string) => void
   placeholder?: string
   disabled?: boolean
+  horizontal?: boolean
 }
 
 const defaultValue = ""
 
-export function TextField({ label, onChange, placeholder, disabled }: TextFieldProps) {
+export function TextField({ label, onChange, placeholder, disabled, horizontal }: TextFieldProps) {
   const [input, setInput] = useState(defaultValue)
 
   const handleInputChange = (value: string) => {
@@ -29,8 +30,8 @@ export function TextField({ label, onChange, placeholder, disabled }: TextFieldP
   const randomName = "name-" + Math.random().toString(36).substring(2, 15)
 
   return (
-    <div className="mb-4">
-      <div className="flex flex-wrap items-center">
+    <div className={horizontal ? "" : "mb-4"}>
+      <div className={`flex ${horizontal ? 'flex-row' : 'flex-col'} flex-wrap items-center gap-4`}>
         <label className="text-gray-700 justify-self-start mr-4" htmlFor={randomName}>{label}:</label>
         <input
           type="text"

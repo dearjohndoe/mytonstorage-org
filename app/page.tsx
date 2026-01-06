@@ -5,16 +5,15 @@ import { useEffect, useState } from "react";
 import { useTonWallet, useTonConnectUI } from "@tonconnect/ui-react";
 import { login, proofPayload } from "@/lib/api"
 import { safeDisconnect } from "@/lib/ton/safeDisconnect"
-import NewBagInfo from "@/components/new-bag-info"
 import WidgetsMap from "@/components/widgets-map"
 import StorageUpload from "@/components/upload-widgets/storage-upload";
-import Payment from "@/components/upload-widgets/payment";
 import StorageInfo from "@/components/upload-widgets/storage-info";
 import ChooseProviders from "@/components/upload-widgets/choose-providers";
 import { FilesList } from "@/components/files-list-widgets/files-list";
 import { useTranslation } from "react-i18next";
 import Details from "@/components/upload-widgets/details";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import ChooseStoragePeriod from "@/components/upload-widgets/choose-storage-period";
 
 function HomeContent() {
   const { t } = useTranslation();
@@ -97,8 +96,8 @@ function HomeContent() {
   // Switch widgets
   useEffect(() => {
     if (widgetData.selectedFiles && widgetData.newBagID && widgetData.newBagID.length === 64) {
-      if (widgetData.selectedProviders && widgetData.selectedProviders.length > 0 && widgetData.transaction) {
-        if (widgetData.storageContractAddress && widgetData.paymentStatus === 'success') {
+      if (widgetData.selectedProviders && widgetData.selectedProviders.length > 0) {
+        if (widgetData.transaction && widgetData.storageContractAddress && widgetData.paymentStatus === 'success') {
           useAppStore.getState().setCurrentWidget(5)
         } else {
           useAppStore.getState().setCurrentWidget(4)
@@ -143,32 +142,23 @@ function HomeContent() {
         )
       case 2:
         return (
-            <Details />
-        )
-      case 2:
-        return (
-          <div className="w-full">
-            <NewBagInfo
-              canCancel={true}
-            />
-            <ChooseProviders />
-          </div>
+          <Details />
         )
       case 3:
         return (
           <div className="w-full">
-            <NewBagInfo
-              canCancel={true}
-            />
-            <Payment />
+            <ChooseProviders />
           </div>
         )
       case 4:
         return (
           <div className="w-full">
-            <NewBagInfo
-              canCancel={false}
-            />
+            <ChooseStoragePeriod />
+          </div>
+        )
+      case 5:
+        return (
+          <div className="w-full">
             <StorageInfo />
           </div>
         )

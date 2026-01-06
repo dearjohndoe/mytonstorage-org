@@ -1,6 +1,6 @@
-import { BagInfoShort, Transaction } from '@/lib/types'
+import { BagInfoShort, ProviderInfo, Transaction } from '@/lib/types'
 import { StorageContractFull } from '@/types/blockchain'
-import { AddedBag, FileInfo, UserBag } from '@/types/files'
+import { UserBag } from '@/types/files'
 import { ContractStatus } from '@/types/mytonstorage'
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
@@ -26,17 +26,17 @@ export interface UploadWidgetData {
   // Widget 1: File upload
   selectedFiles: File[]
   newBagID?: string
-  newBagInfo?: AddedBag
   bagInfo?: UserBag
   freeStorage?: number
   description?: string
 
-  // Widget 2: Choose providers
-  providersCount?: number
+  // Widget 3: Choose providers
+  providers?: ProviderInfo[]
   selectedProviders?: string[]
-  transaction?: Transaction
 
-  // Widget 3: Payment
+  // Widget 4: Choose period and payment
+  transaction?: Transaction
+  proofPeriodDays?: number
   storageContractAddress?: string
   paymentStatus?: 'pending' | 'success' | 'failed'
 }
