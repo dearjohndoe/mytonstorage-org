@@ -120,8 +120,10 @@ export default function Details() {
     }
 
     return (
-        <>
-            <ErrorComponent error={error} />
+        <div className={`${isMobile ? 'mt-4' : 'mt-16'} w-full`}>
+            {
+                error && <ErrorComponent error={error} />
+            }
 
             {
                 isLoading ? (
@@ -170,6 +172,6 @@ export default function Details() {
                     </div>
                 )
             }
-        </>
+        </div>
     )
 }

@@ -147,7 +147,7 @@ export default function StorageUpload() {
         const key = genKey(f);
         if (!seen.has(key)) seen.set(key, f);
       }
-      
+
       return Array.from(seen.values());
     })();
 
@@ -227,8 +227,8 @@ export default function StorageUpload() {
   }
 
   return (
-    <div className="w-full">
-      <ErrorComponent error={error} />
+    <div className={`${isMobile ? 'mt-4' : 'mt-16'} w-full`}>
+      {error && <ErrorComponent error={error} />}
 
       {/* Drop area */}
       <div

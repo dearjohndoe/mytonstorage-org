@@ -2,7 +2,7 @@
 
 import { useAppStore } from "@/store/useAppStore"
 import { useEffect, useState } from "react";
-import { useTonWallet, useTonConnectUI } from "@tonconnect/ui-react";
+import { useTonWallet, useTonConnectUI, useIsConnectionRestored } from "@tonconnect/ui-react";
 import { login, proofPayload } from "@/lib/api"
 import { safeDisconnect } from "@/lib/ton/safeDisconnect"
 import WidgetsMap from "@/components/widgets-map"
@@ -19,6 +19,7 @@ export function PageContent() {
   const { t } = useTranslation();
   const [tonConnectUI] = useTonConnectUI();
   const wallet = useTonWallet()
+  const isConnectionRestored = useIsConnectionRestored();
   const { currentPage, setCurrentPage, upload, files, _hasHydrated } = useAppStore()
   const [fallbackTimer, setFallbackTimer] = useState(false)
   const widgetData = upload.widgetData
@@ -118,14 +119,8 @@ export function PageContent() {
     }
   }, [currentPage, widgetData.newBagID, upload.currentWidget])
 
-  if ((!_hasHydrated && !fallbackTimer)) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <p className="mt-1 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    )
+  if ((!_hasHydrated && !fallbackTimer) || !isConnectionRestored) {
+    return (<></>)
   }
 
   if (!wallet) {
@@ -150,9 +145,7 @@ export function PageContent() {
         )
       case 3:
         return (
-          <div className="w-full">
-            <ChooseProviders />
-          </div>
+          <ChooseProviders />
         )
       case 4:
         return (

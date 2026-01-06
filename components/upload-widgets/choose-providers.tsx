@@ -318,7 +318,7 @@ export default function ChooseProviders() {
   }
 
   return (
-    <div className="mt-16">
+    <div className={`${isMobile ? 'mt-4' : 'mt-16'}`}>
       {/* Provider list */}
       <div className="flex">
         <div className="flex items-center justify-between gap-2 my-4">

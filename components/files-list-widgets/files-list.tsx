@@ -307,7 +307,9 @@ export function FilesList() {
             {t('bagsList.storageContracts')}
           </h2>
         </div>
-        <div>
+        {
+          !isMobile &&
+          <div>
             <div className="flex items-center space-x-6">
               <label className="flex items-center space-x-2 cursor-pointer select-none">
                 <input
@@ -328,11 +330,12 @@ export function FilesList() {
                 {isCheckingNewer
                   ? t('bagsList.checking')
                   : lastUpdate && lastUpdate < Date.now() - 1000 * 60 * 10
-                  ? t('bagsList.reloadPageToRefresh')
-                  : t('bagsList.listUpdated')}
+                    ? t('bagsList.reloadPageToRefresh')
+                    : t('bagsList.listUpdated')}
               </button>
             </div>
-        </div>
+          </div>
+        }
       </div>
 
       {(hookError || error) && <ErrorComponent error={hookError || error} />}

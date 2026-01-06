@@ -5,11 +5,13 @@ import { printSpace } from "@/lib/utils";
 import { Info, Copy } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 export default function StorageInfo() {
     const { t } = useTranslation();
     const { upload, updateWidgetData } = useAppStore();
     const widgetData = upload.widgetData;
+    const isMobile = useIsMobile();
     const [copiedKey, setCopiedKey] = useState<string | null>(null);
     const apiBase = (typeof process !== 'undefined' && process.env.PUBLIC_API_BASE) || "https://mytonstorage.org";
 
@@ -41,7 +43,7 @@ export default function StorageInfo() {
     }
 
     return (
-        <div className="mt-16">
+        <div className={`${isMobile ? 'mt-4' : 'mt-16'} w-full`}>
             <div className="flex items-center justify-between gap-2 mb-4">
                 <div className="flex items-center">
                     <Info className="w-5 h-5 text-blue-600" />

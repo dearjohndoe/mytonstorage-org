@@ -49,7 +49,7 @@ export default function ChooseStoragePeriod() {
 
         const payments = Math.ceil(selectedDays / proofPeriodDays);
         const totalPrice = Math.max(allProvidersPricePerProof * payments + FEE_INIT, DEFAULT_INIT_BALANCE);
-        
+
         setInitialBalance(totalPrice);
     };
 
@@ -64,17 +64,6 @@ export default function ChooseStoragePeriod() {
     useEffect(() => {
         calculateBalance(storagePeriodDays);
     }, [storagePeriodDays]);
-
-    useEffect(() => {
-        if (contractAddress === null) {
-            return;
-        }
-
-        updateWidgetData({
-            storageContractAddress: contractAddress,
-            paymentStatus: "success"
-        });
-    }, [contractAddress]);
 
     const handlePeriodChange = (days: number) => {
         setStoragePeriodDays(days);
@@ -130,7 +119,9 @@ export default function ChooseStoragePeriod() {
         updateWidgetData({
             proofPeriodDays,
             providers: [],
-            selectedProviders: []
+            selectedProviders: [],
+            storageContractAddress: undefined,
+            paymentStatus: undefined,
         });
     };
 
@@ -196,7 +187,7 @@ export default function ChooseStoragePeriod() {
         } else if (response.data) {
             console.log("Successfully set bag storage contract");
             updateWidgetData({
-                paymentStatus: "success"
+                paymentStatus: "success",
             });
         } else {
             setError(t('errors.unknownErrorTryResend'));
@@ -204,13 +195,13 @@ export default function ChooseStoragePeriod() {
     };
 
     return (
-        <div className="mt-16">
+        <div className={`${isMobile ? 'mt-4' : 'mt-16'}`}>
             <div className={`${isMobile ? 'flex flex-col space-y-3' : 'flex justify-between items-center'} my-4`}>
                 <div className="flex items-center">
                     <AlarmClock className="w-5 h-5 text-blue-600" />
                     <h2 className="text-lg pl-2 font-semibold text-gray-900">{t('chooseProviders.selectTimePeriod')}</h2>
                 </div>
-                
+
                 {/* Free storage */}
                 {widgetData?.bagInfo && (
                     <div className={isMobile ? "text-left" : "text-right"}>
@@ -235,7 +226,7 @@ export default function ChooseStoragePeriod() {
                     onChange={handlePeriodChange}
                     disabled={false}
                 />
-                
+
                 {/* Balance info */}
                 <div className="px-4 pb-4">
                     <div className="space-y-3">
