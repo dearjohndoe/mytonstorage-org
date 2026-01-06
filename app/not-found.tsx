@@ -1,18 +1,25 @@
 "use client"
 
-import Link from 'next/link'
+import { useAppStore } from '@/store/useAppStore';
 import { useTranslation } from "react-i18next";
 
 export default function NotFound() {
   const { t } = useTranslation();
+  const { resetWidgetData } = useAppStore();
+
+  const goHome = () => {
+    resetWidgetData();
+    window.location.href = '/';
+  }
+
   return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="text-center">
         <h2 className="text-2xl font-bold mb-4">{t('errors.notFound')}</h2>
         <p className="text-gray-600 mb-4">{t('errors.resourceNotFound')}</p>
-        <Link href="/" className="text-blue-500 hover:text-blue-700">
+        <button onClick={goHome} className="text-blue-600 hover:underline cursor-pointer">
           {t('returnHome')}
-        </Link>
+        </button>
       </div>
     </div>
   )
