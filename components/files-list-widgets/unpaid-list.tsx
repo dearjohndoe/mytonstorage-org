@@ -72,13 +72,10 @@ export function UnpaidFilesList() {
                 updateWidgetData({
                     selectedFiles: [],
                     newBagID: undefined,
-                    newBagInfo: undefined,
                     bagInfo: undefined,
                     description: undefined,
 
-                    providersCount: 0,
                     selectedProviders: [],
-                    transaction: undefined,
 
                     storageContractAddress: undefined,
                     paymentStatus: undefined

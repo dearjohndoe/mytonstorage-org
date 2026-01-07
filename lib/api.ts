@@ -1,7 +1,10 @@
 import axios, { AxiosError } from "axios"
-import { AddedBag, FileMetadata, Offers, UnpaidBags } from "@/types/files";
+import { FileMetadata, Offers, ProviderOffer, UnpaidBags } from "@/types/files";
 import { ApiResponse, BagInfoShort, InitStorageContract, TopupBalance, Transaction, UpdateStorageContract } from "./types";
 import { handleError } from "./utils";
+
+const offersCache = new Map<string, ProviderOffer>();
+const OFFERS_CACHE_TTL = 1000 * 60 * 15; // 15 минут
 
 // API base URL from env with safe fallback
 const host = (typeof process !== 'undefined' && process.env.PUBLIC_API_BASE) || "https://mytonstorage.org";
@@ -157,6 +160,23 @@ export async function getWithdrawTransaction(contractAddress: string): Promise<A
 }
 
 export async function getOffers(providers: string[], bagID: string, bagSize: number, span: number): Promise<ApiResponse> {
+  const cachedOffers: ProviderOffer[] = [];
+  const uncachedProviders: string[] = [];
+
+  for (const providerKey of providers) {
+    const cacheKey = `${bagID}:${providerKey.toLowerCase()}:${span}`;
+    const cached = offersCache.get(cacheKey);
+    if (cached) {
+      cachedOffers.push(cached);
+    } else {
+      uncachedProviders.push(providerKey);
+    }
+  }
+
+  if (uncachedProviders.length === 0) {
+    return { error: null, status: 200, data: { offers: cachedOffers, declines: [] } as Offers };
+  }
+
   var error: string | null = null;
   var status: number | null = null;
   var data: Offers | null = null;
@@ -166,12 +186,22 @@ export async function getOffers(providers: string[], bagID: string, bagSize: num
       bag_id: bagID,
       bag_size: bagSize,
       span: span,
-      providers
+      providers: uncachedProviders
     }, {
-      withCredentials: true,
+      withCredentials: true
     });
     data = response.data as Offers;
     status = response.status;
+
+    if (data?.offers) {
+      for (const offer of data.offers) {
+        const cacheKey = `${bagID}:${offer.provider.key.toLowerCase()}:${span}`;
+        offersCache.set(cacheKey, offer);
+        setTimeout(() => offersCache.delete(cacheKey), OFFERS_CACHE_TTL);
+      }
+    }
+    
+    data.offers = [...cachedOffers, ...data.offers];
   } catch (err: AxiosError | any) {
     error = handleError(err);
     if (err.response?.status) {
@@ -179,11 +209,12 @@ export async function getOffers(providers: string[], bagID: string, bagSize: num
     }
   }
 
-  return {
-    error: error,
-    status: status,
-    data: data
-  }
+  return { error, status, data };
+}
+
+// todo: call when leave (providers selection, storage period) pages
+export function clearOffersCache() {
+  offersCache.clear();
 }
 
 export async function removeFile(bagId: string): Promise<ApiResponse> {
@@ -218,7 +249,7 @@ export async function addFile(file: File, metadata: FileMetadata, setProgress: (
 
   var error: string | null = null;
   var status: number | null = null;
-  var data: AddedBag | null = null;
+  var data: UnpaidBags | null = null;
 
   try {
     const response = await axios.post(`${host}/api/v1/files`, formData, {
@@ -235,7 +266,7 @@ export async function addFile(file: File, metadata: FileMetadata, setProgress: (
       }
     });
 
-    data = response.data as AddedBag
+    data = response.data as UnpaidBags
     status = response.status;
   } catch (err: AxiosError | any) {
     error = handleError(err);
@@ -287,7 +318,7 @@ export async function addFolder(files: File[], metadata: FileMetadata, setProgre
 
   var error: string | null = null;
   var status: number | null = null;
-  var data: AddedBag | null = null;
+  var data: UnpaidBags | null = null;
 
   try {
     const response = await axios.post(`${host}/api/v1/files`, formData, {
@@ -303,7 +334,7 @@ export async function addFolder(files: File[], metadata: FileMetadata, setProgre
         }
       }
     });
-    data = response.data as AddedBag;
+    data = response.data as UnpaidBags;
     status = response.status;
   } catch (err: AxiosError | any) {
     error = handleError(err);

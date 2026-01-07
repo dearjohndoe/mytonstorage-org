@@ -9,7 +9,7 @@ export default function Bags() {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setCurrentPage(1)
+    setCurrentPage(2)
     setMounted(true)
   }, [setCurrentPage])
 

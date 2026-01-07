@@ -1,6 +1,6 @@
-import { BagInfoShort, Transaction } from '@/lib/types'
+import { BagInfoShort, ProviderInfo, Transaction } from '@/lib/types'
 import { StorageContractFull } from '@/types/blockchain'
-import { AddedBag, FileInfo, UserBag } from '@/types/files'
+import { UserBag } from '@/types/files'
 import { ContractStatus } from '@/types/mytonstorage'
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
@@ -24,19 +24,18 @@ export interface Blockchain {
 
 export interface UploadWidgetData {
   // Widget 1: File upload
-  selectedFiles: FileInfo[]
+  selectedFiles: File[]
   newBagID?: string
-  newBagInfo?: AddedBag
   bagInfo?: UserBag
   freeStorage?: number
   description?: string
 
-  // Widget 2: Choose providers
-  providersCount?: number
+  // Widget 3: Choose providers
+  providers?: ProviderInfo[]
   selectedProviders?: string[]
-  transaction?: Transaction
 
-  // Widget 3: Payment
+  // Widget 4: Choose period and payment
+  proofPeriodDays?: number
   storageContractAddress?: string
   paymentStatus?: 'pending' | 'success' | 'failed'
 }
@@ -50,7 +49,7 @@ export interface AppState {
 
   // Данные для страницы загрузки
   upload: {
-    currentWidget: 1 | 2 | 3 | 4
+    currentWidget: 1 | 2 | 3 | 4 | 5 | 6
     widgetData: UploadWidgetData
   }
 
@@ -72,7 +71,7 @@ export interface AppActions {
   setCurrentPage: (page: 1 | 2) => void
 
   // Управление виджетами загрузки
-  setCurrentWidget: (widget: 1 | 2 | 3 | 4) => void
+  setCurrentWidget: (widget: 1 | 2 | 3 | 4 | 5 | 6) => void
 
   // Управление данными виджетов
   updateWidgetData: (data: Partial<UploadWidgetData>) => void

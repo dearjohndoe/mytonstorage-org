@@ -39,7 +39,6 @@ export function ProvidersListDesktop({
   removeProvider
 }: ProvidersListDesktopProps) {
   const { t } = useTranslation();
-  const hasDeclined = providers.some(p => p.decline)
 
   return (
     <div className="overflow-x-auto relative">
@@ -74,13 +73,9 @@ export function ProvidersListDesktop({
                 </th> 
               )
             }
-            {
-              hasDeclined && (
-                <th>
-                  <div className="flex items-center">{t('table.reason')}</div>
-                </th> 
-              )
-            }
+            <th className="min-w-40">
+              <div className="flex items-center">{t('table.status')}</div>
+            </th>
             {
               advanced && (
                 <th>
@@ -145,21 +140,17 @@ export function ProvidersListDesktop({
                     </td>
                   )
                 }
-                {
-                  hasDeclined && (
-                    <td>
-                      <div className="flex items-center">
-                                {
-                                  p.decline ? (
-                                    <span className="text-red-500">{p.decline}</span>
-                                  ) : (
-                                    <span className="text-green-600">{t('table.accepted')}</span>
-                                  )
-                                }
-                      </div>
-                    </td>
-                  )
-                }
+                <td>
+                  <div className="flex items-center">
+                    {p.decline ? (
+                      <span className="text-red-500">{p.decline}</span>
+                    ) : p.offer ? (
+                      <span className="text-green-600">{t('table.accepted')}</span>
+                    ) : (
+                      <span className="text-yellow-600">{t('table.waitingForResponse')}</span>
+                    )}
+                  </div>
+                </td>
                 {
                   advanced && (
                     <td>

@@ -2,7 +2,8 @@
     "siteTitle": "My TON Storage",
     "connectWallet": "Connect wallet to continue.",
     "footer": {
-        "supportChat": "Support chat",
+        "supportChatRU": "Support chat RU",
+        "supportChatEN": "Support chat EN",
         "githubBackend": "GitHub (backend)",
         "githubFrontend": "GitHub (frontend)",
         "backend": "Backend",
@@ -22,7 +23,7 @@
         "anyLocation": "Any Location",
         "sortByRating": "Sort by Rating",
         "sortByPrice": "Sort by Price",
-        "noSorting": "No Sorting"
+        "randomSorting": "Random Sorting"
     },
     "input": {
         "custom": "Custom...",
@@ -35,6 +36,7 @@
         "location": "Location",
         "rating": "Rating",
         "price": "Price",
+        "status": "Status",
         "proofsRange": "Proofs range",
         "reason": "Reason",
         "accepted": "Accepted",
@@ -79,29 +81,46 @@
         "orPickDateLabel": "or pick a date",
         "orSetInitBalanceLabel": "or set init balance",
         "periodMustBeMultiple": "Storage period must be a multiple of the proof period ({{days}} days)",
-        "absoluteMinimum": "The absolute minimum is {{min}} TON"
+        "absoluteMinimum": "The absolute minimum is {{min}} TON",
+        "exDate": "Expiration date",
+        "coinsNeed": "Coins need",
+        "canExtendLater": "Storage time can be extended later",
+        "sendTransaction": "Send Transaction",
+        "periods": {
+            "1week": "1 week",
+            "2weeks": "2 weeks", 
+            "1month": "1 month",
+            "2months": "2 months",
+            "3months": "3 months", 
+            "6months": "6 months",
+            "1year": "1 year",
+            "2years": "2 years"
+        }
     },
     "chooseProviders": {
         "addCustomProvider": "Add custom provider",
         "providerAlreadyAdded": "Provider already added.",
         "noProvidersFound": "No providers found with the given pubkey.",
+        "expiredBag": "The bag has expired. Please start over.",
         "someProvidersDeclinedWarn": "Some providers declined or has errors. You can remove them from list, try again or reload providers list.",
         "failedToGetDeployTransaction": "Failed to get deploy transaction. Please try again later.",
-        "title": "Configure contract",
-        "chooseProvidersCount": "Choose providers count",
+        "selectProviders": "Select storage providers",
+        "selectTimePeriod": "Select storage period",
+        "chooseProvidersCount": "Providers count",
         "reloadProviders": "Reload providers",
-        "hideAdvanced": "[ hide advanced options ]",
         "storageProofEach": "Storage proof each",
         "placeholderPubkey": "Pubkey",
         "loadInfo": "Load info",
         "providersCountInfo": "Providers count: {{count}}",
-        "confirmContinue": "Confirm and continue",
+        "continue": "Continue",
         "loadOffers": "Load offers",
-        "showAdvanced": "[ show advanced options ]"
+        "showAdvanced": "[ show advanced options ]",
+        "hideAdvanced": "[ hide advanced options ]"
     },
     "newBag": {
         "title": "Bag info",
         "cancelStorage": "Cancel storage",
+        "goBack": "Go back",
         "loading": "Loading bag info, please wait...",
         "noBagInfo": "No bag info available.",
         "freeStorage": "Free storage:",
@@ -156,7 +175,8 @@
     "widgets": {
         "uploadFiles": "Upload Files",
         "chooseProviders": "Choose Providers",
-        "payment": "Payment",
+        "choosePeriod": "Choose Storage Period",
+        "details": "Details",
         "complete": "Complete",
         "contractDeployed": "Contract deployed",
         "whatsNext": "What's next?",
@@ -173,14 +193,18 @@
         "fileTooLarge": "File is too large. For files larger than 4GB use TON Torrent",
         "noFilesFound": "No files found.",
         "processingFiles": "Processing files, please wait...",
-        "noFilesSelected": "No Files Selected",
         "dragDropHint": "Drag and drop files here or use the buttons below",
+        "uploadFiles": "Upload File(s)",
         "addFiles": "Add File(s)",
-        "selectFolder": "Select Folder",
+        "selectFolder": "Upload Folder",
+        "resetFiles": "Reset Files",
+        "continue": "Continue",
         "maxFileSize": "Max file size: {{size}}",
         "details": "Details",
+        "back": "Back",
         "addDescription": "Add description:",
-        "uploadButton": "Upload"
+        "uploadButton": "Upload",
+        "manageFilesFirst": "Manage files before sending"
     },
     "filesList": {
         "selectedFiles": "Selected Files",

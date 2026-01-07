@@ -29,7 +29,7 @@ export default function Footer() {
                 <MessageCircle className="h-4 w-4 mr-2" />
                 {t('footer.supportChatRU')}
               </Link>
-              <Link href="https://t.me/tondev_eng" target="_blank" className="flex mb-4 items-center text-gray-500 hover:text-gray-900">
+              <Link href="https://t.me/tondev_eng" target="_blank" className="flex my-2 items-center text-gray-500 hover:text-gray-900">
                 <MessageCircle className="h-4 w-4 mr-2" />
                 {t('footer.supportChatEN')}
               </Link>

@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { ThreeStateField } from "./tri-state-field";
 
 export const sortingStates = {
-    noSorting: "No Sorting",
+    randomSorting: "Random Sorting",
     sortByRating: "Sort by Rating",
     sortByPrice: "Sort by Price",
 };
@@ -33,7 +33,7 @@ export function FiltersSection({
 }: FiltersSectionProps) {
     const { t } = useTranslation();
     const locationKeys: (keyof typeof locationStates)[] = ["differentCountries", "differentCities", "all"];
-    const sortingKeys: (keyof typeof sortingStates)[] = ["sortByRating", "sortByPrice", "noSorting"];
+    const sortingKeys: (keyof typeof sortingStates)[] = ["sortByRating", "sortByPrice", "randomSorting"];
 
     const locationIndex = locationKeys.indexOf(locationFilter);
     const sortingIndex = sortingKeys.indexOf(sortingFilter);
@@ -59,7 +59,7 @@ export function FiltersSection({
                     onChange={handleLocationChange}
                 />
                 <ThreeStateField
-                    states={[t('filtersStates.sortByRating'), t('filtersStates.sortByPrice'), t('filtersStates.noSorting')]}
+                    states={[t('filtersStates.sortByRating'), t('filtersStates.sortByPrice'), t('filtersStates.randomSorting')]}
                     colors={["bg-blue-300", "bg-blue-300", "bg-gray-200"]}
                     value={sortingIndex}
                     onChange={handleSortingChange}
