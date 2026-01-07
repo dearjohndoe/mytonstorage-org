@@ -35,7 +35,6 @@ export interface UploadWidgetData {
   selectedProviders?: string[]
 
   // Widget 4: Choose period and payment
-  transaction?: Transaction
   proofPeriodDays?: number
   storageContractAddress?: string
   paymentStatus?: 'pending' | 'success' | 'failed'

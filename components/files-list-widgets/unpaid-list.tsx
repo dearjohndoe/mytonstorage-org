@@ -76,7 +76,6 @@ export function UnpaidFilesList() {
                     description: undefined,
 
                     selectedProviders: [],
-                    transaction: undefined,
 
                     storageContractAddress: undefined,
                     paymentStatus: undefined

@@ -2,10 +2,33 @@
 
 import { useAppStore } from '@/store/useAppStore';
 import { useTranslation } from "react-i18next";
+import { useEffect, useState } from "react";
+import { PageContent } from "@/components/page-content";
 
 export default function NotFound() {
   const { t } = useTranslation();
-  const { resetWidgetData } = useAppStore();
+  const { resetWidgetData, setCurrentPage } = useAppStore();
+  const [isBagRoute, setIsBagRoute] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const path = window.location.pathname;
+    
+    // bag_id — 64 hex (0-9, A-F, a-f)
+    if (/^\/[0-9A-Fa-f]{64}\/?$/.test(path)) {
+      setCurrentPage(1);
+      setIsBagRoute(true);
+    } else {
+      setIsBagRoute(false);
+    }
+  }, [setCurrentPage]);
+
+  if (isBagRoute === null) {
+    return <></>;
+  }
+
+  if (isBagRoute) {
+    return <PageContent />;
+  }
 
   const goHome = () => {
     resetWidgetData();

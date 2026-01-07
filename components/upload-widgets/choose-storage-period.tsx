@@ -21,7 +21,6 @@ export default function ChooseStoragePeriod() {
     const [storagePeriodDays, setStoragePeriodDays] = useState<number>(28);
     const [error, setError] = useState<string | React.ReactNode | null>(null)
     const [tx, setTx] = useState<Transaction | null>(null);
-    const [contractAddress, setContractAddress] = useState<string | null>(null);
     const isMobile = useIsMobile();
     const { upload, updateWidgetData } = useAppStore();
     const widgetData = upload.widgetData;
@@ -159,8 +158,6 @@ export default function ChooseStoragePeriod() {
                 updateWidgetData({
                     storageContractAddress: tx!.address,
                 });
-
-                setContractAddress(tx!.address);
 
                 sendStorageContract(widgetData.newBagID, tx!.address);
             }

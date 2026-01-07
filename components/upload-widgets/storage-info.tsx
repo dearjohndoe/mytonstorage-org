@@ -9,7 +9,7 @@ import { useIsMobile } from "@/hooks/useIsMobile";
 
 export default function StorageInfo() {
     const { t } = useTranslation();
-    const { upload, updateWidgetData } = useAppStore();
+    const { upload, resetWidgetData } = useAppStore();
     const widgetData = upload.widgetData;
     const isMobile = useIsMobile();
     const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -28,18 +28,8 @@ export default function StorageInfo() {
     };
 
     const resetWidgets = () => {
-        updateWidgetData({
-            selectedFiles: [],
-            newBagID: undefined,
-            bagInfo: undefined,
-            description: undefined,
-
-            selectedProviders: [],
-            transaction: undefined,
-
-            storageContractAddress: undefined,
-            paymentStatus: undefined,
-        });
+        resetWidgetData();
+        window.location.href = '/';
     }
 
     return (

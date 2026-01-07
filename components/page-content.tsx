@@ -94,9 +94,11 @@ export function PageContent() {
   }, [_hasHydrated])
 
   useEffect(() => {
+    console.debug("Widget data changed:", widgetData);
+
     if (widgetData.selectedFiles && widgetData.newBagID && widgetData.newBagID.length === 64) {
       if (widgetData.selectedProviders && widgetData.selectedProviders.length > 0) {
-        if (widgetData.transaction && widgetData.storageContractAddress && widgetData.paymentStatus === 'success') {
+        if (widgetData.storageContractAddress && widgetData.paymentStatus === 'success') {
           useAppStore.getState().setCurrentWidget(5)
         } else {
           useAppStore.getState().setCurrentWidget(4)
@@ -145,7 +147,9 @@ export function PageContent() {
         )
       case 3:
         return (
-          <ChooseProviders />
+          <div className="w-full">
+            <ChooseProviders />
+          </div>
         )
       case 4:
         return (
