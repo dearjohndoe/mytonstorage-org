@@ -1,4 +1,4 @@
-import { OutMsg, StorageContracts, Transaction } from "@/types/blockchain";
+import { OutMsg, Transaction } from "@/types/blockchain";
 import { Address } from "@ton/ton";
 import axios from "axios";
 

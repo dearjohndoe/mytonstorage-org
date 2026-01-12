@@ -14,8 +14,9 @@ import { TextField } from "./input-text-field";
 import { getOffers, getUpdateTransaction } from "@/lib/api";
 import { Offers } from "@/types/files";
 import { Transaction } from "@/lib/types";
-import { useTonConnectUI } from "@tonconnect/ui-react";
+import { useTonConnectUI, useTonWallet } from "@tonconnect/ui-react";
 import { safeDisconnect } from '@/lib/ton/safeDisconnect';
+import { sendTransactionWithFallback } from '@/lib/ton/transactions';
 import HintWithIcon from "./hint";
 import { DAY_SECONDS, FEE_UPDATE, WEEK_DAYS } from "@/lib/storage-constants";
 import { PeriodField } from "./input-period-field";
@@ -43,6 +44,8 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
     const [warn, setWarn] = React.useState<string | null>(null);
     const [copiedKey, setCopiedKey] = React.useState<string | null>(null);
     const [newPubkey, setNewPubkey] = React.useState<string | null>(null);
+
+    const wallet = useTonWallet();
 
     const [isEdit, setIsEdit] = React.useState(false);
     const [editProviders, setEditProviders] = React.useState<providerEdit[] | null>(null);
@@ -302,16 +305,22 @@ export function ContractDetails({ contractAddress }: ContractDetailsProps) {
                 payload: tx.body,
             };
 
-            try {
-                const wResp = await tonConnectUI.sendTransaction({
-                    validUntil: Math.floor(Date.now() / 1000) + 60,
-                    messages: [message]
+            if (!wallet?.account.address) {
+                setError(t('errors.unknownErrorOccurred'));
+            } else {
+                const result = await sendTransactionWithFallback({
+                    tonConnectUI,
+                    message,
+                    contractAddress: tx.address,
+                    userAddress: wallet.account.address,
+                    timeoutMs: 180_000,
+                    pollingIntervalMs: 5_000,
                 });
 
-                console.log("Topup transaction response:", wResp);
-            } catch (error) {
-                console.error("Failed to send topup transaction:", error);
-                setError(t('errors.failedToSendTransaction'));
+                console.log("Update transaction result:", result);
+                if (!result.success) {
+                    setError(t('errors.failedToSendTransaction'));
+                }
             }
         } finally {
             setIsLoading(false);
