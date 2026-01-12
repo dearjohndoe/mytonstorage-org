@@ -123,7 +123,7 @@
         "goBack": "Go back",
         "loading": "Loading bag info, please wait...",
         "noBagInfo": "No bag info available.",
-        "freeStorage": "Free storage:",
+        "freeStorage": "Free storage",
         "bagID": "BagID",
         "description": "Description",
         "filesCount": "Files Count",

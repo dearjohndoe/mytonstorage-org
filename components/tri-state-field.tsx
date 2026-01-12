@@ -18,7 +18,7 @@ export function ThreeStateField({ states, colors, value, onChange, disabled = fa
   const color = disabled ? "bg-gray-300" : colors[value]
 
   return (
-    <div className="items-center gap-2 mt-2">
+    <div className="flex items-center m-0">
       <button
         type="button"
         className={`px-3 py-1 rounded-full text-sm font-medium ${color} text-gray-700 transition-colors ${disabled ? 'cursor-not-allowed opacity-60' : 'hover:opacity-80'}`}

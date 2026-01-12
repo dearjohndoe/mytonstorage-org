@@ -54,9 +54,9 @@ export const StoragePeriodSlider: React.FC<StoragePeriodSliderProps> = ({
 
   return (
     <div className="w-full">
-      <div className="mb-3 p-4">
+      <div className="mb-3">
         <label className="block text-gray-700 mb-3">
-          {t('storage.setPeriodLabel')}: <span className="font-semibold">{getDisplayValue()}</span>
+          {t('storage.setPeriodLabel')}: <span className="text-gray-700">{getDisplayValue()}</span>
         </label>
         <div className="px-3 relative">
           {/* Vertical markers */}

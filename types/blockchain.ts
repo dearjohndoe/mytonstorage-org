@@ -41,8 +41,13 @@ export type OutMsg = {
     destination: string;
 }
 
+export type InMsg = {
+    source?: string;
+}
+
 export type Transaction = {
     lt: string;
     prev_trans_lt: string;
     out_msgs: OutMsg[];
+    in_msg?: InMsg;
 }

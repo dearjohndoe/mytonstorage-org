@@ -20,7 +20,7 @@ import { ProvidersListMobile } from "./providers-list-mobile";
 import { ProvidersListDesktop } from "./providers-list-desktop";
 import { FiltersSection, locationStates, sortingStates } from "../filters";
 import { DAY_SECONDS, WEEK_DAYS } from "@/lib/storage-constants";
-import { CountdownTimer } from "../countdown-timer";
+import { FreeStorageDisplay } from "../free-storage-display";
 
 export default function ChooseProviders() {
   const { t } = useTranslation();
@@ -271,48 +271,27 @@ export default function ChooseProviders() {
     setIsLoading(false);
   };
 
-  const freeStorage = () => {
-    if (!widgetData || !widgetData.bagInfo) {
-      return null;
-    }
-
-    return (
-      <div className={isMobile ? "mb-4 px-2" : "flex-1"}>
-        <div className="mt-4 mx-auto justify-center">
-          <span className="text-gray-700">{t('newBag.freeStorage')}</span>
-          <div className="flex justify-end">
-            <div className="mx-2">
-              <CountdownTimer expirationTime={(widgetData!.bagInfo?.created_at || 0) + (widgetData!.freeStorage || 0)} />
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   const providersCount = () => {
     return (
-      <div className={isMobile ? "px-2" : "flex-1"}>
-        <div className="my-4 mx-auto">
-          <label className="block text-gray-700 mb-2">
-            {t('chooseProviders.chooseProvidersCount')}: {selectedProvidersCount}
-          </label>
-          <Slider
-            className="h-4"
-            min={1}
-            max={10}
-            value={selectedProvidersCount}
-            onChange={(value) => setSelectedProvidersCount(value)}
-            renderThumb={(props: any) => {
-              const { key, ...restProps } = props;
-              return <div key={key} {...restProps} className="bg-blue-500 rounded-full w-4 h-4 translate-y-[-25%] cursor-pointer" />
-            }}
-            renderTrack={(props: any, state: any) => {
-              const { key, ...restProps } = props;
-              return <div key={key} {...restProps} className={`h-2 rounded-full ${state.index === 0 ? 'bg-blue-500' : 'bg-gray-300'}`} />
-            }}
-          />
-        </div>
+      <div className={`flex ${isMobile ? 'flex-col' : 'items-center'} my-4 mx-auto gap-4`}>
+        <label className={`${isMobile ? 'text-left' : ''} text-gray-700`}>
+          {t('chooseProviders.chooseProvidersCount')}: {selectedProvidersCount}
+        </label>
+        <Slider
+          className={`h-4 ${isMobile ? '' : 'flex-1 translate-y-1'}`}
+          min={1}
+          max={10}
+          value={selectedProvidersCount}
+          onChange={(value) => setSelectedProvidersCount(value)}
+          renderThumb={(props: any) => {
+            const { key, ...restProps } = props;
+            return <div key={key} {...restProps} className="bg-blue-500 rounded-full w-4 h-4 translate-y-[-25%] cursor-pointer" />
+          }}
+          renderTrack={(props: any, state: any) => {
+            const { key, ...restProps } = props;
+            return <div key={key} {...restProps} className={`h-2 rounded-full ${state.index === 0 ? 'bg-blue-500' : 'bg-gray-300'}`} />
+          }}
+        />
       </div>
     )
   }
@@ -337,12 +316,17 @@ export default function ChooseProviders() {
       )}
 
       <div className="rounded-lg border bg-gray-50 border-gray-50 mp-4 p-4">
-        {/* Free storage countdown */}
         {/* Providers count */}
-        <div className={`w-full mt-4 px-2 ${isMobile ? 'flex flex-col' : 'flex gap-32'}`}>
-          {providersCount()}
-          {freeStorage()}
-        </div>
+        {/* Free storage countdown */}
+        {providersCount()}
+        {
+          widgetData.bagInfo && (
+            <FreeStorageDisplay
+              expirationTime={(widgetData.bagInfo.created_at || 0) + (widgetData.freeStorage || 0)}
+              isMobile={isMobile}
+            />
+          )
+        }
 
         {/* Filters */}
         <div className="mt-4">
