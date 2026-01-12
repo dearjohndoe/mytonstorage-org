@@ -1,4 +1,4 @@
-import { OutMsg, StorageContracts, Transaction } from "@/types/blockchain";
+import { OutMsg, Transaction } from "@/types/blockchain";
 import { Address } from "@ton/ton";
 import axios from "axios";
 
@@ -81,4 +81,150 @@ async function fetchUserTransactions(userAddr: string, endLt?: string, limit: nu
         console.error(err);
         return new Error('Failed to fetch transactions');
     }
+}
+
+export type SendTxResult = {
+    success: boolean;
+    source: 'tonconnect' | 'blockchain';
+    boc?: string;
+    txLt?: string;
+    error?: string;
+};
+
+export type TxMessage = {
+    address: string;
+    amount: string;
+    stateInit?: string;
+    payload?: string;
+};
+
+type SendTransactionWithFallbackParams = {
+    tonConnectUI: any;
+    message: TxMessage;
+    contractAddress: string;
+    userAddress: string;
+    timeoutMs?: number;
+    pollingIntervalMs?: number;
+};
+
+export async function sendTransactionWithFallback({
+    tonConnectUI,
+    message,
+    contractAddress,
+    userAddress,
+    timeoutMs = 1000 * 60 * 4,
+    pollingIntervalMs = 5000,
+}: SendTransactionWithFallbackParams): Promise<SendTxResult> {
+    const startTimestamp = Math.floor(Date.now() / 1000);
+    let aborted = false;
+    let pollingTimeoutId: NodeJS.Timeout | null = null;
+
+    const normalizedContractAddress = normalizeAddress(contractAddress);
+    const normalizedUserAddress = normalizeAddress(userAddress);
+
+    const tonConnectPromise = (async (): Promise<SendTxResult> => {
+        try {
+            const resp = await tonConnectUI.sendTransaction({
+                validUntil: Math.floor(Date.now() / 1000) + 300,
+                messages: [message],
+            });
+
+            if (resp.boc && resp.boc.length > 0) {
+                return { success: true, source: 'tonconnect', boc: resp.boc };
+            }
+            return { success: false, source: 'tonconnect', error: 'Empty BOC response' };
+        } catch (err: any) {
+            if (aborted) {
+                return { success: false, source: 'tonconnect', error: 'Aborted' };
+            }
+            return { success: false, source: 'tonconnect', error: err?.message || 'Transaction rejected' };
+        }
+    })();
+
+    const blockchainPollingPromise = (async (): Promise<SendTxResult> => {
+        const deadline = Date.now() + timeoutMs;
+
+        while (!aborted && Date.now() < deadline) {
+            await sleep(pollingIntervalMs);
+            if (aborted) break;
+
+            try {
+                const txs = await fetchUserTransactions(userAddress, undefined, 20);
+                if (txs instanceof Error) {
+                    console.warn('Polling: failed to fetch transactions', txs.message);
+                    continue;
+                }
+
+                for (const tx of txs) {
+                    if (!tx.out_msgs || tx.out_msgs.length === 0) continue;
+
+                    for (const msg of tx.out_msgs) {
+                        const msgCreatedAt = Number(msg.created_at);
+                        if (msgCreatedAt < startTimestamp) continue;
+
+                        const destination = normalizeAddress(msg.destination);
+                        if (destination !== normalizedContractAddress) continue;
+
+                        const source = tx.in_msg?.source 
+                            ? normalizeAddress(tx.in_msg.source) 
+                            : normalizedUserAddress;
+                        if (source !== normalizedUserAddress) continue;
+
+                        return { success: true, source: 'blockchain', txLt: tx.lt };
+                    }
+                }
+            } catch (err) {
+                console.warn('Polling: error', err);
+            }
+        }
+
+        return { success: false, source: 'blockchain', error: 'Polling timeout' };
+    })();
+
+    const timeoutPromise = new Promise<SendTxResult>((resolve) => {
+        pollingTimeoutId = setTimeout(() => {
+            resolve({ success: false, source: 'blockchain', error: 'Global timeout' });
+        }, timeoutMs);
+    });
+
+    try {
+        const result = await Promise.race([
+            tonConnectPromise,
+            blockchainPollingPromise,
+            timeoutPromise,
+        ]);
+
+        aborted = true;
+        if (pollingTimeoutId) clearTimeout(pollingTimeoutId);
+
+        if (result.success) {
+            try {
+                await tonConnectUI.closeModal();
+            } catch (err) {
+                console.warn('Failed to close TonConnect modal', err);
+            }
+        }
+
+        return result;
+    } catch (err: any) {
+        aborted = true;
+        if (pollingTimeoutId) clearTimeout(pollingTimeoutId);
+        return { success: false, source: 'tonconnect', error: err?.message || 'Unknown error' };
+    }
+}
+
+function normalizeAddress(addr: string): string {
+    try {
+        return Address.parseRaw(addr).toString({ testOnly: false });
+    } catch {
+        try {
+            return Address.parse(addr).toString({ testOnly: false });
+        } catch {
+            return addr.toLowerCase();
+        }
+    }
+}
+
+function sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }

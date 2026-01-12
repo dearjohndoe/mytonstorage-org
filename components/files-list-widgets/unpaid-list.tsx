@@ -12,6 +12,7 @@ import { useTonConnectUI } from '@tonconnect/ui-react';
 import { safeDisconnect } from '@/lib/ton/safeDisconnect';
 import { CountdownTimer } from "../countdown-timer";
 import { copyToClipboard, printSpace, shortenString } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 export function UnpaidFilesList() {
     const { t } = useTranslation();
@@ -22,6 +23,7 @@ export function UnpaidFilesList() {
     const [unpaidFiles, setUnpaidFiles] = useState<UserBag[] | null>(null);
     const [freeStorageDuration, setFreeStorageDuration] = useState<number | null>(null);
     const [copiedKey, setCopiedKey] = useState<string | null>(null);
+    const isMobile = useIsMobile();
 
     const apiBase = useMemo(() => (typeof process !== 'undefined' && process.env.PUBLIC_API_BASE) || "https://mytonstorage.org", []);
 
@@ -105,77 +107,155 @@ export function UnpaidFilesList() {
             {error && <ErrorComponent error={error} />}
 
             {!isLoading && unpaidFiles && unpaidFiles.length > 0 && (
-                <div className="overflow-x-auto">
-                    <table className="ton-table overscroll-x-auto">
-                        <thead>
-                            <tr>
-                                <th>
-                                    <div className="flex items-center ml-2">{t('unpaid.bagID')}</div>
-                                </th>
-                                <th>
-                                    <div className="flex items-center">{t('unpaid.description')}</div>
-                                </th>
-                                <th>
-                                    <div className="flex items-center">{t('unpaid.size')}</div>
-                                </th>
-                                <th>
-                                    <div className="flex items-center">{t('unpaid.freeStorage')}</div>
-                                </th>
-                                <th className="w-8">{t('unpaid.actions')}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {unpaidFiles.map((f, index) => (
-                                <React.Fragment key={f.bag_id}>
-                                    <tr className={`group ${index % 2 ? "" : "bg-gray-50"} transition-colors duration-200`}>
-                                        <td>
-                                            <div className="flex items-center">
-                                                <a
-                                                    href={`${apiBase}/api/v1/gateway/${f.bag_id.toUpperCase()}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-blue-600 hover:underline"
-                                                    title={f.bag_id.toUpperCase()}>
-                                                    {shortenString(f.bag_id.toUpperCase(), 8)}
-                                                </a>
-                                                <button
-                                                    onClick={() => copyToClipboard(f.bag_id.toUpperCase(), setCopiedKey)}
-                                                    className={`ml-2 transition-colors duration-200 ${copiedKey === f.bag_id.toUpperCase() ? "text-gray-100 font-extrabold drop-shadow-[0_0_6px_rgba(34,197,94,0.8)]" : "text-gray-700 hover:text-gray-400"}`}
-                                                >
-                                                    <Copy className="h-4 w-4" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div className="flex items-center" title={f.description}>{shortenString(f.description || '', 35)}</div>
-                                        </td>
-                                        <td>
-                                            <div className="flex items-center">{printSpace(f.bag_size)}</div>
-                                        </td>
-                                        <td>
-                                            <div className="flex items-center w-40">
-                                                {freeStorageDuration ? (
-                                                    <CountdownTimer expirationTime={f.created_at + freeStorageDuration} />
-                                                ) : (
-                                                    <span className="text-gray-500">—</span>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <button
-                                                onClick={() => cancelStorage(f.bag_id)}
-                                                className="flex p-1 rounded-full hover:bg-gray-100"
-                                                title={t('unpaid.removeUnpaidFileTitle')}
+                isMobile ? (
+                    <div className="space-y-3">
+                        {unpaidFiles.map((f) => (
+                            <div
+                                key={`mobile-${f.bag_id}`}
+                                className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-blue-200 transition-all duration-200"
+                            >
+                                {/* Header: Bag ID */}
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-xs font-medium text-gray-500 mb-1">{t('unpaid.bagID')}</div>
+                                        <div className="flex items-center space-x-2">
+                                            <a
+                                                href={`${apiBase}/api/v1/gateway/${f.bag_id.toUpperCase()}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="font-mono font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                                                title={f.bag_id.toUpperCase()}
                                             >
-                                                <X className="h-5 w-5 text-red-500" />
+                                                {shortenString(f.bag_id.toUpperCase(), 14)}
+                                            </a>
+                                            <button
+                                                onClick={() => copyToClipboard(f.bag_id.toUpperCase(), setCopiedKey)}
+                                                className={`p-1 rounded-md transition-all duration-200 ${copiedKey === f.bag_id.toUpperCase()
+                                                    ? "text-green-600 bg-green-50 scale-110"
+                                                    : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+                                                    }`}
+                                            >
+                                                <Copy className="h-3.5 w-3.5" />
                                             </button>
-                                        </td>
-                                    </tr>
-                                </React.Fragment>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                                        </div>
+                                    </div>
+                                    <div className="text-right ml-3">
+                                        <div className="text-sm font-semibold text-gray-900">
+                                            {printSpace(f.bag_size)}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Description */}
+                                <div className="mb-4">
+                                    <div className="text-xs font-medium text-gray-500 mb-1">{t('unpaid.description')}</div>
+                                    <p className="text-gray-700 line-clamp-2" title={f.description || ''}>
+                                        {f.description ? (
+                                            shortenString(f.description, 40)
+                                        ) : (
+                                            <span className="text-gray-400 italic">--</span>
+                                        )}
+                                    </p>
+                                </div>
+
+                                {/* Free Storage Timer */}
+                                <div className="mb-4">
+                                    <div className="text-xs font-medium text-gray-500 mb-1">{t('unpaid.freeStorage')}</div>
+                                    <div className="text-sm text-gray-700">
+                                        {freeStorageDuration ? (
+                                            <CountdownTimer expirationTime={f.created_at + freeStorageDuration} />
+                                        ) : (
+                                            <span className="text-gray-400">—</span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Actions */}
+                                <div className="flex justify-end pt-3 border-t border-gray-100">
+                                    <button
+                                        onClick={() => cancelStorage(f.bag_id)}
+                                        className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-red-50 transition-all duration-200"
+                                        title={t('unpaid.removeUnpaidFileTitle')}
+                                    >
+                                        <X className="h-4 w-4 text-red-500 hover:text-red-600" />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="ton-table overscroll-x-auto">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <div className="flex items-center ml-2">{t('unpaid.bagID')}</div>
+                                    </th>
+                                    <th>
+                                        <div className="flex items-center">{t('unpaid.description')}</div>
+                                    </th>
+                                    <th>
+                                        <div className="flex items-center">{t('unpaid.size')}</div>
+                                    </th>
+                                    <th>
+                                        <div className="flex items-center">{t('unpaid.freeStorage')}</div>
+                                    </th>
+                                    <th className="w-8">{t('unpaid.actions')}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {unpaidFiles.map((f, index) => (
+                                    <React.Fragment key={f.bag_id}>
+                                        <tr className={`group ${index % 2 ? "" : "bg-gray-50"} transition-colors duration-200`}>
+                                            <td>
+                                                <div className="flex items-center">
+                                                    <a
+                                                        href={`${apiBase}/api/v1/gateway/${f.bag_id.toUpperCase()}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-blue-600 hover:underline"
+                                                        title={f.bag_id.toUpperCase()}>
+                                                        {shortenString(f.bag_id.toUpperCase(), 8)}
+                                                    </a>
+                                                    <button
+                                                        onClick={() => copyToClipboard(f.bag_id.toUpperCase(), setCopiedKey)}
+                                                        className={`ml-2 transition-colors duration-200 ${copiedKey === f.bag_id.toUpperCase() ? "text-gray-100 font-extrabold drop-shadow-[0_0_6px_rgba(34,197,94,0.8)]" : "text-gray-700 hover:text-gray-400"}`}
+                                                    >
+                                                        <Copy className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div className="flex items-center" title={f.description}>{shortenString(f.description || '', 35)}</div>
+                                            </td>
+                                            <td>
+                                                <div className="flex items-center">{printSpace(f.bag_size)}</div>
+                                            </td>
+                                            <td>
+                                                <div className="flex items-center w-40">
+                                                    {freeStorageDuration ? (
+                                                        <CountdownTimer expirationTime={f.created_at + freeStorageDuration} />
+                                                    ) : (
+                                                        <span className="text-gray-500">—</span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <button
+                                                    onClick={() => cancelStorage(f.bag_id)}
+                                                    className="flex p-1 rounded-full hover:bg-gray-100"
+                                                    title={t('unpaid.removeUnpaidFileTitle')}
+                                                >
+                                                    <X className="h-5 w-5 text-red-500" />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </React.Fragment>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )
             )}
         </div>
     )

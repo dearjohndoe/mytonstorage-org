@@ -5,6 +5,7 @@ import { useAppStore } from '@/store/useAppStore'
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { safeDisconnect } from '@/lib/ton/safeDisconnect';
 import { getTopupBalanceTransaction, getWithdrawTransaction } from '@/lib/api';
+import { sendTransactionWithFallback } from '@/lib/ton/transactions';
 import { Transaction } from '@/lib/types';
 import { Copy, ReceiptText } from 'lucide-react';
 import { copyToClipboard, shortenString } from '@/lib/utils';
@@ -114,16 +115,22 @@ export function FilesList() {
     setSelectedTopupContract(null);
 
     console.log("Sending topup transaction:", message);
-    try {
-      const wResp = await tonConnectUI.sendTransaction({
-        validUntil: Math.floor(Date.now() / 1000) + 60,
-        messages: [message]
+    if (!wallet?.account.address) {
+      setError(t('errors.unknownErrorOccurred'));
+    } else {
+      const result = await sendTransactionWithFallback({
+        tonConnectUI,
+        message,
+        contractAddress: tx.address,
+        userAddress: wallet.account.address,
+        timeoutMs: 180_000,
+        pollingIntervalMs: 5_000,
       });
 
-      console.log("Topup transaction response:", wResp);
-    } catch (error) {
-      console.error("Failed to send topup transaction:", error);
-      setError(t('errors.failedToSendTransactionShort'));
+      console.log("Topup transaction result:", result);
+      if (!result.success) {
+        setError(t('errors.failedToSendTransactionShort'));
+      }
     }
   }
 
@@ -161,18 +168,29 @@ export function FilesList() {
     setLoadingWithdrawalAddress(null);
 
     console.log("Sending transaction:", message);
-    const wResp = await tonConnectUI.sendTransaction({
-      validUntil: Math.floor(Date.now() / 1000) + 60,
-      messages: [
-        message
-      ]
+    if (!wallet?.account.address) {
+      setError(t('errors.unknownErrorOccurred'));
+      setLoadingWithdrawalAddress(null);
+      return;
+    }
+
+    const result = await sendTransactionWithFallback({
+      tonConnectUI,
+      message,
+      contractAddress: tx.address,
+      userAddress: wallet.account.address,
+      timeoutMs: 180_000,
+      pollingIntervalMs: 5_000,
     });
 
-    console.log("Transaction response:", wResp);
+    console.log("Transaction result:", result);
 
-    if (wResp.boc.length > 0) {
+    if (result.success) {
       const filtered = files.list.filter(f => f.contractAddress !== tx.address);
       setFiles(filtered);
+    } else {
+      console.error("Cancel storage transaction failed:", result.error);
+      setError(t('errors.failedToSendTransactionShort'));
     }
   }
 

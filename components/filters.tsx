@@ -1,6 +1,5 @@
 "use client"
 
-import React from "react"
 import { useTranslation } from "react-i18next";
 import { ThreeStateField } from "./tri-state-field";
 
@@ -47,11 +46,11 @@ export function FiltersSection({
     };
 
     return (
-        <div className={isMobile ? 'mt-6' : ''}>
-            <p className="text-center text-gray-700 justify-self-start mt-4">
+        <div className={`flex ${isMobile ? 'flex-col gap-4' : 'place-content-between'}`}>
+            <label className="block text-gray-700 mb-2">
                 {t('filtersStates.title')}:
-            </p>
-            <div className={`flex ${isMobile ? 'gap-4' : ' gap-16'} flex-wrap items-center justify-center items-end`}>
+            </label>
+            <div className="flex flex-col gap-4 items-center md:flex-row md:gap-8 md:flex-wrap">
                 <ThreeStateField
                     states={[t('filtersStates.fromDifferentCountries'), t('filtersStates.fromDifferentCities'), t('filtersStates.anyLocation')]}
                     colors={["bg-blue-300", "bg-blue-300", "bg-gray-200"]}

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useIsMobile } from "@/hooks/useIsMobile"
 import { StoragePeriodSlider } from "../storage-period-slider"
-import { CountdownTimer } from "../countdown-timer"
+import { FreeStorageDisplay } from "../free-storage-display"
 import { DAY_SECONDS, WEEK_DAYS, DEFAULT_INIT_BALANCE, FEE_PROOF, FEE_INIT } from "@/lib/storage-constants"
 import { useTonAddress, useTonConnectUI } from "@tonconnect/ui-react"
 import { useTranslation } from "react-i18next"
@@ -11,6 +11,7 @@ import { useAppStore } from "@/store/useAppStore"
 import { InitStorageContract, Transaction } from "@/lib/types"
 import { getDeployTransaction } from "@/lib/api"
 import { safeDisconnect } from "@/lib/ton/safeDisconnect"
+import { sendTransactionWithFallback } from "@/lib/ton/transactions"
 import { AlarmClock } from "lucide-react"
 import { setBagStorageContract } from "@/lib/api";
 
@@ -131,42 +132,48 @@ export default function ChooseStoragePeriod() {
             return;
         }
 
+        if (!widgetData.newBagID) {
+            console.error("No new bag ID available");
+            setError(t('errors.unknownErrorOccurred'));
+            return;
+        }
+
+        if (!userAddress) {
+            console.error("No user address available");
+            setError(t('errors.unknownErrorOccurred'));
+            return;
+        }
+
         const message = {
             address: tx!.address,
             amount: tx!.amount.toString(),
             stateInit: tx!.state_init,
             payload: tx!.body,
-        }
-        try {
-            if (!widgetData.newBagID) {
-                console.error("No new bag ID available");
-                setError(t('errors.unknownErrorOccurred'));
-                return;
-            }
+        };
 
-            console.log("Sending transaction:", message);
-            const resp = await tonConnectUI.sendTransaction({
-                validUntil: Math.floor(Date.now() / 1000) + 60,
-                messages: [
-                    message
-                ]
+        console.log("Sending transaction:", message);
+
+        const result = await sendTransactionWithFallback({
+            tonConnectUI,
+            message,
+            contractAddress: tx!.address,
+            userAddress,
+            timeoutMs: 1000 * 60 * 4,
+            pollingIntervalMs: 5000,
+        });
+
+        console.log("Transaction result:", result);
+
+        if (result.success) {
+            updateWidgetData({
+                storageContractAddress: tx!.address,
             });
-
-            console.log("Transaction response:", resp);
-
-            if (resp.boc.length > 0) {
-                updateWidgetData({
-                    storageContractAddress: tx!.address,
-                });
-
-                sendStorageContract(widgetData.newBagID, tx!.address);
-            }
-
-        } catch (error) {
-            console.error("Error sending transaction:", error);
+            sendStorageContract(widgetData.newBagID, tx!.address);
+        } else {
+            console.error("Transaction failed:", result.error);
             setError(t('errors.failedToSendTransaction'));
         }
-    }
+    };
 
     const sendStorageContract = async (bagid: string, storageContractAddress: string) => {
         setError(null);
@@ -178,6 +185,7 @@ export default function ChooseStoragePeriod() {
             safeDisconnect(tonConnectUI);
             return;
         }
+        
         if (response.error) {
             setError(t('errors.tryResendAddressError', { error: response.error }));
             console.error("Failed to set bag storage contract:", response.error);
@@ -193,21 +201,11 @@ export default function ChooseStoragePeriod() {
 
     return (
         <div className={`${isMobile ? 'mt-4' : 'mt-16'}`}>
-            <div className={`${isMobile ? 'flex flex-col space-y-3' : 'flex justify-between items-center'} my-4`}>
+            <div className="flex items-center justify-between gap-2 my-4">
                 <div className="flex items-center">
                     <AlarmClock className="w-5 h-5 text-blue-600" />
                     <h2 className="text-lg pl-2 font-semibold text-gray-900">{t('chooseProviders.selectTimePeriod')}</h2>
                 </div>
-
-                {/* Free storage */}
-                {widgetData?.bagInfo && (
-                    <div className={isMobile ? "text-left" : "text-right"}>
-                        <span className="text-sm text-gray-600">{t('newBag.freeStorage')}</span>
-                        <div className="text-sm">
-                            <CountdownTimer expirationTime={(widgetData!.bagInfo?.created_at || 0) + (widgetData!.freeStorage || 0)} />
-                        </div>
-                    </div>
-                )}
             </div>
 
             {/* Error message */}
@@ -217,30 +215,43 @@ export default function ChooseStoragePeriod() {
                 </div>
             )}
 
-            <div className="rounded-lg border bg-gray-50 border-gray-50 my-4">
-                <StoragePeriodSlider
-                    value={storagePeriodDays}
-                    onChange={handlePeriodChange}
-                    disabled={false}
-                />
+            <div className="rounded-lg border bg-gray-50 border-gray-50 my-4 p-4">
+                <div className="my-4">
+                    <StoragePeriodSlider
+                        value={storagePeriodDays}
+                        onChange={handlePeriodChange}
+                        disabled={false}
+                    />
+                </div>
+
+                {/* Free storage */}
+                {
+                    widgetData.bagInfo && (
+                        <FreeStorageDisplay
+                            expirationTime={(widgetData.bagInfo!.created_at || 0) + (widgetData.freeStorage || 0)}
+                            isMobile={isMobile}
+                        />
+                    )
+                }
 
                 {/* Balance info */}
-                <div className="px-4 pb-4">
-                    <div className="space-y-3">
-                        <div className="flex justify-center gap-8">
-                            <div className="text-center">
-                                <div className="text-sm text-gray-600 mb-1">{t('storage.coinsNeed')}</div>
-                                <div className="text-lg font-semibold">{(initialBalance / 1_000_000_000).toFixed(3)} TON</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-sm text-gray-600 mb-1">{t('storage.exDate')}</div>
-                                <div className="text-lg font-semibold">{getExpirationDate()}</div>
-                            </div>
-                        </div>
-                        <div className="text-center text-xs text-gray-500 mt-3">
-                            {t('storage.canExtendLater', 'Время хранения можно продлить позже')}
-                        </div>
-                    </div>
+                <div className={`flex ${isMobile ? 'flex-col' : 'place-content-between'} gap-4 mt-4`}>
+                    <label className="text-gray-700">
+                        {t('storage.coinsNeed')}:
+                    </label>
+                    <span className="text-sm font-medium text-gray-700">
+                        {(initialBalance / 1_000_000_000).toFixed(3)} TON
+                    </span>
+                </div>
+
+                {/* Expiration */}
+                <div className={`flex ${isMobile ? 'flex-col' : 'place-content-between'} gap-4 mt-4`}>
+                    <label className="text-gray-700">
+                        {t('storage.exDate')}:
+                    </label>
+                    <span className="text-sm font-medium text-gray-700">
+                        {getExpirationDate()}
+                    </span>
                 </div>
             </div>
 
