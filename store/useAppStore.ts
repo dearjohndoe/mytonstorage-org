@@ -231,17 +231,22 @@ export const useAppStore = create<AppStore>()(
           }
         })),
 
-      // todo: unused?
       resetAll: () => set(initialState)
     }),
 
     {
       name: 'app-storage', // имя в localStorage
       storage: createJSONStorage(() => localStorage),
-      // Можно указать какие части стейта сохранять (исключаем _hasHydrated)
+      // Сохраняем всё, кроме реальных File объектов (они не сериализуются корректно).
       partialize: (state) => ({
         currentPage: state.currentPage,
-        upload: state.upload,
+        upload: {
+          ...state.upload,
+          widgetData: {
+            ...state.upload.widgetData,
+            selectedFiles: []
+          }
+        },
         files: {
           blockchain: state.files.blockchain,
           list: state.files.list,
@@ -252,10 +257,20 @@ export const useAppStore = create<AppStore>()(
         }
       }),
 
-      onRehydrateStorage: () => (state, error) => {
+      onRehydrateStorage: () => (_state, error) => {
         if (!error) {
           setTimeout(() => {
-            useAppStore.setState({ _hasHydrated: true })
+            // Ensure any persisted selectedFiles are cleared on rehydrate (Files can't be restored).
+            useAppStore.setState((s) => ({
+              _hasHydrated: true,
+              upload: {
+                ...s.upload,
+                widgetData: {
+                  ...s.upload.widgetData,
+                  selectedFiles: []
+                }
+              }
+            }))
           }, 0)
         }
       },
