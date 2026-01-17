@@ -2,7 +2,7 @@
 
 import { useAppStore } from "@/store/useAppStore"
 import { useEffect, useState } from "react";
-import { useTonWallet, useTonConnectUI, useIsConnectionRestored } from "@tonconnect/ui-react";
+import { useTonWallet, useTonConnectUI } from "@tonconnect/ui-react";
 import { login, proofPayload } from "@/lib/api"
 import { safeDisconnect } from "@/lib/ton/safeDisconnect"
 import WidgetsMap from "@/components/widgets-map"
@@ -19,8 +19,7 @@ export function PageContent() {
   const { t } = useTranslation();
   const [tonConnectUI] = useTonConnectUI();
   const wallet = useTonWallet()
-  const isConnectionRestored = useIsConnectionRestored();
-  const { currentPage, setCurrentPage, upload, files, _hasHydrated } = useAppStore()
+  const { currentPage, upload, files, _hasHydrated } = useAppStore()
   const [fallbackTimer, setFallbackTimer] = useState(false)
   const widgetData = upload.widgetData
   const isMobile = useIsMobile();
@@ -94,9 +93,7 @@ export function PageContent() {
   }, [_hasHydrated])
 
   useEffect(() => {
-    console.debug("Widget data changed:", widgetData);
-
-    if (widgetData.selectedFiles && widgetData.newBagID && widgetData.newBagID.length === 64) {
+    if (widgetData.newBagID && widgetData.newBagID.length === 64) {
       if (widgetData.selectedProviders && widgetData.selectedProviders.length > 0) {
         if (widgetData.storageContractAddress && widgetData.paymentStatus === 'success') {
           useAppStore.getState().setCurrentWidget(5)
@@ -107,10 +104,21 @@ export function PageContent() {
         useAppStore.getState().setCurrentWidget(3)
       }
     } else {
-      if (widgetData.selectedFiles && widgetData.selectedFiles.length > 0) {
+      const firstFile = widgetData.selectedFiles && widgetData.selectedFiles[0];
+      const isValidFile =
+        firstFile &&
+        typeof firstFile.name === 'string' &&
+        firstFile.name.length > 0 &&
+        typeof firstFile.size === 'number' &&
+        Number.isFinite(firstFile.size) &&
+        firstFile.size >= 0;
+
+      if (isValidFile) {
         useAppStore.getState().setCurrentWidget(2)
+        window.history.replaceState({}, '', '/');
       } else {
         useAppStore.getState().setCurrentWidget(1)
+        window.history.replaceState({}, '', '/');
       }
     }
   }, [widgetData])
@@ -121,7 +129,7 @@ export function PageContent() {
     }
   }, [currentPage, widgetData.newBagID, upload.currentWidget])
 
-  if ((!_hasHydrated && !fallbackTimer) || !isConnectionRestored) {
+  if (!_hasHydrated && !fallbackTimer) {
     return (<></>)
   }
 

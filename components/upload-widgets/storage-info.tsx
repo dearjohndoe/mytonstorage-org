@@ -29,7 +29,6 @@ export default function StorageInfo() {
 
     const resetWidgets = () => {
         resetWidgetData();
-        window.location.href = '/';
     }
 
     return (
