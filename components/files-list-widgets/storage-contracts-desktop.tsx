@@ -131,7 +131,7 @@ export function StorageContractsDesktop({
                           rel="noopener noreferrer"
                           className="text-blue-600 hover:underline"
                           title={f.info.bag_id.toUpperCase()}>
-                          {shortenString(f.info.bag_id.toUpperCase(), 8)}
+                          {shortenString(f.info.bag_id.toUpperCase(), 12)}
                         </a>
                         <button
                           onClick={() => copyToClipboard(f.info!.bag_id.toUpperCase(), setCopiedKey)}

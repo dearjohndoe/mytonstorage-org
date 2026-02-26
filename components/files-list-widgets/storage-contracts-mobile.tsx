@@ -115,7 +115,7 @@ export function StorageContractsMobile({
                                         className="font-mono text-blue-600 hover:text-blue-800 transition-colors"
                                         title={f.info.bag_id.toUpperCase()}
                                     >
-                                        {shortenString(f.info.bag_id.toUpperCase(), 16)}
+                                        {shortenString(f.info.bag_id.toUpperCase(), 8)}
                                     </a>
                                     <button
                                         onClick={() => copyToClipboard(f.info!.bag_id.toUpperCase(), setCopiedKey)}

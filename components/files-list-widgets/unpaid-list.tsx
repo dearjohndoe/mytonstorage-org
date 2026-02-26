@@ -126,7 +126,7 @@ export function UnpaidFilesList() {
                                                 className="font-mono font-medium text-blue-600 hover:text-blue-800 transition-colors"
                                                 title={f.bag_id.toUpperCase()}
                                             >
-                                                {shortenString(f.bag_id.toUpperCase(), 14)}
+                                                {shortenString(f.bag_id.toUpperCase(), 8)}
                                             </a>
                                             <button
                                                 onClick={() => copyToClipboard(f.bag_id.toUpperCase(), setCopiedKey)}
@@ -215,7 +215,7 @@ export function UnpaidFilesList() {
                                                         rel="noopener noreferrer"
                                                         className="text-blue-600 hover:underline"
                                                         title={f.bag_id.toUpperCase()}>
-                                                        {shortenString(f.bag_id.toUpperCase(), 8)}
+                                                        {shortenString(f.bag_id.toUpperCase(), 12)}
                                                     </a>
                                                     <button
                                                         onClick={() => copyToClipboard(f.bag_id.toUpperCase(), setCopiedKey)}
